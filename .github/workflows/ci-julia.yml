@@ -180,18 +180,29 @@ jobs:
 
       - uses: julia-actions/cache@9a93c5fb3e9c1c20b60fc80a478cae53e38618a4 # v3.0.2
 
+      - name: Install dependencies
+        run: |
+          julia --project=julia -e '
+            using Pkg
+            Pkg.Registry.update()
+            rm(joinpath("julia", "Manifest.toml"); force=true)
+            Pkg.instantiate()
+          '
+
       - name: Check formatting (JuliaFormatter)
         run: |
-          julia -e '
-            using Pkg; Pkg.add("JuliaFormatter")
+          before_hash="$(git diff -- ':(glob)julia/**/*.jl' | git hash-object --stdin)"
+          julia --project=julia -e '
             using JuliaFormatter
-            formatted = format("julia/"; overwrite=false)
-            if !formatted
-              println("::error::Julia code is not formatted.")
-              println("::error::Fix locally with: using JuliaFormatter; format(\"julia/\")")
-              exit(1)
-            end
+            format("julia/"; overwrite=true)
           '
+          after_hash="$(git diff -- ':(glob)julia/**/*.jl' | git hash-object --stdin)"
+          if [ "$before_hash" != "$after_hash" ]; then
+            echo "::error::Julia code is not formatted."
+            echo "::error::Fix locally with: julia --project=julia -e 'using JuliaFormatter; format(\"julia/\"; overwrite=true)'"
+            git --no-pager diff -- ':(glob)julia/**/*.jl'
+            exit 1
+          fi
 
   fuzz:
     runs-on: ubuntu-latest

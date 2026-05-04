@@ -131,7 +131,13 @@ for target in "${TARGETS[@]}"; do
   if [ -f "$ENV_FILE" ]; then
     compose_cmd+=(--env-file "$ENV_FILE")
   fi
-  if ! "${compose_cmd[@]}" run --rm "$target"; then
+  run_env=()
+  # Keep local sonarqube preflight aligned with CI SonarQube workflow:
+  # generate Julia coverage artifacts, but do not enforce formatter gate here.
+  if [ "$HAS_SONAR" = true ] && [ "$target" = "julia" ]; then
+    run_env+=(LOCAL_CI_JULIA_SKIP_FORMAT=true)
+  fi
+  if ! env "${run_env[@]}" "${compose_cmd[@]}" run --rm "$target"; then
     FAILED+=("$target")
     if [ "$CONTINUE_ON_ERROR" = false ]; then
       echo "Target failed: $target"

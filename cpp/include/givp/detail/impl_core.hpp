@@ -147,9 +147,10 @@ OptimizeResult run(F &&func, const std::vector<std::pair<double, double>> &bound
         best_cost = evaluate_with_cache(best_solution, wrapped, cache, half);
     } else {
         auto child = rng.child();
+        const GraspConstructParams init_params{nullptr, config.alpha, half,
+                                               config.num_candidates_per_step};
         auto [sol, cost] =
-            construct_grasp(num_vars, lower, upper, wrapped, nullptr, config.alpha, half,
-                            config.num_candidates_per_step, cache, child, deadline);
+            construct_grasp(num_vars, lower, upper, wrapped, init_params, cache, child, deadline);
         best_solution = std::move(sol);
         best_cost = cost;
     }
@@ -169,8 +170,9 @@ OptimizeResult run(F &&func, const std::vector<std::pair<double, double>> &bound
         }
         iterations_executed = iteration + 1;
 
-        double alpha = get_current_alpha(iteration, config.max_iterations, config.alpha_min,
-                                         config.alpha_max, config.adaptive_alpha, config.alpha);
+        double alpha = get_current_alpha(AlphaScheduleParams{iteration, config.max_iterations,
+                                                             config.alpha_min, config.alpha_max,
+                                                             config.adaptive_alpha, config.alpha});
 
         auto child = rng.child();
         const std::vector<double> *ig =
@@ -181,9 +183,10 @@ OptimizeResult run(F &&func, const std::vector<std::pair<double, double>> &bound
 
         if (config.n_workers <= 1) {
             // Single-worker path keeps cache behavior identical to prior releases.
-            auto grasp_result =
-                construct_grasp(num_vars, lower, upper, wrapped, ig, alpha, half,
-                                config.num_candidates_per_step, cache, child, deadline);
+            const GraspConstructParams grasp_params{ig, alpha, half,
+                                                    config.num_candidates_per_step};
+            auto grasp_result = construct_grasp(num_vars, lower, upper, wrapped, grasp_params,
+                                                cache, child, deadline);
             candidate = std::move(grasp_result.first);
 
             double grasp_eval = evaluate_with_cache(candidate, wrapped, cache, half);
@@ -207,14 +210,15 @@ OptimizeResult run(F &&func, const std::vector<std::pair<double, double>> &bound
                 const std::vector<double> *worker_ig = (worker == 0) ? ig : nullptr;
 
                 futures.push_back(std::async(
-                    std::launch::async,
-                    [&, worker_rng = std::move(worker_rng), worker_ig]() mutable -> WorkerResult {
+                    std::launch::async, [&, worker_rng, worker_ig]() mutable -> WorkerResult {
                         // Keep per-worker cache local to avoid shared mutable state.
                         std::optional<EvaluationCache> local_cache;
+                        const GraspConstructParams worker_params{worker_ig, alpha, half,
+                                                                 config.num_candidates_per_step};
 
-                        auto grasp_result = construct_grasp(
-                            num_vars, lower, upper, wrapped, worker_ig, alpha, half,
-                            config.num_candidates_per_step, local_cache, worker_rng, deadline);
+                        auto grasp_result =
+                            construct_grasp(num_vars, lower, upper, wrapped, worker_params,
+                                            local_cache, worker_rng, deadline);
                         std::vector<double> local_candidate = std::move(grasp_result.first);
 
                         double grasp_eval =
@@ -277,9 +281,10 @@ OptimizeResult run(F &&func, const std::vector<std::pair<double, double>> &bound
         // Stagnation restart
         if (stagnation > config.max_iterations / 4) {
             auto child2 = rng.child();
-            auto [rsol, rcost0] =
-                construct_grasp(num_vars, lower, upper, wrapped, nullptr, alpha, half,
-                                config.num_candidates_per_step, cache, child2, deadline);
+            const GraspConstructParams restart_params{nullptr, alpha, half,
+                                                      config.num_candidates_per_step};
+            auto [rsol, rcost0] = construct_grasp(num_vars, lower, upper, wrapped, restart_params,
+                                                  cache, child2, deadline);
             double rcost = local_search_vnd(wrapped, rsol, rcost0, half, lower, upper,
                                             config.vnd_iterations, cache, child2, deadline);
             rcost = ils_search(wrapped, rsol, rcost, half, lower, upper, config.ils_iterations,

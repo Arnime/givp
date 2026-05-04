@@ -50,15 +50,24 @@ julia -e '
 '
 
 echo "[julia] Formatting check"
-julia -e '
-  using Pkg; Pkg.add("JuliaFormatter")
-  using JuliaFormatter
-  formatted = format("julia/"; overwrite=false)
-  if !formatted
-    println("Julia code is not formatted.")
-    exit(1)
-  end
-'
+if [ "${LOCAL_CI_JULIA_SKIP_FORMAT:-false}" = "true" ]; then
+  echo "[julia] Formatting check skipped (LOCAL_CI_JULIA_SKIP_FORMAT=true)"
+else
+  before_hash="$(git diff -- ':(glob)julia/**/*.jl' | git hash-object --stdin)"
+
+  julia --project=julia -e '
+    using JuliaFormatter
+    format("julia/"; overwrite=true)
+  '
+
+  after_hash="$(git diff -- ':(glob)julia/**/*.jl' | git hash-object --stdin)"
+  if [ "$before_hash" != "$after_hash" ]; then
+    echo "Julia code is not formatted."
+    echo "Fix locally with: julia --project=julia -e 'using JuliaFormatter; format(\"julia/\"; overwrite=true)'"
+    git --no-pager diff -- ':(glob)julia/**/*.jl' | head -n 200
+    exit 1
+  fi
+fi
 
 echo "[julia] Fuzz trials"
 julia --project=julia julia/fuzz/fuzz_givp.jl \

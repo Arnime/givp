@@ -177,3 +177,46 @@ around 0.01s.
 only).  
 **Metadata**: algorithms `["GIVP-full", "GRASP-only"]`, functions
 `["Ackley", "Rastrigin", "Rosenbrock", "Sphere"]`, generated 2026-05-04.
+
+### R
+
+The R notebook experiment currently has two documented runs:
+
+* **Medium**: completed JSON export (`n_runs=5`, `n_dims=10`, lighter config).
+* **Robust**: partial CSV checkpoint (`n_runs=10`, `n_dims=10`, `max_iterations=80`,
+  `vnd_iterations=150`, `ils_iterations=8`).
+
+Both runs show the same qualitative behaviour observed in other ports:
+GIVP-full consistently reaches lower objective values than GRASP-only,
+with substantially higher runtime.
+
+#### R Medium (n=5, 10-D)
+
+| Function | GIVP-full mean +- std | GRASP-only mean +- std | GIVP-full mean time (s) | GRASP-only mean time (s) |
+|---|---|---|---|---|
+| Sphere | 4.03e-02 +- 1.78e-02 | 2.691e+01 +- 7.1326e+00 | 8.8650 | 0.4568 |
+| Rosenbrock | 3.0751e+01 +- 1.2204e+01 | 5.3734e+04 +- 2.2511e+04 | 13.3699 | 0.4136 |
+| Rastrigin | 4.8871e+01 +- 6.7673e+00 | 8.5181e+01 +- 1.3954e+01 | 6.6203 | 0.4065 |
+| Ackley | 3.7770e+00 +- 4.828e-01 | 1.9383e+01 +- 3.657e-01 | 8.9671 | 0.3784 |
+
+#### R Robust checkpoint (n=10, 10-D)
+
+| Function | GIVP-full mean +- std | GRASP-only mean +- std | GIVP-full mean time (s) | GRASP-only mean time (s) |
+|---|---|---|---|---|
+| Sphere | 2.1223e-02 +- 6.985e-03 | 2.3234e+01 +- 4.7093e+00 | 226.7211 | 1.0279 |
+| Rosenbrock | 1.6037e+01 +- 3.6345e+00 | 3.1382e+04 +- 1.6223e+04 | 223.8017 | 0.9973 |
+| Rastrigin | 3.6156e+01 +- 4.5694e+00 | 8.3601e+01 +- 1.0687e+01 | 162.9951 | 1.0632 |
+| Ackley | 2.8140e+00 +- 3.4762e-01 | 1.8177e+01 +- 9.6254e-01 | 199.8611 | 1.3010 |
+
+Observed runtime in the robust checkpoint (`Notebooks/R/benchmark_literature_comparison_r_partial.csv`):
+
+* GIVP-full: `8123.83 s` (~2.26 h)
+* GRASP-only: `43.90 s`
+* Total: `8167.73 s` (~2.27 h)
+
+**Statistical test**: Wilcoxon results are available in the notebook output.
+For publication-grade comparison parity with Julia/Rust/C++, prefer `n_runs=30`.
+**Metadata**: medium JSON
+`Notebooks/R/benchmark_literature_comparison_r_results.json` and robust
+checkpoint CSV `Notebooks/R/benchmark_literature_comparison_r_partial.csv`,
+generated 2026-05-04.

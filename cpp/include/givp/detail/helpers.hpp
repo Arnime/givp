@@ -24,7 +24,7 @@ class Rng {
     explicit Rng(std::uint64_t seed) : engine_(seed) {}
 
     static Rng from_seed(std::optional<std::uint64_t> seed) {
-        if (seed)
+        if (seed.has_value())
             return Rng(*seed);
         std::random_device rd;
         std::uint64_t s =
@@ -63,7 +63,7 @@ inline std::size_t get_half(std::size_t num_vars, std::optional<std::size_t> int
 }
 
 inline bool expired(const Deadline &deadline) {
-    if (!deadline)
+    if (!deadline.has_value())
         return false;
     return std::chrono::steady_clock::now() >= *deadline;
 }
