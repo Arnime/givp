@@ -25,6 +25,28 @@ test_that("givp accepts minimize flag", {
   expect_equal(res$direction, "minimize")
 })
 
+test_that("givp executes iteration callback and direction overrides minimize", {
+  f <- function(x) sum(x * x)
+  called <- FALSE
+  got_class <- FALSE
+
+  res <- givp(
+    f,
+    bounds = list(c(-2, 2), c(-2, 2)),
+    minimize = TRUE,
+    direction = "maximize",
+    iteration_callback = function(r) {
+      called <<- TRUE
+      got_class <<- inherits(r, "givp_result")
+    },
+    seed = 7
+  )
+
+  expect_equal(res$direction, "maximize")
+  expect_true(called)
+  expect_true(got_class)
+})
+
 test_that("givp validates objective", {
   expect_error(givp(1, bounds = list(c(-1, 1))), class = "givp_error_invalid_objective")
 })
