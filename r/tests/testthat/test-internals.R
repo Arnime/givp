@@ -1,18 +1,38 @@
 # SPDX-FileCopyrightText: 2026 Arnaldo Mendes Pires Junior
 # SPDX-License-Identifier: MIT
 
-internal_files <- c(
-  "exceptions.R",
-  "helpers.R",
-  "cache.R",
-  "convergence.R",
-  "elite.R",
-  "experiment.R"
-)
-
-for (internal_file in internal_files) {
-  source(file.path("..", "..", "R", internal_file), local = TRUE)
+ns_get <- function(name) {
+  get(name, envir = asNamespace("givp"), inherits = FALSE)
 }
+
+make_eval_cache <- ns_get("make_eval_cache")
+cache_get <- ns_get("cache_get")
+cache_set <- ns_get("cache_set")
+cache_key <- ns_get("cache_key")
+
+make_convergence_monitor <- ns_get("make_convergence_monitor")
+convergence_update <- ns_get("convergence_update")
+
+make_elite_pool <- ns_get("make_elite_pool")
+elite_add <- ns_get("elite_add")
+elite_best <- ns_get("elite_best")
+
+normalize_bounds <- ns_get("normalize_bounds")
+clamp_to_bounds <- ns_get("clamp_to_bounds")
+normalize_integer_tail <- ns_get("normalize_integer_tail")
+is_improvement <- ns_get("is_improvement")
+better_value <- ns_get("better_value")
+safe_eval <- ns_get("safe_eval")
+set_seed_if_needed <- ns_get("set_seed_if_needed")
+
+givp_abort <- ns_get("givp_abort")
+abort_invalid_bounds <- ns_get("abort_invalid_bounds")
+abort_invalid_config <- ns_get("abort_invalid_config")
+abort_invalid_initial_guess <- ns_get("abort_invalid_initial_guess")
+
+seed_sweep <- ns_get("seed_sweep")
+sweep_summary <- ns_get("sweep_summary")
+sphere <- ns_get("sphere")
 
 test_that("cache implements get/set and LRU eviction", {
   cache <- make_eval_cache(max_size = 2L)

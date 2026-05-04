@@ -35,6 +35,8 @@ julia/benchmarks/Manifest.toml
 
 # Rust
 rust/target/
+Notebooks/_rust_*/
+Notebooks/_cpp_*/
 
 Notebooks/Resultados_Dissertacao/
 Notebooks/*/*.png
@@ -43,6 +45,9 @@ Notebooks/*/*.png
 *.tar.gz
 r/*.Rcheck/
 r/man/*.Rd
+
+# Local downloads
+mutmut_download/
 
 # github copilot
 .github/agents/

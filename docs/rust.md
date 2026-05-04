@@ -199,6 +199,29 @@ cargo run --example run_literature_comparison -- \
 
 Output JSON is compatible with the Python `generate_report.py` tool.
 
+### Notebook experiment (Rust, reproducible)
+
+The notebook [Notebooks/Rust/benchmark_literature_comparison_rust.ipynb](../Notebooks/Rust/benchmark_literature_comparison_rust.ipynb)
+runs a reproducible 30-seed comparison between **GIVP-full** and **GRASP-only**
+for 10-D Sphere, Rosenbrock, Rastrigin, and Ackley.
+
+Latest exported payload:
+
+- [Notebooks/benchmark_literature_comparison_rust_results.json](../Notebooks/benchmark_literature_comparison_rust_results.json)
+
+Summary from that run (30 seeds, lower is better):
+
+| Function | GIVP-full mean ± std | GRASP-only mean ± std | Wilcoxon (one-sided, GIVP < GRASP) |
+|---|---|---|---|
+| Sphere | 1.278e-04 ± 4.694e-05 | 1.175e+00 ± 4.622e-01 | p < 1e-4 |
+| Rosenbrock | 4.590e-01 ± 1.438e-01 | 5.539e+03 ± 2.964e+03 | p < 1e-4 |
+| Rastrigin | 8.347e-02 ± 4.601e-02 | 1.934e+01 ± 4.239e+00 | p < 1e-4 |
+| Ackley | 9.956e-02 ± 2.599e-02 | 8.520e+00 ± 9.990e-01 | p < 1e-4 |
+
+This notebook profile intentionally reflects a strong local-search setting,
+so **GIVP-full** is much slower but significantly better in objective quality
+than **GRASP-only**.
+
 ## CLI
 
 The Rust port also provides a small CLI binary:

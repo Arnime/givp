@@ -34,12 +34,24 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
+      - name: Install Linux system dependencies
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libcurl4-openssl-dev \
+            libssl-dev \
+            libxml2-dev \
+            libgit2-dev \
+            libuv1-dev
+
       - uses: r-lib/actions/setup-r@a51a8012b0aab7c32ef9d19bf54da93f3254335e # v2
         with:
           r-version: ${{ matrix.r-version }}
           use-public-rspm: true
 
-      - uses: r-lib/actions/setup-r-dependencies@e4dd30c02c9c31fb1edec7f0fb22cc0e2b84de34 # v2
+      - uses: r-lib/actions/setup-r-dependencies@a51a8012b0aab7c32ef9d19bf54da93f3254335e # v2
         with:
           working-directory: r
           extra-packages: any::covr, any::lintr, any::lazyeval

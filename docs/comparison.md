@@ -18,7 +18,7 @@ The table below positions `givp` against widely used Python alternatives.
 | `scipy.optimize.dual_annealing` | yes | yes | continuous | maxiter | yes | Python | strong on basins of attraction |
 | `optuna` (TPE/CMA) | yes | yes | yes | n_trials, timeout | yes | Python | great for HP tuning, no SciPy-style API |
 | `pyomo`/`gurobi` | structured | depends | yes (MIP) | yes | yes | Python | needs the model to be expressible analytically |
-| **`givp`** | yes | yes | yes (mixed) | iter + time | yes (`seed=`) | Python+Julia | SciPy-style API, hybrid GRASP/ILS/VND/PR |
+| **`givp`** | yes | yes | yes (mixed) | iter + time | yes (`seed=`) | Python+Julia+Rust | SciPy-style API, hybrid GRASP/ILS/VND/PR |
 
 ## Apples-to-apples: Rastrigin-30D
 
@@ -112,6 +112,8 @@ higher-dimensional sweeps (`--dims 30`) and tuned-config runs
 
 ## Experimental results — GIVP-full vs. GRASP-only (30 seeds, 10-D)
 
+### Julia
+
 The table below summarises the Julia benchmark (`Notebooks/Julia/results_notebook_julia.json`),
 30 independent seeds per algorithm and function, 10 dimensions.
 All results are objective function values
@@ -129,3 +131,25 @@ All results are objective function values
 **Statistical test**: two-sided Wilcoxon signed-rank test (α = 0.05).  
 **★** = statistically significant difference (p < 0.05) in favour of GIVP-full.
 **Metadata**: Julia 1.12.6, GIVPOptimizer v1.0.0, generated 2026-04-29.
+
+### Rust
+
+The table below summarises the Rust notebook benchmark
+([Notebooks/Rust/benchmark_literature_comparison_rust.ipynb](../Notebooks/Rust/benchmark_literature_comparison_rust.ipynb)),
+30 independent seeds per algorithm and function, 10 dimensions.
+All results are objective function values (lower = better).
+
+| Function | GIVP-full mean ± std | GRASP-only mean ± std | W | p-value | Sig |
+|---|---|---|---|---|---|
+| Sphere | 1.2781e-04 ± 4.6940e-05 | 1.1746e+00 ± 4.6217e-01 | 0.0 | < 0.0001 | ★ |
+| Rosenbrock | 4.5897e-01 ± 1.4378e-01 | 5.5395e+03 ± 2.9638e+03 | 0.0 | < 0.0001 | ★ |
+| Rastrigin | 8.3469e-02 ± 4.6006e-02 | 1.9337e+01 ± 4.2390e+00 | 0.0 | < 0.0001 | ★ |
+| Ackley | 9.9556e-02 ± 2.5989e-02 | 8.5198e+00 ± 9.9896e-01 | 0.0 | < 0.0001 | ★ |
+
+**Statistical test**: one-sided Wilcoxon signed-rank test
+  (`alternative="less"`, α = 0.05).  
+**★** = statistically significant difference (p < 0.05) in favour of GIVP-full.
+**Metadata**: Rust crate `givp`, notebook output
+[Notebooks/Rust/benchmark_literature_comparison_rust_results.json]
+  (../Notebooks/Rust/benchmark_literature_comparison_rust_results.json),
+  generated 2026-05-04.
