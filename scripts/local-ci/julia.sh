@@ -55,7 +55,11 @@ if [ "${LOCAL_CI_JULIA_SKIP_FORMAT:-false}" = "true" ]; then
 else
   before_hash="$(git diff -- ':(glob)julia/**/*.jl' | git hash-object --stdin)"
 
-  julia --project=julia -e '
+  julia -e '
+    using Pkg
+    Pkg.Registry.update()
+    Pkg.activate(; temp=true)
+    Pkg.add("JuliaFormatter")
     using JuliaFormatter
     format("julia/"; overwrite=true)
   '
