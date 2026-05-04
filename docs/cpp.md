@@ -139,6 +139,10 @@ cmake --build build_bench --target givp_literature_comparison
     --n-runs 30 --dims 10 --output cpp/benchmarks/literature_comparison.json
 ```
 
+Latest notebook run results for this experiment (C++, 10-D, 30 seeds,
+GIVP-full vs GRASP-only) are documented in the comparison page under the
+"C++" section.
+
 ## Coverage
 
 The CI enforces a minimum of 80% line coverage for the C++ port.

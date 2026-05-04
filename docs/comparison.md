@@ -135,7 +135,7 @@ All results are objective function values
 ### Rust
 
 The table below summarises the Rust notebook benchmark
-([Notebooks/Rust/benchmark_literature_comparison_rust.ipynb](../Notebooks/Rust/benchmark_literature_comparison_rust.ipynb)),
+([Notebooks/Rust/benchmark_literature_comparison_rust.ipynb](https://github.com/Arnime/grasp_ils_vnd_pr/blob/main/Notebooks/Rust/benchmark_literature_comparison_rust.ipynb)),
 30 independent seeds per algorithm and function, 10 dimensions.
 All results are objective function values (lower = better).
 
@@ -150,6 +150,30 @@ All results are objective function values (lower = better).
   (`alternative="less"`, α = 0.05).  
 **★** = statistically significant difference (p < 0.05) in favour of GIVP-full.
 **Metadata**: Rust crate `givp`, notebook output
-[Notebooks/Rust/benchmark_literature_comparison_rust_results.json]
-  (../Notebooks/Rust/benchmark_literature_comparison_rust_results.json),
+[Notebooks/Rust/benchmark_literature_comparison_rust_results.json](https://github.com/Arnime/grasp_ils_vnd_pr/blob/main/Notebooks/Rust/benchmark_literature_comparison_rust_results.json),
   generated 2026-05-04.
+
+### C++
+
+The table below summarises the C++ notebook benchmark output
+(`Notebooks/Cpp/benchmark_literature_comparison_cpp_results.json`),
+30 independent seeds per algorithm and function, 10 dimensions.
+All results are objective function values (lower = better).
+
+| Function | GIVP-full mean +- std | GRASP-only mean +- std | GIVP-full median | GRASP-only median |
+|---|---|---|---|---|
+| Sphere | 1.7374e-06 +- 5.1980e-07 | 1.1361e+00 +- 4.0839e-01 | 1.7674e-06 | 1.1412e+00 |
+| Rosenbrock | 2.2411e-02 +- 8.1751e-03 | 6.0428e+03 +- 4.0905e+03 | 2.2461e-02 | 5.4019e+03 |
+| Rastrigin | 5.6247e-04 +- 1.9117e-04 | 1.9694e+01 +- 2.8138e+00 | 5.6499e-04 | 1.9809e+01 |
+| Ackley | 1.0648e-02 +- 1.9393e-03 | 8.4947e+00 +- 1.1307e+00 | 1.1009e-02 | 8.8055e+00 |
+
+Across all four functions, GIVP-full reaches several orders of magnitude lower
+objective values than GRASP-only. The same run also shows the expected
+intensification cost: mean `nfev` around 18.8M to 20.4M for GIVP-full versus
+about 4.2k to 4.3k for GRASP-only, with mean runtime around 72s to 82s versus
+around 0.01s.
+
+**Statistical test**: not present in the C++ JSON artifact (descriptive summary
+only).  
+**Metadata**: algorithms `["GIVP-full", "GRASP-only"]`, functions
+`["Ackley", "Rastrigin", "Rosenbrock", "Sphere"]`, generated 2026-05-04.

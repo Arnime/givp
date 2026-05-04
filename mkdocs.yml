@@ -60,11 +60,14 @@ nav:
   - Quickstart: quickstart.md
   - Python: python.md
   - Julia: julia.md
+  - Rust: rust.md
   - C++: cpp.md
   - R: r.md
   - CLI Reference: cli.md
   - Algorithm: algorithm.md
-  - Examples: examples.md
+  - Examples:
+      - Overview: examples.md
+      - Benchmarks: examples/benchmarks.md
   - Comparison: comparison.md
   - Profiling: profiling.md
   - Roadmap: roadmap.md

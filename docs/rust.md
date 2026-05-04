@@ -201,13 +201,13 @@ Output JSON is compatible with the Python `generate_report.py` tool.
 
 ### Notebook experiment (Rust, reproducible)
 
-The notebook [Notebooks/Rust/benchmark_literature_comparison_rust.ipynb](../Notebooks/Rust/benchmark_literature_comparison_rust.ipynb)
+The notebook [Notebooks/Rust/benchmark_literature_comparison_rust.ipynb](https://github.com/Arnime/grasp_ils_vnd_pr/blob/main/Notebooks/Rust/benchmark_literature_comparison_rust.ipynb)
 runs a reproducible 30-seed comparison between **GIVP-full** and **GRASP-only**
 for 10-D Sphere, Rosenbrock, Rastrigin, and Ackley.
 
 Latest exported payload:
 
-- [Notebooks/benchmark_literature_comparison_rust_results.json](../Notebooks/benchmark_literature_comparison_rust_results.json)
+- [Notebooks/Rust/benchmark_literature_comparison_rust_results.json](https://github.com/Arnime/grasp_ils_vnd_pr/blob/main/Notebooks/Rust/benchmark_literature_comparison_rust_results.json)
 
 Summary from that run (30 seeds, lower is better):
 
