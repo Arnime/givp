@@ -33,32 +33,44 @@ library(givp)
 
 # ── JSON serialization (base R only, no external dep) ─────────────────────────
 to_json_value <- function(x) {
-  if (is.null(x) || (length(x) == 1L && is.na(x))) return("null")
-  if (is.logical(x) && length(x) == 1L) return(if (x) "true" else "false")
-  if (is.numeric(x) && length(x) == 1L) {
-    if (is.infinite(x)) return(if (x > 0) "1e308" else "-1e308")
-    if (is.nan(x)) return("null")
-    return(sprintf("%.15g", x))
-  }
-  if (is.character(x) && length(x) == 1L) {
-    return(paste0('"', gsub('"', '\\\\"', x), '"'))
-  }
-  if (is.numeric(x)) {
-    vals <- vapply(x, to_json_value, character(1L))
-    return(paste0("[", paste(vals, collapse = ", "), "]"))
+  if (is.null(x)) return("null")
+  if (is.data.frame(x)) {
+    rows <- lapply(seq_len(nrow(x)), function(i) {
+      row <- lapply(x[i, , drop = FALSE], function(v) v[[1L]])
+      to_json_value(row)
+    })
+    return(paste0("[", paste(rows, collapse = ", "), "]"))
   }
   if (is.list(x)) {
-    if (!is.null(names(x))) {
-      pairs <- mapply(
-        function(k, v) paste0('"', k, '": ', to_json_value(v)),
-        names(x), x, SIMPLIFY = FALSE
-      )
-      return(paste0("{", paste(unlist(pairs), collapse = ", "), "}"))
+    nms <- names(x)
+    if (!is.null(nms) && length(nms) == length(x)) {
+      pairs <- character(length(x))
+      for (i in seq_along(x)) {
+        pairs[[i]] <- paste0('"', nms[[i]], '": ', to_json_value(x[[i]]))
+      }
+      return(paste0("{", paste(pairs, collapse = ", "), "}"))
     }
-    items <- lapply(x, to_json_value)
+    items <- character(length(x))
+    for (i in seq_along(x)) items[[i]] <- to_json_value(x[[i]])
     return(paste0("[", paste(items, collapse = ", "), "]"))
   }
-  to_json_value(as.character(x))
+  if (length(x) == 0L) return("[]")
+  if (length(x) > 1L) {
+    items <- character(length(x))
+    for (i in seq_along(x)) items[[i]] <- to_json_value(x[[i]])
+    return(paste0("[", paste(items, collapse = ", "), "]"))
+  }
+  # scalar
+  if (is.na(x)) return("null")
+  if (is.logical(x)) return(if (x) "true" else "false")
+  if (is.numeric(x)) {
+    if (is.infinite(x)) return(if (x > 0) "1e308" else "-1e308")
+    if (is.nan(x))      return("null")
+    return(sprintf("%.15g", x))
+  }
+  # character / factor / anything else → coerce to string
+  s <- as.character(x)[[1L]]
+  paste0('"', gsub('\\\\', '\\\\\\\\', gsub('"', '\\\\"', s)), '"')
 }
 
 write_json <- function(obj, path) {
