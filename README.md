@@ -13,7 +13,7 @@
 [![Julia](https://img.shields.io/badge/Julia-1.9%2B-9558B2?logo=julia&logoColor=white)](https://julialang.org/)
 [![CI Julia](https://github.com/Arnime/grasp_ils_vnd_pr/actions/workflows/ci-julia.yml/badge.svg)](https://github.com/Arnime/grasp_ils_vnd_pr/actions/workflows/ci-julia.yml)
 [![Codecov (julia)](https://codecov.io/gh/Arnime/grasp_ils_vnd_pr/graph/badge.svg?flag=julia)](https://codecov.io/gh/Arnime/grasp_ils_vnd_pr/flags/julia)
-[![JuliaFormatter](https://img.shields.io/badge/Formatter-JuliaFormatter-9558B2?logo=julia&logoColor=white)](https://github.com/domluna/JuliaFormatter.jl)
+[![JuliaFormatter](https://img.shields.io/badge/Formatter-JuliaFormatter.jl-9558B2?logo=julia&logoColor=white)](https://github.com/domluna/JuliaFormatter.jl)
 [![JET](https://img.shields.io/badge/Type--Checked-JET.jl-9558B2?logo=julia&logoColor=white)](https://github.com/aviatesk/JET.jl)
 [![Aqua](https://img.shields.io/badge/Quality-Aqua.jl-9558B2?logo=julia&logoColor=white)](https://github.com/JuliaTesting/Aqua.jl)
 
@@ -34,6 +34,14 @@
 [![clang-format](https://img.shields.io/badge/Formatter-clang--format-blue?logo=llvm&logoColor=white)](https://clang.llvm.org/docs/ClangFormat.html)
 [![clang-tidy](https://img.shields.io/badge/Linter-clang--tidy-blue?logo=llvm&logoColor=white)](https://clang.llvm.org/extra/clang-tidy/)
 
+**R** &nbsp;
+[![R package: givp v1.0.0](https://img.shields.io/badge/R%20Package-givp%20v1.0.0-276DC3?logo=r&logoColor=white)](r/)
+[![R](https://img.shields.io/badge/R-4.1%2B-276DC3?logo=r&logoColor=white)](https://www.r-project.org/)
+[![CI R](https://github.com/Arnime/grasp_ils_vnd_pr/actions/workflows/ci-r.yml/badge.svg)](https://github.com/Arnime/grasp_ils_vnd_pr/actions/workflows/ci-r.yml)
+[![Codecov (r)](https://codecov.io/gh/Arnime/grasp_ils_vnd_pr/graph/badge.svg?flag=r)](https://codecov.io/gh/Arnime/grasp_ils_vnd_pr/flags/r)
+[![lintr](https://img.shields.io/badge/Linter-lintr-276DC3?logo=r&logoColor=white)](https://lintr.r-lib.org/)
+[![testthat](https://img.shields.io/badge/Tests-testthat-276DC3?logo=r&logoColor=white)](https://testthat.r-lib.org/)
+
 **Project** &nbsp;
 [![OpenSSF Scorecard](https://img.shields.io/ossf-scorecard/github.com/Arnime/grasp_ils_vnd_pr?cacheSeconds=300&logo=openssf&logoColor=white)](https://securityscorecards.dev/viewer/?uri=github.com/Arnime/grasp_ils_vnd_pr)
 [![CI SonarQube](https://github.com/Arnime/grasp_ils_vnd_pr/actions/workflows/ci-sonarqube.yml/badge.svg)](https://github.com/Arnime/grasp_ils_vnd_pr/actions/workflows/ci-sonarqube.yml)
@@ -50,7 +58,7 @@ mixed** black-box problems, available in five languages:
 | **Julia** | [JuliaHub `GIVPOptimizer`](https://juliahub.com/ui/Packages/General/GIVPOptimizer) | Julia 1.9+ |
 | **Rust** | [crates.io `givp`](https://crates.io/crates/givp) | Rust 1.85+ |
 | **C++17** | Header-only (vcpkg / FetchContent / copy) | C++17 compiler, CMake 3.21+ |
-| **R** | Local package (`r/`) | R 4.1+ |
+| **R** | r-universe / GitHub / local source (`r/`) | R 4.1+ |
 
 The library bundles:
 
@@ -86,6 +94,7 @@ workflow runs in addition (CI SonarQube).
     - [Julia installation](#julia-installation)
     - [Rust installation](#rust-installation)
     - [C++ installation](#c-installation)
+    - [R installation](#r-installation)
   - [Python](#python)
     - [Quick start](#quick-start)
     - [Choosing the optimization sense](#choosing-the-optimization-sense)
@@ -119,6 +128,11 @@ workflow runs in addition (CI SonarQube).
     - [C++ quick start](#c-quick-start)
     - [C++ configuration](#c-configuration)
     - [Running tests and benchmarks](#running-tests-and-benchmarks)
+  - [R](#r)
+    - [R quick start](#r-quick-start)
+    - [R bounds and integer variables](#r-bounds-and-integer-variables)
+    - [R configuration cookbook](#r-configuration-cookbook)
+    - [Running R tests and lint](#running-r-tests-and-lint)
   - [Comparison with other optimizers](#comparison-with-other-optimizers)
   - [Empirical results](#empirical-results)
     - [Sphere — $f(\\mathbf{x}) = \\sum x\_i^2$, global minimum 0 at **0**](#sphere--fmathbfx--sum-x_i2-global-minimum-0-at-0)
@@ -227,6 +241,52 @@ include path. No external dependencies are required at runtime.
 
 Requires a C++17 compiler (GCC 9+, Clang 10+, MSVC 2019+) and CMake 3.21+
 (for the `FetchContent` approach).
+
+Dependency-manager style alternatives:
+
+- **vcpkg manifest mode** (recommended for application repos):
+
+```json
+{
+  "dependencies": [
+    "givp"
+  ]
+}
+```
+
+- **FetchContent/CPM-style git dependency** (no local copy required):
+  use the `FetchContent` snippet above pinning `GIT_TAG`.
+
+### R installation
+
+Install from **r-universe** (binary/source, no local clone):
+
+```r
+install.packages(
+  "givp",
+  repos = c("https://arnime.r-universe.dev", "https://cloud.r-project.org")
+)
+```
+
+Template files for the `Arnime.r-universe.dev` repository are available in
+`docs/r-universe/`.
+
+Install directly from GitHub:
+
+```r
+install.packages("remotes")
+remotes::install_github("Arnime/grasp_ils_vnd_pr", subdir = "r")
+```
+
+From source:
+
+```bash
+git clone https://github.com/Arnime/grasp_ils_vnd_pr.git
+cd grasp_ils_vnd_pr
+R CMD INSTALL r
+```
+
+Requires R 4.1+.
 
 ---
 
@@ -797,6 +857,80 @@ cmake --build build_bench
 
 ---
 
+## R
+
+The R port mirrors the same algorithm and public API shape as the other
+languages, with an idiomatic R interface.
+
+### R quick start
+
+```r
+library(givp)
+
+sphere <- function(x) sum(x^2)
+bounds <- replicate(10, c(-5, 5), simplify = FALSE)
+
+result <- givp(sphere, bounds)
+print(result$fun)
+print(result$nfev)
+print(result$nit)
+```
+
+Maximization:
+
+```r
+result <- givp(my_score, bounds, direction = "maximize")
+```
+
+### R bounds and integer variables
+
+You can pass bounds either as:
+
+- list of pairs, e.g. `list(c(-5, 5), c(0, 10), c(-1, 1))`
+- two-column numeric matrix
+
+For mixed continuous/integer problems, set `integer_split` in config:
+
+```r
+cfg <- givp_config(integer_split = 8)
+result <- givp(my_obj, bounds, config = cfg)
+```
+
+### R configuration cookbook
+
+```r
+# Fast triage
+cfg_fast <- givp_config(
+  max_iterations = 20,
+  vnd_iterations = 50,
+  ils_iterations = 5,
+  use_elite_pool = FALSE,
+  use_convergence_monitor = FALSE
+)
+
+# Quality run with wall-clock budget
+cfg_quality <- givp_config(
+  max_iterations = 200,
+  vnd_iterations = 300,
+  ils_iterations = 15,
+  elite_size = 10,
+  path_relink_frequency = 5,
+  adaptive_alpha = TRUE,
+  alpha_min = 0.05,
+  alpha_max = 0.20,
+  time_limit = 600
+)
+```
+
+### Running R tests and lint
+
+```bash
+Rscript -e "library(testthat); testthat::test_dir('r/tests/testthat')"
+Rscript -e "lintr::lint_package('r')"
+```
+
+---
+
 ## Comparison with other optimizers
 
 | Library                                  | Sense convention                  | Discrete vars?  | Built-in cache | Built-in time budget | Language          |
@@ -808,6 +942,7 @@ cmake --build build_bench
 | `pygad`                                  | Always maximize                   | Yes             | No             | No                   | Python            |
 | **`givp`** (Python / Julia / Rust)       | Explicit (`minimize`/`direction`) | Yes (mixed)     | LRU cache      | Yes (`time_limit`)   | Python+Julia+Rust |
 | **`givp`** (C++)                         | Explicit (`Direction` enum)       | Yes (mixed)     | LRU cache      | Yes (`time_limit`)   | C++17             |
+| **`givp`** (R)                           | Explicit (`direction`)            | Yes (mixed)     | LRU cache      | Yes (`time_limit`)   | R                 |
 
 ---
 

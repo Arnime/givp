@@ -26,6 +26,10 @@ flags:
     paths:
       - cpp/include/
     carryforward: true
+  r:
+    paths:
+      - r/R/
+    carryforward: true
 
 comment:
   layout: "reach,diff,flags,files"

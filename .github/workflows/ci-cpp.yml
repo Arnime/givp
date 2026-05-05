@@ -78,7 +78,9 @@ jobs:
       - name: Run clang-tidy
         run: |
           find cpp/tests cpp/benchmarks -type f -name '*.cpp' -print0 \
-            | xargs -0 -r -n 1 clang-tidy-18 -p build_tidy --warnings-as-errors='*'
+            | xargs -0 -r -n 1 clang-tidy-18 -p build_tidy \
+                --header-filter='cpp/include/.*' \
+                --warnings-as-errors='*'
 
   test:
     needs: setup
