@@ -70,8 +70,8 @@ jobs:
               if: steps.preflight.outputs.enabled == 'true'
               run: |
                   pip install --require-hashes -r python/requirements/ci.txt
-                  sh .github/scripts/install-package.sh
-                  pytest --cov=givp --cov-report=xml:coverage-python.xml
+                  sh .github/scripts/install-package-editable.sh
+                  pytest --cov=givp --cov-report=xml:coverage-python.xml python/tests/
 
             - name: Set up Rust toolchain
               if: steps.preflight.outputs.enabled == 'true'
