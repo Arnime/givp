@@ -60,10 +60,9 @@ static std::pair<double, bool> try_integer_moves(std::size_t idx, std::vector<do
 }
 
 template <typename F, typename RngT>
-static std::pair<double, bool> try_continuous_move(std::size_t idx,
-                                                    std::vector<double> &solution,
-                                                    double best_cost, const F &func,
-                                                    VndContext<RngT> &ctx) {
+static std::pair<double, bool> try_continuous_move(std::size_t idx, std::vector<double> &solution,
+                                                   double best_cost, const F &func,
+                                                   VndContext<RngT> &ctx) {
 
     double span = ctx.upper[idx] - ctx.lower[idx];
     double delta = ctx.rng.uniform(-0.05, 0.05) * span;
@@ -77,8 +76,8 @@ static std::pair<double, bool> try_continuous_move(std::size_t idx,
 }
 
 template <typename RngT>
-static void perturb_index(std::vector<double> &solution, std::size_t idx,
-                          PerturbStrength strength, VndContext<RngT> &ctx) {
+static void perturb_index(std::vector<double> &solution, std::size_t idx, PerturbStrength strength,
+                          VndContext<RngT> &ctx) {
 
     if (idx >= ctx.half) {
         double step = std::max(static_cast<double>(strength.value) / 2.0, 1.0);
@@ -96,8 +95,7 @@ static void perturb_index(std::vector<double> &solution, std::size_t idx,
 
 template <typename F, typename RngT>
 static std::pair<double, bool> neighborhood_flip(std::vector<double> &solution, double best_cost,
-                                                 const F &func,
-                                                 std::vector<double> &sensitivity,
+                                                 const F &func, std::vector<double> &sensitivity,
                                                  VndContext<RngT> &ctx) {
 
     std::size_t n = solution.size();

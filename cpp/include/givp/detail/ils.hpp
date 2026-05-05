@@ -87,10 +87,9 @@ double ils_search(const F &func, std::vector<double> &solution, double current_c
         auto candidate = perturb_solution(best_sol, ctx.half, PerturbStrength{effective_strength},
                                           ctx.lower, ctx.upper, ctx.rng);
         double perturbed_cost = evaluate_with_cache(candidate, func, ctx.cache, ctx.half);
-        VndContext<RngT> vnd_ctx{ctx.lower, ctx.upper, ctx.cache, ctx.half, ctx.rng,
-                                 ctx.deadline};
-        double vnd_cost = local_search_vnd(func, candidate, perturbed_cost, ctx.vnd_iterations,
-                                           vnd_ctx);
+        VndContext<RngT> vnd_ctx{ctx.lower, ctx.upper, ctx.cache, ctx.half, ctx.rng, ctx.deadline};
+        double vnd_cost =
+            local_search_vnd(func, candidate, perturbed_cost, ctx.vnd_iterations, vnd_ctx);
 
         if (vnd_cost < best_cost) {
             best_cost = vnd_cost;
