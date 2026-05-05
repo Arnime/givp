@@ -227,6 +227,40 @@ inline bool should_run_path_relinking(const GivpConfig &config, std::size_t iter
            (iteration % config.path_relink_frequency == 0) && elite_pool.len() >= 2;
 }
 
+inline Deadline compute_deadline(double time_limit) {
+    if (time_limit <= 0.0)
+        return Deadline{};
+
+    return std::chrono::steady_clock::now() +
+           std::chrono::duration_cast<std::chrono::steady_clock::duration>(
+               std::chrono::duration<double>(time_limit));
+}
+
+inline const std::vector<double> *
+iteration_initial_guess(std::size_t iteration,
+                        const std::optional<std::vector<double>> &initial_guess) {
+    if (iteration == 0 && initial_guess)
+        return &(*initial_guess);
+    return nullptr;
+}
+
+inline void update_best_and_stagnation(double candidate_cost, const std::vector<double> &candidate,
+                                       double &best_cost, std::vector<double> &best_solution,
+                                       std::size_t &stagnation) {
+    if (candidate_cost < best_cost) {
+        best_cost = candidate_cost;
+        best_solution = candidate;
+        stagnation = 0;
+        return;
+    }
+    ++stagnation;
+}
+
+inline bool reached_early_stop(const std::optional<std::size_t> &no_improve_count,
+                               std::size_t early_stop_threshold) {
+    return no_improve_count.has_value() && *no_improve_count >= early_stop_threshold;
+}
+
 template <typename F>
 static void apply_stagnation_restart(const CoreIterationContext<F> &ctx,
                                      std::optional<EvaluationCache> &cache, Rng &rng,
@@ -299,11 +333,7 @@ OptimizeResult run(F &&func, const std::vector<std::pair<double, double>> &bound
     if (config.use_convergence_monitor)
         conv_monitor.emplace(20, 50);
 
-    Deadline deadline;
-    if (config.time_limit > 0.0)
-        deadline = std::chrono::steady_clock::now() +
-                   std::chrono::duration_cast<std::chrono::steady_clock::duration>(
-                       std::chrono::duration<double>(config.time_limit));
+    Deadline deadline = compute_deadline(config.time_limit);
 
     // ── Initialise best solution ─────────────────────────────────────────────
     const ProblemShape shape{num_vars, half};
@@ -331,8 +361,7 @@ OptimizeResult run(F &&func, const std::vector<std::pair<double, double>> &bound
                                                              config.adaptive_alpha, config.alpha});
         const auto iter_ctx = CoreIterationContext<decltype(wrapped)>{core_ctx, alpha};
 
-        const std::vector<double> *ig =
-            (iteration == 0 && config.initial_guess) ? &(*config.initial_guess) : nullptr;
+        const std::vector<double> *ig = iteration_initial_guess(iteration, config.initial_guess);
 
         CandidateCost iteration_result = (config.n_workers <= 1)
                                              ? run_single_worker_iteration(iter_ctx, ig, cache, rng)
@@ -341,14 +370,7 @@ OptimizeResult run(F &&func, const std::vector<std::pair<double, double>> &bound
         std::vector<double> candidate = std::move(iteration_result.candidate);
         double ils_cost = iteration_result.cost;
 
-        // Update best
-        if (ils_cost < best_cost) {
-            best_cost = ils_cost;
-            best_solution = candidate;
-            stagnation = 0;
-        } else {
-            ++stagnation;
-        }
+        update_best_and_stagnation(ils_cost, candidate, best_cost, best_solution, stagnation);
 
         if (config.use_elite_pool)
             elite_pool.add(candidate, ils_cost);
@@ -368,7 +390,7 @@ OptimizeResult run(F &&func, const std::vector<std::pair<double, double>> &bound
         apply_stagnation_restart(iter_ctx, cache, rng, stagnation, best_solution, best_cost);
 
         // Early stop — reuse the same convergence signal from this iteration.
-        if (no_improve_count.has_value() && *no_improve_count >= config.early_stop_threshold) {
+        if (reached_early_stop(no_improve_count, config.early_stop_threshold)) {
             message = "early stop due to stagnation";
             break;
         }
