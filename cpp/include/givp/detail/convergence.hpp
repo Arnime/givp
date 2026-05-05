@@ -56,9 +56,9 @@ class ConvergenceMonitor {
     }
 
   public:
-        ConvergenceMonitor(ConvergenceWindowSize window_size,
-                                             ConvergenceRestartThreshold restart_threshold)
-                : window_size_(window_size.value), restart_threshold_(restart_threshold.value) {}
+    ConvergenceMonitor(ConvergenceWindowSize window_size,
+                       ConvergenceRestartThreshold restart_threshold)
+        : window_size_(window_size.value), restart_threshold_(restart_threshold.value) {}
 
     ConvergenceSignal update(double current_cost, const ElitePool *elite_pool = nullptr) {
         if (current_cost < best_ever_) {

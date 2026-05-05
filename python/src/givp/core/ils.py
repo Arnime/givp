@@ -15,6 +15,7 @@ import numpy as np
 
 from givp.core.cache import EvaluationCache
 from givp.core.helpers import (
+    _CoreConfigProto,
     _expired,
     _new_rng,
 )
@@ -66,7 +67,7 @@ def ils_search(
     current_cost: float,
     num_vars: int,
     cost_fn: Callable,
-    config,
+    config: _CoreConfigProto,
     lower_arr: np.ndarray | None = None,
     upper_arr: np.ndarray | None = None,
     cache: EvaluationCache | None = None,

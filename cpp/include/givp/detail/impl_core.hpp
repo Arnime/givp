@@ -77,8 +77,7 @@ struct PathRelinkingContext {
     const Deadline &deadline;
 };
 
-template <typename F>
-static void do_path_relinking(const F &func, PathRelinkingContext &ctx) {
+template <typename F> static void do_path_relinking(const F &func, PathRelinkingContext &ctx) {
 
     const auto &all = ctx.elite_pool.get_all();
     std::size_t max_pairs = std::min(std::size_t{3}, all.size());
@@ -88,14 +87,12 @@ static void do_path_relinking(const F &func, PathRelinkingContext &ctx) {
             if (expired(ctx.deadline))
                 return;
 
-            auto [pr_sol, pr_cost] = bidirectional_path_relinking(func, all[i].first, all[j].first,
-                                                                  ctx.half, ctx.cache, ctx.rng,
-                                                                  ctx.deadline);
-            VndContext<Rng> vnd_ctx{ctx.lower, ctx.upper, ctx.cache, ctx.half, ctx.rng,
-                                    ctx.deadline};
-            double refined_cost =
-                local_search_vnd(func, pr_sol, pr_cost,
-                                 VndMaxIterations{ctx.vnd_iterations / 2}, vnd_ctx);
+            auto [pr_sol, pr_cost] = bidirectional_path_relinking(
+                func, all[i].first, all[j].first, ctx.half, ctx.cache, ctx.rng, ctx.deadline);
+            VndContext<Rng> vnd_ctx{ctx.lower, ctx.upper, ctx.cache,
+                                    ctx.half,  ctx.rng,   ctx.deadline};
+            double refined_cost = local_search_vnd(
+                func, pr_sol, pr_cost, VndMaxIterations{ctx.vnd_iterations / 2}, vnd_ctx);
 
             if (refined_cost < ctx.best_cost) {
                 ctx.best_cost = refined_cost;
@@ -399,9 +396,9 @@ OptimizeResult run(F &&func, const std::vector<std::pair<double, double>> &bound
         // Path relinking
         if (should_run_path_relinking(config, iteration, elite_pool)) {
             auto child = rng.child();
-            PathRelinkingContext pr_ctx{elite_pool,   best_solution, best_cost, half,
-                                        lower,        upper,         config.vnd_iterations,
-                                        cache,        child,         deadline};
+            PathRelinkingContext pr_ctx{
+                elite_pool, best_solution,         best_cost, half,  lower,
+                upper,      config.vnd_iterations, cache,     child, deadline};
             do_path_relinking(wrapped, pr_ctx);
         }
 

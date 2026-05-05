@@ -16,7 +16,6 @@ without changes.
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Protocol
 
 import numpy as np
 
@@ -25,6 +24,7 @@ from givp.core.convergence import ConvergenceMonitor
 from givp.core.elite import ElitePool
 from givp.core.grasp import construct_grasp, get_current_alpha
 from givp.core.helpers import (
+    _CoreConfigProto,
     _ensure_verbose_handler,
     _expired,
     _get_half,
@@ -38,36 +38,6 @@ from givp.core.ils import ils_search
 from givp.core.pr import bidirectional_path_relinking
 from givp.core.vnd import _create_cached_cost_fn, local_search_vnd
 from givp.exceptions import InvalidBoundsError
-
-
-class _CoreConfigProto(Protocol):
-    """Structural protocol satisfied by ``givp.config.GIVPConfig`` and any
-    compatible config object passed to core functions.
-
-    Core functions accept any object with these attributes, so ``GIVPConfig``
-    can be passed directly without copying field values into a separate class.
-    """
-
-    max_iterations: int
-    alpha: float
-    vnd_iterations: int
-    ils_iterations: int
-    perturbation_strength: int
-    use_elite_pool: bool
-    elite_size: int
-    path_relink_frequency: int
-    adaptive_alpha: bool
-    alpha_min: float
-    alpha_max: float
-    num_candidates_per_step: int
-    use_cache: bool
-    cache_size: int
-    early_stop_threshold: int
-    use_convergence_monitor: bool
-    n_workers: int
-    time_limit: float
-    integer_split: int | None
-    group_size: int | None
 
 
 def _safe_iteration_callback(

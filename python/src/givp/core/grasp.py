@@ -21,6 +21,7 @@ import numpy as np
 from givp.core.cache import EvaluationCache
 from givp.core.helpers import (
     EvaluatorFn,
+    _CoreConfigProto,
     _get_half,
     _new_rng,
     _safe_evaluate,
@@ -444,7 +445,7 @@ def construct_grasp(
     num_candidates_per_step: int | None = None,
     cache: EvaluationCache | None = None,
     n_workers: int = 1,
-):
+) -> np.ndarray:
     """Build an initial solution via randomised Latin-style sampling and RCL selection.
 
     Generates ``num_candidates_per_step`` random solutions within the bounds,
@@ -525,7 +526,7 @@ def construct_grasp(
 # ---------------------------------------------------------------------------
 
 
-def get_current_alpha(iteration: int, config) -> float:
+def get_current_alpha(iteration: int, config: _CoreConfigProto) -> float:
     """Return the adaptive alpha value based on iteration progress."""
     if config.adaptive_alpha:
         progress = iteration / max(1, config.max_iterations - 1)

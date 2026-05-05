@@ -28,9 +28,8 @@ struct PrTarget {
 template <typename F>
 static std::pair<std::vector<double>, double>
 path_relinking_best(const F &func, PrSource source, PrTarget target,
-                    std::vector<std::size_t> diff_indices,
-                    std::optional<EvaluationCache> &cache, std::size_t half,
-                    const Deadline &deadline) {
+                    std::vector<std::size_t> diff_indices, std::optional<EvaluationCache> &cache,
+                    std::size_t half, const Deadline &deadline) {
 
     std::vector<double> current = source.value;
     std::vector<double> best = current;
@@ -100,12 +99,10 @@ std::pair<std::vector<double>, double> bidirectional_path_relinking(
         std::swap(diff_indices[i], diff_indices[j]);
     }
 
-    auto [best_fwd, cost_fwd] =
-        path_relinking_best(func, PrSource{sol1}, PrTarget{sol2}, diff_indices, cache, half,
-                            deadline);
-    auto [best_bwd, cost_bwd] =
-        path_relinking_best(func, PrSource{sol2}, PrTarget{sol1}, diff_indices, cache, half,
-                            deadline);
+    auto [best_fwd, cost_fwd] = path_relinking_best(func, PrSource{sol1}, PrTarget{sol2},
+                                                    diff_indices, cache, half, deadline);
+    auto [best_bwd, cost_bwd] = path_relinking_best(func, PrSource{sol2}, PrTarget{sol1},
+                                                    diff_indices, cache, half, deadline);
 
     return (cost_fwd <= cost_bwd) ? std::make_pair(std::move(best_fwd), cost_fwd)
                                   : std::make_pair(std::move(best_bwd), cost_bwd);

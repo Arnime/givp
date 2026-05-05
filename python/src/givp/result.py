@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, TypedDict
@@ -87,7 +88,7 @@ class OptimizeResult:
     direction: str = "minimize"
     meta: AlgorithmMeta = field(default_factory=_empty_meta)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Any]:
         # Allows tuple unpacking ``x, fun = result`` for compatibility with
         # callers expecting the legacy ``(solution, value)`` 2-tuple.
         yield self.x

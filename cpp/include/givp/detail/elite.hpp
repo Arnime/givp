@@ -36,8 +36,7 @@ class ElitePool {
 
   public:
     ElitePool(ElitePoolMaxSize max_size, ElitePoolMinDistance min_distance,
-              const std::vector<double> &lower,
-              const std::vector<double> &upper)
+              const std::vector<double> &lower, const std::vector<double> &upper)
         : max_size_(max_size.value), min_distance_(min_distance.value) {
         range_.resize(lower.size());
         for (std::size_t i = 0; i < lower.size(); ++i)

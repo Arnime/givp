@@ -85,6 +85,6 @@ class ElitePool:
         """Return the current size of the pool."""
         return len(self.pool)
 
-    def clear(self):
+    def clear(self) -> None:
         """Clear the pool."""
         self.pool.clear()

@@ -24,7 +24,10 @@ permissions:
   contents: read
 
 jobs:
+
+  # ─── 1. Cross-platform unit tests (3 OS × 3 R versions = 9 runs) ──────────
   test:
+    name: Test (${{ matrix.os }} / R ${{ matrix.r-version }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -41,11 +44,13 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
+            cmake \
             libcurl4-openssl-dev \
             libssl-dev \
             libxml2-dev \
             libgit2-dev \
-            libuv1-dev
+            libuv1-dev \
+            pandoc
 
       - uses: r-lib/actions/setup-r@a51a8012b0aab7c32ef9d19bf54da93f3254335e # v2
         with:
@@ -55,7 +60,8 @@ jobs:
       - uses: r-lib/actions/setup-r-dependencies@a51a8012b0aab7c32ef9d19bf54da93f3254335e # v2
         with:
           working-directory: r
-          extra-packages: any::covr, any::lintr, any::lazyeval
+          extra-packages: any::lazyeval
+          cache: true
 
       - name: Install package
         shell: bash
@@ -65,16 +71,211 @@ jobs:
         shell: bash
         run: Rscript -e "library(testthat); testthat::test_dir('r/tests/testthat')"
 
+  # ─── 2. Lint gate — ubuntu/release only, single run ──────────────────────
+  lint:
+    name: Lint (R)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Install system dependencies
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake \
+            libcurl4-openssl-dev \
+            libssl-dev \
+            libxml2-dev \
+            libgit2-dev \
+            libuv1-dev \
+            pandoc
+
+      - uses: r-lib/actions/setup-r@a51a8012b0aab7c32ef9d19bf54da93f3254335e # v2
+        with:
+          r-version: release
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@a51a8012b0aab7c32ef9d19bf54da93f3254335e # v2
+        with:
+          working-directory: r
+          extra-packages: any::lintr, any::lazyeval
+          cache: true
+
+      - name: Install package
+        shell: bash
+        run: R CMD INSTALL r
+
       - name: Run lintr
         shell: bash
         run: |
-          Rscript -e "lints <- lintr::lint_package('r'); n <- length(lints); cat(sprintf('lintr found %d lint(s)\n', n)); if (n > 0) stop(sprintf('lintr quality gate failed: %d lint(s) found', n))"
+          Rscript -e "
+            lints <- lintr::lint_package('r')
+            n     <- length(lints)
+            cat(sprintf('lintr found %d lint(s)\n', n))
+            if (n > 0) stop(sprintf('lintr quality gate failed: %d lint(s) found', n))
+          "
 
-      - name: Check coverage gate (>=90%)
+  # ─── 3. Coverage gate — ubuntu/release only, single run ──────────────────
+  coverage:
+    name: Coverage (R >= 90%)
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Install system dependencies
         shell: bash
         run: |
-          Rscript -e "cov <- covr::package_coverage(path='r'); pct <- covr::percent_coverage(cov); cat(sprintf('R coverage: %.1f%%\\n', pct)); if (pct < 90) stop(sprintf('Coverage below 90%% threshold (got %.1f%%)', pct))"
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake \
+            libcurl4-openssl-dev \
+            libssl-dev \
+            libxml2-dev \
+            libgit2-dev \
+            libuv1-dev \
+            pandoc
+
+      - uses: r-lib/actions/setup-r@a51a8012b0aab7c32ef9d19bf54da93f3254335e # v2
+        with:
+          r-version: release
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@a51a8012b0aab7c32ef9d19bf54da93f3254335e # v2
+        with:
+          working-directory: r
+          extra-packages: any::covr, any::lazyeval
+          cache: true
+
+      - name: Install package
+        shell: bash
+        run: R CMD INSTALL r
+
+      - name: Check coverage gate (>= 90%)
+        shell: bash
+        run: |
+          Rscript -e "
+            cov <- covr::package_coverage(path = 'r')
+            pct <- covr::percent_coverage(cov)
+            cat(sprintf('R coverage: %.1f%%\n', pct))
+            if (pct < 90) stop(sprintf('Coverage below 90%% threshold (got %.1f%%)', pct))
+          "
+
+  # ─── 4. Build check — gates on all three quality jobs ────────────────────
+  build:
+    name: Build (R)
+    runs-on: ubuntu-latest
+    needs: [test, lint, coverage]
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Install system dependencies
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake \
+            libcurl4-openssl-dev \
+            libssl-dev \
+            libxml2-dev \
+            libgit2-dev \
+            libuv1-dev \
+            pandoc
+
+      - uses: r-lib/actions/setup-r@a51a8012b0aab7c32ef9d19bf54da93f3254335e # v2
+        with:
+          r-version: release
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@a51a8012b0aab7c32ef9d19bf54da93f3254335e # v2
+        with:
+          working-directory: r
+          extra-packages: any::lazyeval
+          cache: true
 
       - name: Build package
         shell: bash
         run: R CMD build r
+
+  # ─── 5. Fuzz driver — informational, does not block merge ────────────────
+  fuzz:
+    name: Fuzz (R)
+    runs-on: ubuntu-latest
+    needs: build
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Install system dependencies
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake \
+            libcurl4-openssl-dev \
+            libssl-dev \
+            libxml2-dev \
+            libgit2-dev \
+            libuv1-dev \
+            pandoc
+
+      - uses: r-lib/actions/setup-r@a51a8012b0aab7c32ef9d19bf54da93f3254335e # v2
+        with:
+          r-version: release
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@a51a8012b0aab7c32ef9d19bf54da93f3254335e # v2
+        with:
+          working-directory: r
+          extra-packages: any::lazyeval
+          cache: true
+
+      - name: Install package
+        shell: bash
+        run: R CMD INSTALL r
+
+      - name: Run fuzz driver
+        shell: bash
+        run: Rscript r/fuzz/fuzz_givp.R --n-trials 50 --seed 42
+
+  # ─── 6. Benchmark smoke — informational, does not block merge ────────────
+  benchmark-smoke:
+    name: Benchmark smoke (R)
+    runs-on: ubuntu-latest
+    needs: build
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Install system dependencies
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake \
+            libcurl4-openssl-dev \
+            libssl-dev \
+            libxml2-dev \
+            libgit2-dev \
+            libuv1-dev \
+            pandoc
+
+      - uses: r-lib/actions/setup-r@a51a8012b0aab7c32ef9d19bf54da93f3254335e # v2
+        with:
+          r-version: release
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@a51a8012b0aab7c32ef9d19bf54da93f3254335e # v2
+        with:
+          working-directory: r
+          extra-packages: any::lazyeval
+          cache: true
+
+      - name: Install package
+        shell: bash
+        run: R CMD INSTALL r
+
+      - name: Run literature comparison smoke test
+        shell: bash
+        run: Rscript r/benchmarks/run_literature_comparison.R --n-runs 2 --dims 3 --verbose
