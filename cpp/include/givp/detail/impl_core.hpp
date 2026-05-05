@@ -80,10 +80,9 @@ do_path_relinking(const F &func, const ElitePool &elite_pool, std::vector<double
 
             auto [pr_sol, pr_cost] = bidirectional_path_relinking(func, all[i].first, all[j].first,
                                                                   half, cache, rng, deadline);
-
-            double refined_cost =
-                local_search_vnd(func, pr_sol, pr_cost, lower, upper, half,
-                                 VndMaxIterations{vnd_iterations / 2}, cache, rng, deadline);
+            VndContext<Rng> vnd_ctx{lower, upper, cache, half, rng, deadline};
+            double refined_cost = local_search_vnd(func, pr_sol, pr_cost,
+                                                   VndMaxIterations{vnd_iterations / 2}, vnd_ctx);
 
             if (refined_cost < best_cost) {
                 best_cost = refined_cost;
@@ -131,32 +130,37 @@ initialize_best_solution(const CoreContext<F> &ctx, std::optional<EvaluationCach
     auto child = rng.child();
     const GraspConstructParams init_params{nullptr, ctx.config.alpha, ctx.shape.half,
                                            ctx.config.num_candidates_per_step};
-    return construct_grasp(ctx.shape.num_vars, ctx.lower, ctx.upper, ctx.wrapped, init_params,
-                           cache, child, ctx.deadline);
+    const GraspRunContext grasp_ctx{ctx.shape.num_vars, ctx.lower, ctx.upper, cache, ctx.deadline};
+    return construct_grasp(ctx.wrapped, init_params, grasp_ctx, child);
 }
 
 template <typename F>
 static CandidateCost run_single_worker_iteration(const CoreIterationContext<F> &ctx,
                                                  const std::vector<double> *initial_guess_ptr,
-                                                 std::optional<EvaluationCache> &cache, Rng &rng,
-                                                 const Deadline &deadline) {
+                                                 std::optional<EvaluationCache> &cache, Rng &rng) {
     const GraspConstructParams grasp_params{initial_guess_ptr, ctx.alpha, ctx.base.shape.half,
                                             ctx.base.config.num_candidates_per_step};
-    auto grasp_result = construct_grasp(ctx.base.shape.num_vars, ctx.base.lower, ctx.base.upper,
-                                        ctx.base.wrapped, grasp_params, cache, rng, deadline);
+    const GraspRunContext grasp_ctx{ctx.base.shape.num_vars, ctx.base.lower, ctx.base.upper, cache,
+                                    ctx.base.deadline};
+    auto grasp_result = construct_grasp(ctx.base.wrapped, grasp_params, grasp_ctx, rng);
     std::vector<double> candidate = std::move(grasp_result.first);
 
     double grasp_eval =
         evaluate_with_cache(candidate, ctx.base.wrapped, cache, ctx.base.shape.half);
-    double vnd_cost =
-        local_search_vnd(ctx.base.wrapped, candidate, grasp_eval, ctx.base.lower, ctx.base.upper,
-                         ctx.base.shape.half, VndMaxIterations{ctx.base.config.vnd_iterations},
-                         cache, rng, deadline);
-    double ils_cost =
-        ils_search(ctx.base.wrapped, candidate, vnd_cost, ctx.base.lower, ctx.base.upper,
-                   ctx.base.shape.half, IlsIterations{ctx.base.config.ils_iterations},
-                   VndMaxIterations{ctx.base.config.vnd_iterations},
-                   PerturbStrength{ctx.base.config.perturbation_strength}, cache, rng, deadline);
+    VndContext<Rng> vnd_ctx{ctx.base.lower, ctx.base.upper, cache, ctx.base.shape.half, rng,
+                            ctx.base.deadline};
+    double vnd_cost = local_search_vnd(ctx.base.wrapped, candidate, grasp_eval,
+                                       VndMaxIterations{ctx.base.config.vnd_iterations}, vnd_ctx);
+    IlsRunContext<Rng> ils_ctx{ctx.base.lower,
+                               ctx.base.upper,
+                               ctx.base.shape.half,
+                               IlsIterations{ctx.base.config.ils_iterations},
+                               VndMaxIterations{ctx.base.config.vnd_iterations},
+                               PerturbStrength{ctx.base.config.perturbation_strength},
+                               cache,
+                               rng,
+                               ctx.base.deadline};
+    double ils_cost = ils_search(ctx.base.wrapped, candidate, vnd_cost, ils_ctx);
     return {std::move(candidate), ils_cost};
 }
 
@@ -172,43 +176,16 @@ static CandidateCost run_multi_worker_iteration(const CoreIterationContext<F> &c
     std::vector<std::future<WorkerResult>> futures;
     futures.reserve(ctx.base.config.n_workers);
 
-    const F &wrapped = ctx.base.wrapped;
-    const GivpConfig &config = ctx.base.config;
-    const ProblemShape &shape = ctx.base.shape;
-    const std::vector<double> &lower = ctx.base.lower;
-    const std::vector<double> &upper = ctx.base.upper;
-    const Deadline &deadline = ctx.base.deadline;
-    const double alpha = ctx.alpha;
-
     for (std::size_t worker = 0; worker < ctx.base.config.n_workers; ++worker) {
         auto worker_rng = rng.child();
         const std::vector<double> *worker_ig = (worker == 0) ? initial_guess_ptr : nullptr;
 
         futures.push_back(std::async(
-            std::launch::async,
-            [&wrapped, &config, &lower, &upper, shape, alpha, deadline, worker_rng,
-             worker_ig]() mutable -> WorkerResult {
+            std::launch::async, [&ctx, worker_rng, worker_ig]() mutable -> WorkerResult {
                 std::optional<EvaluationCache> local_cache;
-                const GraspConstructParams worker_params{worker_ig, alpha, shape.half,
-                                                         config.num_candidates_per_step};
-
-                auto grasp_result =
-                    construct_grasp(shape.num_vars, lower, upper, wrapped, worker_params,
-                                    local_cache, worker_rng, deadline);
-                std::vector<double> local_candidate = std::move(grasp_result.first);
-
-                double grasp_eval =
-                    evaluate_with_cache(local_candidate, wrapped, local_cache, shape.half);
-                double vnd_cost = local_search_vnd(
-                    wrapped, local_candidate, grasp_eval, lower, upper, shape.half,
-                    VndMaxIterations{config.vnd_iterations}, local_cache, worker_rng, deadline);
-                double local_cost = ils_search(wrapped, local_candidate, vnd_cost, lower, upper,
-                                               shape.half, IlsIterations{config.ils_iterations},
-                                               VndMaxIterations{config.vnd_iterations},
-                                               PerturbStrength{config.perturbation_strength},
-                                               local_cache, worker_rng, deadline);
-
-                return WorkerResult{std::move(local_candidate), local_cost};
+                CandidateCost worker_result =
+                    run_single_worker_iteration(ctx, worker_ig, local_cache, worker_rng);
+                return WorkerResult{std::move(worker_result.candidate), worker_result.cost};
             }));
     }
 
@@ -262,16 +239,24 @@ static void apply_stagnation_restart(const CoreIterationContext<F> &ctx,
     const GraspConstructParams restart_params{nullptr, ctx.alpha, ctx.base.shape.half,
                                               ctx.base.config.num_candidates_per_step};
     auto [rsol, rcost0] =
-        construct_grasp(ctx.base.shape.num_vars, ctx.base.lower, ctx.base.upper, ctx.base.wrapped,
-                        restart_params, cache, child, ctx.base.deadline);
-    double rcost = local_search_vnd(
-        ctx.base.wrapped, rsol, rcost0, ctx.base.lower, ctx.base.upper, ctx.base.shape.half,
-        VndMaxIterations{ctx.base.config.vnd_iterations}, cache, child, ctx.base.deadline);
-    rcost = ils_search(ctx.base.wrapped, rsol, rcost, ctx.base.lower, ctx.base.upper,
-                       ctx.base.shape.half, IlsIterations{ctx.base.config.ils_iterations},
-                       VndMaxIterations{ctx.base.config.vnd_iterations},
-                       PerturbStrength{ctx.base.config.perturbation_strength}, cache, child,
-                       ctx.base.deadline);
+        construct_grasp(ctx.base.wrapped, restart_params,
+                        GraspRunContext{ctx.base.shape.num_vars, ctx.base.lower, ctx.base.upper,
+                                        cache, ctx.base.deadline},
+                        child);
+    VndContext<Rng> vnd_ctx{ctx.base.lower, ctx.base.upper, cache, ctx.base.shape.half, child,
+                            ctx.base.deadline};
+    double rcost = local_search_vnd(ctx.base.wrapped, rsol, rcost0,
+                                    VndMaxIterations{ctx.base.config.vnd_iterations}, vnd_ctx);
+    IlsRunContext<Rng> ils_ctx{ctx.base.lower,
+                               ctx.base.upper,
+                               ctx.base.shape.half,
+                               IlsIterations{ctx.base.config.ils_iterations},
+                               VndMaxIterations{ctx.base.config.vnd_iterations},
+                               PerturbStrength{ctx.base.config.perturbation_strength},
+                               cache,
+                               child,
+                               ctx.base.deadline};
+    rcost = ils_search(ctx.base.wrapped, rsol, rcost, ils_ctx);
     if (rcost < best_cost) {
         best_cost = rcost;
         best_solution = std::move(rsol);
@@ -352,7 +337,7 @@ OptimizeResult run(F &&func, const std::vector<std::pair<double, double>> &bound
 
         CandidateCost iteration_result =
             (config.n_workers <= 1)
-                ? run_single_worker_iteration(iter_ctx, ig, cache, rng, deadline)
+                ? run_single_worker_iteration(iter_ctx, ig, cache, rng)
                 : run_multi_worker_iteration(iter_ctx, ig, rng);
 
         std::vector<double> candidate = std::move(iteration_result.candidate);

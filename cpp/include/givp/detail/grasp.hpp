@@ -114,25 +114,32 @@ struct GraspConstructParams {
     std::size_t num_candidates;
 };
 
+struct GraspRunContext {
+    std::size_t num_vars;
+    const std::vector<double> &lower;
+    const std::vector<double> &upper;
+    std::optional<EvaluationCache> &cache;
+    const Deadline &deadline;
+};
+
 // ── GRASP construction ────────────────────────────────────────────────────────
 
 template <typename F, typename RngT>
-std::pair<std::vector<double>, double>
-construct_grasp(std::size_t num_vars, const std::vector<double> &lower,
-                const std::vector<double> &upper, const F &func, const GraspConstructParams &params,
-                std::optional<EvaluationCache> &cache, RngT &rng, const Deadline &deadline) {
+std::pair<std::vector<double>, double> construct_grasp(const F &func,
+                                                       const GraspConstructParams &params,
+                                                       const GraspRunContext &ctx, RngT &rng) {
 
     std::vector<std::vector<double>> candidates;
     std::vector<double> costs;
     candidates.reserve(params.num_candidates);
     costs.reserve(params.num_candidates);
-    const CandidateBuildParams build_params{num_vars, params.half, lower, upper};
+    const CandidateBuildParams build_params{ctx.num_vars, params.half, ctx.lower, ctx.upper};
 
     // Optional initial guess as first candidate
     if (params.initial_guess) {
         auto sol = *params.initial_guess;
         normalize_integer_tail(sol, params.half);
-        double cost = evaluate_with_cache(sol, func, cache, params.half);
+        double cost = evaluate_with_cache(sol, func, ctx.cache, params.half);
         candidates.push_back(std::move(sol));
         costs.push_back(cost);
     }
@@ -141,18 +148,18 @@ construct_grasp(std::size_t num_vars, const std::vector<double> &lower,
     if (candidates.size() < params.num_candidates) {
         auto sol = build_heuristic_candidate(build_params, rng);
         normalize_integer_tail(sol, params.half);
-        double cost = evaluate_with_cache(sol, func, cache, params.half);
+        double cost = evaluate_with_cache(sol, func, ctx.cache, params.half);
         candidates.push_back(std::move(sol));
         costs.push_back(cost);
     }
 
     // Fill rest with random candidates
     while (candidates.size() < params.num_candidates) {
-        if (expired(deadline))
+        if (expired(ctx.deadline))
             break;
         auto sol = build_random_candidate(build_params, rng);
         normalize_integer_tail(sol, params.half);
-        double cost = evaluate_with_cache(sol, func, cache, params.half);
+        double cost = evaluate_with_cache(sol, func, ctx.cache, params.half);
         candidates.push_back(std::move(sol));
         costs.push_back(cost);
     }

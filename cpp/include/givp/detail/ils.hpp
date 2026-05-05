@@ -19,6 +19,18 @@ struct IlsIterations {
     std::size_t value;
 };
 
+template <typename RngT> struct IlsRunContext {
+    const std::vector<double> &lower;
+    const std::vector<double> &upper;
+    std::size_t half;
+    IlsIterations ils_iterations;
+    VndMaxIterations vnd_iterations;
+    PerturbStrength perturbation_strength;
+    std::optional<EvaluationCache> &cache;
+    RngT &rng;
+    const Deadline &deadline;
+};
+
 template <typename RngT>
 static std::vector<double>
 perturb_solution(const std::vector<double> &solution, std::size_t half, PerturbStrength strength,
@@ -55,36 +67,35 @@ perturb_solution(const std::vector<double> &solution, std::size_t half, PerturbS
 /// Iterated Local Search.
 template <typename F, typename RngT>
 double ils_search(const F &func, std::vector<double> &solution, double current_cost,
-                  const std::vector<double> &lower, const std::vector<double> &upper,
-                  std::size_t half, IlsIterations ils_iterations, VndMaxIterations vnd_iterations,
-                  PerturbStrength perturbation_strength, std::optional<EvaluationCache> &cache,
-                  RngT &rng, const Deadline &deadline) {
+                  IlsRunContext<RngT> &ctx) {
 
     double best_cost = current_cost;
     std::vector<double> best_sol = solution;
 
-    for (std::size_t i = 0; i < ils_iterations.value; ++i) {
-        if (expired(deadline))
+    for (std::size_t i = 0; i < ctx.ils_iterations.value; ++i) {
+        if (expired(ctx.deadline))
             break;
 
         // Progressive adaptive strength
         double progress = static_cast<double>(i) /
-                          static_cast<double>(std::max(ils_iterations.value, std::size_t{1}));
+                          static_cast<double>(std::max(ctx.ils_iterations.value, std::size_t{1}));
         std::size_t effective_strength =
-            std::max(perturbation_strength.value,
-                     static_cast<std::size_t>(static_cast<double>(perturbation_strength.value) *
+            std::max(ctx.perturbation_strength.value,
+                     static_cast<std::size_t>(static_cast<double>(ctx.perturbation_strength.value) *
                                               (1.0 + progress)));
 
-        auto candidate = perturb_solution(best_sol, half, PerturbStrength{effective_strength},
-                                          lower, upper, rng);
-        double perturbed_cost = evaluate_with_cache(candidate, func, cache, half);
-        double vnd_cost = local_search_vnd(func, candidate, perturbed_cost, lower, upper, half,
-                                           vnd_iterations, cache, rng, deadline);
+        auto candidate = perturb_solution(best_sol, ctx.half, PerturbStrength{effective_strength},
+                                          ctx.lower, ctx.upper, ctx.rng);
+        double perturbed_cost = evaluate_with_cache(candidate, func, ctx.cache, ctx.half);
+        VndContext<RngT> vnd_ctx{ctx.lower, ctx.upper, ctx.cache, ctx.half, ctx.rng,
+                                 ctx.deadline};
+        double vnd_cost = local_search_vnd(func, candidate, perturbed_cost, ctx.vnd_iterations,
+                                           vnd_ctx);
 
         if (vnd_cost < best_cost) {
             best_cost = vnd_cost;
             best_sol = candidate;
-        } else if (vnd_cost < best_cost * 1.25 && rng.random_double() < 0.1) {
+        } else if (vnd_cost < best_cost * 1.25 && ctx.rng.random_double() < 0.1) {
             // Accept slightly worse with 10% probability (diversification)
             best_sol = candidate;
             best_cost = vnd_cost;

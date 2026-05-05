@@ -22,25 +22,33 @@ struct VndMaxIterations {
     std::size_t value;
 };
 
+template <typename RngT> struct VndContext {
+    const std::vector<double> &lower;
+    const std::vector<double> &upper;
+    std::optional<EvaluationCache> &cache;
+    std::size_t half;
+    RngT &rng;
+    const Deadline &deadline;
+};
+
 // ── Per-variable move primitives ──────────────────────────────────────────────
 
-template <typename F>
-static std::pair<double, bool>
-try_integer_moves(std::size_t idx, std::vector<double> &solution, double best_cost, const F &func,
-                  const std::vector<double> &lower, const std::vector<double> &upper,
-                  std::optional<EvaluationCache> &cache, std::size_t half) {
+template <typename F, typename RngT>
+static std::pair<double, bool> try_integer_moves(std::size_t idx, std::vector<double> &solution,
+                                                 double best_cost, const F &func,
+                                                 const VndContext<RngT> &ctx) {
 
     double base = std::round(solution[idx]);
     double best = best_cost;
     bool improved = false;
 
     for (double delta : {-1.0, 0.0, 1.0}) {
-        double val = std::round(clamp_val(base + delta, lower[idx], upper[idx]));
+        double val = std::round(clamp_val(base + delta, ctx.lower[idx], ctx.upper[idx]));
         if (std::abs(val - solution[idx]) < 1e-12)
             continue;
         double old = solution[idx];
         solution[idx] = val;
-        double cost = evaluate_with_cache(solution, func, cache, half);
+        double cost = evaluate_with_cache(solution, func, ctx.cache, ctx.half);
         if (cost < best) {
             best = cost;
             improved = true;
@@ -52,46 +60,45 @@ try_integer_moves(std::size_t idx, std::vector<double> &solution, double best_co
 }
 
 template <typename F, typename RngT>
-static std::pair<double, bool>
-try_continuous_move(std::size_t idx, std::vector<double> &solution, double best_cost, const F &func,
-                    RngT &rng, const std::vector<double> &lower, const std::vector<double> &upper,
-                    std::optional<EvaluationCache> &cache, std::size_t half) {
+static std::pair<double, bool> try_continuous_move(std::size_t idx,
+                                                    std::vector<double> &solution,
+                                                    double best_cost, const F &func,
+                                                    VndContext<RngT> &ctx) {
 
-    double span = upper[idx] - lower[idx];
-    double delta = rng.uniform(-0.05, 0.05) * span;
-    double new_val = clamp_val(solution[idx] + delta, lower[idx], upper[idx]);
+    double span = ctx.upper[idx] - ctx.lower[idx];
+    double delta = ctx.rng.uniform(-0.05, 0.05) * span;
+    double new_val = clamp_val(solution[idx] + delta, ctx.lower[idx], ctx.upper[idx]);
     double old = solution[idx];
     solution[idx] = new_val;
-    if (double cost = evaluate_with_cache(solution, func, cache, half); cost < best_cost)
+    if (double cost = evaluate_with_cache(solution, func, ctx.cache, ctx.half); cost < best_cost)
         return {cost, true};
     solution[idx] = old;
     return {best_cost, false};
 }
 
 template <typename RngT>
-static void perturb_index(std::vector<double> &solution, std::size_t idx, PerturbStrength strength,
-                          RngT &rng, const std::vector<double> &lower,
-                          const std::vector<double> &upper, std::size_t half) {
+static void perturb_index(std::vector<double> &solution, std::size_t idx,
+                          PerturbStrength strength, VndContext<RngT> &ctx) {
 
-    if (idx >= half) {
+    if (idx >= ctx.half) {
         double step = std::max(static_cast<double>(strength.value) / 2.0, 1.0);
-        double delta = rng.uniform(-step, step);
-        solution[idx] = std::round(clamp_val(solution[idx] + delta, lower[idx], upper[idx]));
+        double delta = ctx.rng.uniform(-step, step);
+        solution[idx] =
+            std::round(clamp_val(solution[idx] + delta, ctx.lower[idx], ctx.upper[idx]));
     } else {
-        double span = upper[idx] - lower[idx];
-        double delta = rng.uniform(-0.15, 0.15) * span;
-        solution[idx] = clamp_val(solution[idx] + delta, lower[idx], upper[idx]);
+        double span = ctx.upper[idx] - ctx.lower[idx];
+        double delta = ctx.rng.uniform(-0.15, 0.15) * span;
+        solution[idx] = clamp_val(solution[idx] + delta, ctx.lower[idx], ctx.upper[idx]);
     }
 }
 
 // ── Neighborhoods ─────────────────────────────────────────────────────────────
 
 template <typename F, typename RngT>
-static std::pair<double, bool>
-neighborhood_flip(std::vector<double> &solution, double best_cost, const F &func,
-                  std::vector<double> &sensitivity, RngT &rng, const std::vector<double> &lower,
-                  const std::vector<double> &upper, std::optional<EvaluationCache> &cache,
-                  std::size_t half, const Deadline &deadline) {
+static std::pair<double, bool> neighborhood_flip(std::vector<double> &solution, double best_cost,
+                                                 const F &func,
+                                                 std::vector<double> &sensitivity,
+                                                 VndContext<RngT> &ctx) {
 
     std::size_t n = solution.size();
     std::vector<std::size_t> indices(n);
@@ -103,12 +110,11 @@ neighborhood_flip(std::vector<double> &solution, double best_cost, const F &func
     bool any_improved = false;
 
     for (std::size_t vidx : indices) {
-        if (expired(deadline))
+        if (expired(ctx.deadline))
             break;
-        auto [nc, imp] = (vidx >= half) ? try_integer_moves(vidx, solution, current_best, func,
-                                                            lower, upper, cache, half)
-                                        : try_continuous_move(vidx, solution, current_best, func,
-                                                              rng, lower, upper, cache, half);
+        auto [nc, imp] = (vidx >= ctx.half)
+                             ? try_integer_moves(vidx, solution, current_best, func, ctx)
+                             : try_continuous_move(vidx, solution, current_best, func, ctx);
         if (imp) {
             sensitivity[vidx] = 0.9 * sensitivity[vidx] + (current_best - nc);
             current_best = nc;
@@ -119,11 +125,8 @@ neighborhood_flip(std::vector<double> &solution, double best_cost, const F &func
 }
 
 template <typename F, typename RngT>
-static std::pair<double, bool>
-neighborhood_swap(std::vector<double> &solution, double best_cost, const F &func, RngT &rng,
-                  const std::vector<double> &lower, const std::vector<double> &upper,
-                  std::optional<EvaluationCache> &cache, std::size_t half,
-                  const Deadline &deadline) {
+static std::pair<double, bool> neighborhood_swap(std::vector<double> &solution, double best_cost,
+                                                 const F &func, VndContext<RngT> &ctx) {
 
     std::size_t n = solution.size();
     double current_best = best_cost;
@@ -131,17 +134,17 @@ neighborhood_swap(std::vector<double> &solution, double best_cost, const F &func
     std::size_t max_attempts = std::min(std::size_t{50}, n * (n - 1) / 2);
 
     for (std::size_t attempt = 0; attempt < max_attempts; ++attempt) {
-        if (expired(deadline))
+        if (expired(ctx.deadline))
             break;
-        std::size_t i = rng.uniform_index(0, n - 1);
-        std::size_t j = rng.uniform_index(0, n - 1);
+        std::size_t i = ctx.rng.uniform_index(0, n - 1);
+        std::size_t j = ctx.rng.uniform_index(0, n - 1);
         if (i == j)
             continue;
         double old_i = solution[i], old_j = solution[j];
-        perturb_index(solution, i, PerturbStrength{4}, rng, lower, upper, half);
-        perturb_index(solution, j, PerturbStrength{4}, rng, lower, upper, half);
-        normalize_integer_tail(solution, half);
-        double cost = evaluate_with_cache(solution, func, cache, half);
+        perturb_index(solution, i, PerturbStrength{4}, ctx);
+        perturb_index(solution, j, PerturbStrength{4}, ctx);
+        normalize_integer_tail(solution, ctx.half);
+        double cost = evaluate_with_cache(solution, func, ctx.cache, ctx.half);
         if (cost < current_best) {
             current_best = cost;
             any_improved = true;
@@ -154,11 +157,9 @@ neighborhood_swap(std::vector<double> &solution, double best_cost, const F &func
 }
 
 template <typename F, typename RngT>
-static std::pair<double, bool>
-neighborhood_multiflip(std::vector<double> &solution, double best_cost, const F &func, RngT &rng,
-                       const std::vector<double> &lower, const std::vector<double> &upper,
-                       std::optional<EvaluationCache> &cache, std::size_t half,
-                       const Deadline &deadline) {
+static std::pair<double, bool> neighborhood_multiflip(std::vector<double> &solution,
+                                                      double best_cost, const F &func,
+                                                      VndContext<RngT> &ctx) {
 
     std::size_t n = solution.size();
     std::size_t k = std::min(std::size_t{3}, n);
@@ -166,20 +167,20 @@ neighborhood_multiflip(std::vector<double> &solution, double best_cost, const F 
     bool any_improved = false;
 
     for (std::size_t attempt = 0; attempt < 50; ++attempt) {
-        if (expired(deadline))
+        if (expired(ctx.deadline))
             break;
         std::vector<double> backup = solution;
         std::vector<std::size_t> indices(n);
         std::iota(indices.begin(), indices.end(), std::size_t{0});
         // Fisher-Yates partial shuffle for k elements
         for (std::size_t i = 0; i < k; ++i) {
-            std::size_t j = rng.uniform_index(i, n - 1);
+            std::size_t j = ctx.rng.uniform_index(i, n - 1);
             std::swap(indices[i], indices[j]);
         }
         for (std::size_t i = 0; i < k; ++i)
-            perturb_index(solution, indices[i], PerturbStrength{4}, rng, lower, upper, half);
-        normalize_integer_tail(solution, half);
-        double cost = evaluate_with_cache(solution, func, cache, half);
+            perturb_index(solution, indices[i], PerturbStrength{4}, ctx);
+        normalize_integer_tail(solution, ctx.half);
+        double cost = evaluate_with_cache(solution, func, ctx.cache, ctx.half);
         if (cost < current_best) {
             current_best = cost;
             any_improved = true;
@@ -194,10 +195,7 @@ neighborhood_multiflip(std::vector<double> &solution, double best_cost, const F 
 
 template <typename F, typename RngT>
 double local_search_vnd(const F &func, std::vector<double> &solution, double current_cost,
-                        const std::vector<double> &lower, const std::vector<double> &upper,
-                        std::size_t half, VndMaxIterations max_iter,
-                        std::optional<EvaluationCache> &cache, RngT &rng,
-                        const Deadline &deadline) {
+                        VndMaxIterations max_iter, VndContext<RngT> &ctx) {
 
     std::size_t n = solution.size();
     std::vector<double> sensitivity(n, 0.0);
@@ -206,7 +204,7 @@ double local_search_vnd(const F &func, std::vector<double> &solution, double cur
     const std::size_t no_improve_limit = 5;
 
     for (std::size_t iter = 0; iter < max_iter.value; ++iter) {
-        if (expired(deadline))
+        if (expired(ctx.deadline))
             break;
 
         // Decay sensitivity
@@ -214,21 +212,18 @@ double local_search_vnd(const F &func, std::vector<double> &solution, double cur
             s *= 0.9;
 
         // Neighborhood 1: flip
-        auto [c1, imp1] = neighborhood_flip(solution, best_cost, func, sensitivity, rng, lower,
-                                            upper, cache, half, deadline);
+        auto [c1, imp1] = neighborhood_flip(solution, best_cost, func, sensitivity, ctx);
         best_cost = c1;
 
         if (!imp1) {
             ++no_improve_flip_count;
             // Neighborhood 2: swap
-            auto [c2, imp2] = neighborhood_swap(solution, best_cost, func, rng, lower, upper, cache,
-                                                half, deadline);
+            auto [c2, imp2] = neighborhood_swap(solution, best_cost, func, ctx);
             best_cost = c2;
 
             if (!imp2 && no_improve_flip_count >= no_improve_limit) {
                 // Neighborhood 3: multiflip
-                auto [c3, imp3] = neighborhood_multiflip(solution, best_cost, func, rng, lower,
-                                                         upper, cache, half, deadline);
+                auto [c3, imp3] = neighborhood_multiflip(solution, best_cost, func, ctx);
                 best_cost = c3;
                 (void)imp3;
             }
