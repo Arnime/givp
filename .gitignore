@@ -55,3 +55,6 @@ mutmut_download/
 # C/C++ compilation database (generated locally)
 compile_commands.json
 build/compile_commands.json
+
+# SonarQube Reports
+reports/sonar/
