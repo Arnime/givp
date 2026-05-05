@@ -124,14 +124,12 @@ function grasp_ils_vnd(
     start_time = time()
     deadline = config.time_limit > 0 ? start_time + config.time_limit : 0.0
 
-    # Warm start
-    if initial_guess !== nothing && elite_pool !== nothing
-        init_cost = evaluate_with_cache_impl(initial_arr, cost_fn, cache)
+    # Warm start from the initial candidate so a very short time limit can still
+    # return a meaningful finite best cost for finite objectives.
+    init_cost = evaluate_with_cache_impl(initial_arr, cost_fn, cache)
+    best_cost = init_cost
+    if elite_pool !== nothing
         add!(elite_pool, copy(initial_arr), init_cost)
-        if init_cost < best_cost
-            best_cost = init_cost
-            best_solution = copy(initial_arr)
-        end
     end
 
     verbose && @info @sprintf(
