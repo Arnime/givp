@@ -38,11 +38,10 @@ template <typename F>
 double evaluate_with_cache(const std::vector<double> &candidate, const F &func,
                            std::optional<EvaluationCache> &cache, std::size_t half) {
     if (cache) {
-        auto cached = cache->get(candidate, half);
-        if (cached.has_value())
+        if (auto cached = cache->get(candidate, half); cached.has_value())
             return *cached;
         double cost = safe_evaluate(func, candidate);
-        cache->put(candidate, half, cost);
+        cache->put(candidate, cost, EvaluationCache::HalfIndex{half});
         return cost;
     }
     return safe_evaluate(func, candidate);

@@ -51,3 +51,7 @@ mutmut_download/
 
 # github copilot
 .github/agents/
+
+# C/C++ compilation database (generated locally)
+compile_commands.json
+build/compile_commands.json

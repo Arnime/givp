@@ -27,7 +27,13 @@
 #include <utility>
 #include <vector>
 
+#if __has_include(<givp/config.hpp>)
 #include <givp/config.hpp>
+#elif __has_include("../include/givp/config.hpp")
+#include "../include/givp/config.hpp"
+#else
+#error "givp/config.hpp not found. Open the project through CMake."
+#endif
 
 // ── Objective functions
 // ───────────────────────────────────────────────────────

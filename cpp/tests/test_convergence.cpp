@@ -42,7 +42,7 @@ TEST_CASE("cache get returns nullopt for unknown key", "[cache]") {
 TEST_CASE("cache put and get round-trip", "[cache]") {
     EvaluationCache c{10};
     std::vector<double> sol{1.0, 2.0};
-    c.put(sol, 2, 42.0);
+    c.put(sol, 42.0, EvaluationCache::HalfIndex{2});
     auto v = c.get(sol, 2);
     REQUIRE(v.has_value());
     REQUIRE(v.value_or(std::numeric_limits<double>::quiet_NaN()) == Catch::Approx(42.0));
@@ -53,8 +53,8 @@ TEST_CASE("cache duplicate put is a no-op", "[cache]") {
     // The value stored by the first put must be preserved.
     EvaluationCache c{10};
     std::vector<double> sol{3.0, 4.0};
-    c.put(sol, 2, 42.0);
-    c.put(sol, 2, 99.0); // duplicate — should be ignored
+    c.put(sol, 42.0, EvaluationCache::HalfIndex{2});
+    c.put(sol, 99.0, EvaluationCache::HalfIndex{2}); // duplicate — should be ignored
     auto v = c.get(sol, 2);
     REQUIRE(v.has_value());
     REQUIRE(v.value_or(std::numeric_limits<double>::quiet_NaN()) == Catch::Approx(42.0));
@@ -63,7 +63,7 @@ TEST_CASE("cache duplicate put is a no-op", "[cache]") {
 TEST_CASE("cache hit rate is tracked", "[cache]") {
     EvaluationCache c{10};
     std::vector<double> sol{3.0, 4.0};
-    c.put(sol, 2, 5.0);
+    c.put(sol, 5.0, EvaluationCache::HalfIndex{2});
     c.get(sol, 2);        // hit
     c.get({9.0, 9.0}, 2); // miss
     auto s = c.stats();
@@ -73,16 +73,16 @@ TEST_CASE("cache hit rate is tracked", "[cache]") {
 
 TEST_CASE("cache evicts oldest entry when full", "[cache]") {
     EvaluationCache c{2};
-    c.put({1.0}, 1, 10.0);
-    c.put({2.0}, 1, 20.0);
-    c.put({3.0}, 1, 30.0); // should evict {1.0}
+    c.put({1.0}, 10.0, EvaluationCache::HalfIndex{1});
+    c.put({2.0}, 20.0, EvaluationCache::HalfIndex{1});
+    c.put({3.0}, 30.0, EvaluationCache::HalfIndex{1}); // should evict {1.0}
     REQUIRE_FALSE(c.get({1.0}, 1).has_value());
     REQUIRE(c.get({3.0}, 1).has_value());
 }
 
 TEST_CASE("cache clear removes all entries", "[cache]") {
     EvaluationCache c{10};
-    c.put({1.0, 2.0}, 2, 3.0);
+    c.put({1.0, 2.0}, 3.0, EvaluationCache::HalfIndex{2});
     c.clear();
     REQUIRE_FALSE(c.get({1.0, 2.0}, 2).has_value());
     REQUIRE(c.stats().size == 0);

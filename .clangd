@@ -1,2 +1,16 @@
 CompileFlags:
-  Add: [-std=c++17]
+  # Disable the WSL-generated compile_commands.json (uses /mnt/d/... paths
+  # that are not resolvable by the Windows clangd process). Fall back to
+  # compile_flags.txt + the Add list below which use workspace-relative paths.
+  CompilationDatabase: None
+
+  Add:
+    - -std=c++17
+    - -Icpp/include
+    - -Ibuild/_deps/catch2-src/src
+    - -Ibuild/_deps/catch2-build/generated-includes
+    - -Ibuild/_deps/nanobench-src/src/include
+    - -Icpp/build/_deps/catch2-src/src
+    - -Icpp/build/_deps/nanobench-src/src/include
+    - -Ibuild_local_ci_cpp/_deps/catch2-src/src
+    - -Ibuild_local_ci_cpp/_deps/nanobench-src/src/include

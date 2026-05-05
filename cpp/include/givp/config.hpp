@@ -12,7 +12,7 @@
 namespace givp {
 
 /// Optimization direction.
-enum class Direction {
+enum class Direction : std::uint8_t {
     Minimize,
     Maximize,
 };

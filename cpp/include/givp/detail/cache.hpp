@@ -13,6 +13,12 @@ namespace givp::detail {
 
 /// LRU evaluation cache to avoid redundant objective-function calls.
 class EvaluationCache {
+  public:
+    struct HalfIndex {
+        std::size_t value;
+    };
+
+  private:
     std::size_t maxsize_;
     std::unordered_map<std::uint64_t, double> cache_;
     std::vector<std::uint64_t> insertion_order_;
@@ -52,9 +58,9 @@ class EvaluationCache {
         return std::nullopt;
     }
 
-    void put(const std::vector<double> &solution, std::size_t half, double cost) {
-        auto key = hash_solution(solution, half);
-        if (cache_.count(key))
+    void put(const std::vector<double> &solution, double cost, HalfIndex half) {
+        auto key = hash_solution(solution, half.value);
+        if (cache_.find(key) != cache_.end())
             return;
         if (cache_.size() >= maxsize_ && !insertion_order_.empty()) {
             cache_.erase(insertion_order_.front());
@@ -77,7 +83,7 @@ class EvaluationCache {
 
     Stats stats() const {
         std::size_t total = hits_ + misses_;
-        double rate = (total > 0) ? static_cast<double>(hits_) / total : 0.0;
+        double rate = (total > 0) ? static_cast<double>(hits_) / static_cast<double>(total) : 0.0;
         return {hits_, misses_, rate, cache_.size()};
     }
 };

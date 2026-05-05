@@ -3,6 +3,7 @@
 #pragma once
 
 #include <cctype>
+#include <cstdint>
 #include <limits>
 #include <string>
 #include <unordered_map>
@@ -13,7 +14,7 @@
 namespace givp {
 
 /// Reason the optimizer stopped.
-enum class TerminationReason {
+enum class TerminationReason : std::uint8_t {
     Converged,
     MaxIterationsReached,
     TimeLimitReached,

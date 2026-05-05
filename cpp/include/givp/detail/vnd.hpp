@@ -14,6 +14,14 @@
 
 namespace givp::detail {
 
+struct PerturbStrength {
+    std::size_t value;
+};
+
+struct VndMaxIterations {
+    std::size_t value;
+};
+
 // ── Per-variable move primitives ──────────────────────────────────────────────
 
 template <typename F>
@@ -54,20 +62,19 @@ try_continuous_move(std::size_t idx, std::vector<double> &solution, double best_
     double new_val = clamp_val(solution[idx] + delta, lower[idx], upper[idx]);
     double old = solution[idx];
     solution[idx] = new_val;
-    double cost = evaluate_with_cache(solution, func, cache, half);
-    if (cost < best_cost)
+    if (double cost = evaluate_with_cache(solution, func, cache, half); cost < best_cost)
         return {cost, true};
     solution[idx] = old;
     return {best_cost, false};
 }
 
 template <typename RngT>
-static void perturb_index(std::vector<double> &solution, std::size_t idx, std::size_t strength,
+static void perturb_index(std::vector<double> &solution, std::size_t idx, PerturbStrength strength,
                           RngT &rng, const std::vector<double> &lower,
                           const std::vector<double> &upper, std::size_t half) {
 
     if (idx >= half) {
-        double step = std::max(static_cast<double>(strength) / 2.0, 1.0);
+        double step = std::max(static_cast<double>(strength.value) / 2.0, 1.0);
         double delta = rng.uniform(-step, step);
         solution[idx] = std::round(clamp_val(solution[idx] + delta, lower[idx], upper[idx]));
     } else {
@@ -131,8 +138,8 @@ neighborhood_swap(std::vector<double> &solution, double best_cost, const F &func
         if (i == j)
             continue;
         double old_i = solution[i], old_j = solution[j];
-        perturb_index(solution, i, 4, rng, lower, upper, half);
-        perturb_index(solution, j, 4, rng, lower, upper, half);
+        perturb_index(solution, i, PerturbStrength{4}, rng, lower, upper, half);
+        perturb_index(solution, j, PerturbStrength{4}, rng, lower, upper, half);
         normalize_integer_tail(solution, half);
         double cost = evaluate_with_cache(solution, func, cache, half);
         if (cost < current_best) {
@@ -170,7 +177,7 @@ neighborhood_multiflip(std::vector<double> &solution, double best_cost, const F 
             std::swap(indices[i], indices[j]);
         }
         for (std::size_t i = 0; i < k; ++i)
-            perturb_index(solution, indices[i], 4, rng, lower, upper, half);
+            perturb_index(solution, indices[i], PerturbStrength{4}, rng, lower, upper, half);
         normalize_integer_tail(solution, half);
         double cost = evaluate_with_cache(solution, func, cache, half);
         if (cost < current_best) {
@@ -187,8 +194,8 @@ neighborhood_multiflip(std::vector<double> &solution, double best_cost, const F 
 
 template <typename F, typename RngT>
 double local_search_vnd(const F &func, std::vector<double> &solution, double current_cost,
-                        std::size_t half, const std::vector<double> &lower,
-                        const std::vector<double> &upper, std::size_t max_iter,
+                        const std::vector<double> &lower, const std::vector<double> &upper,
+                        std::size_t half, VndMaxIterations max_iter,
                         std::optional<EvaluationCache> &cache, RngT &rng,
                         const Deadline &deadline) {
 
@@ -198,7 +205,7 @@ double local_search_vnd(const F &func, std::vector<double> &solution, double cur
     std::size_t no_improve_flip_count = 0;
     const std::size_t no_improve_limit = 5;
 
-    for (std::size_t iter = 0; iter < max_iter; ++iter) {
+    for (std::size_t iter = 0; iter < max_iter.value; ++iter) {
         if (expired(deadline))
             break;
 
