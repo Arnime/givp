@@ -317,11 +317,10 @@ struct LoopState {
 };
 
 template <typename WrappedF>
-static bool run_main_iteration(const CoreContext<WrappedF> &core_ctx,
-                               std::optional<EvaluationCache> &cache, Rng &rng,
-                               ElitePool &elite_pool,
-                               std::optional<ConvergenceMonitor> &conv_monitor,
-                               std::size_t iteration, LoopState &state) {
+static bool
+run_main_iteration(const CoreContext<WrappedF> &core_ctx, std::optional<EvaluationCache> &cache,
+                   Rng &rng, ElitePool &elite_pool, std::optional<ConvergenceMonitor> &conv_monitor,
+                   std::size_t iteration, LoopState &state) {
     double alpha = get_current_alpha(AlphaScheduleParams{
         iteration, core_ctx.config.max_iterations, core_ctx.config.alpha_min,
         core_ctx.config.alpha_max, core_ctx.config.adaptive_alpha, core_ctx.config.alpha});
