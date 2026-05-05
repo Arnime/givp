@@ -1,0 +1,8 @@
+[
+  {
+    "directory": "<absolute-path-to-workspace>/build/tests",
+    "command": "<cxx-compiler> -I\"<absolute-path-to-workspace>/cpp/include\" -I\"<absolute-path-to-workspace>/build/_deps/catch2-src/src\" -I\"<absolute-path-to-workspace>/build/_deps/catch2-build/generated-includes\" -std=c++17 -c \"<absolute-path-to-workspace>/cpp/tests/test_basic.cpp\" -o CMakeFiles/givp_tests.dir/test_basic.cpp.o",
+    "file": "<absolute-path-to-workspace>/cpp/tests/test_basic.cpp",
+    "output": "tests/CMakeFiles/givp_tests.dir/test_basic.cpp.o"
+  }
+]

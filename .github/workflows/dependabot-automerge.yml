@@ -4,12 +4,12 @@ on:
     pull_request_target:
         types: [ opened, reopened, synchronize, ready_for_review ]
 
-permissions: read-all
+permissions:
+  contents: read
 
 jobs:
     automerge:
         runs-on: ubuntu-latest
-        if: github.actor == 'dependabot[bot]'
         permissions:
             actions: read
             checks: read
@@ -22,10 +22,29 @@ jobs:
             security-events: read
             statuses: read
         steps:
+            - name: Verify PR author is Dependabot
+              id: verify
+              shell: bash
+              run: |
+                  set -euo pipefail
+                  pr_author="$(gh api "repos/${REPO}/pulls/${PR_NUMBER}" --jq '.user.login')"
+                  if [[ "${pr_author}" == "dependabot[bot]" ]]; then
+                      echo "allow=true" >> "$GITHUB_OUTPUT"
+                  else
+                      echo "allow=false" >> "$GITHUB_OUTPUT"
+                  fi
+              env:
+                  REPO: ${{ github.repository }}
+                  PR_NUMBER: ${{ github.event.pull_request.number }}
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
             - name: Enable auto-merge for Dependabot PRs
+              if: steps.verify.outputs.allow == 'true'
               # Requires "Allow auto-merge" enabled in Settings → General → Pull Requests
-              run: gh pr merge --auto --squash "$PR_URL"
+              run: gh pr merge --auto --squash "$PR_NUMBER"
               continue-on-error: true
               env:
-                  PR_URL: ${{ github.event.pull_request.html_url }}
+                  PR_NUMBER: ${{ github.event.pull_request.number }}
                   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+

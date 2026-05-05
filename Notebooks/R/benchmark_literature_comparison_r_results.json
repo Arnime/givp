@@ -1,0 +1,450 @@
+{
+  "metadata": {
+    "n_runs": 5,
+    "n_dims": 10
+  },
+  "summary": [
+    {
+      "function_name": "Ackley",
+      "algorithm": "GIVP-full",
+      "mean_fun": 3.777,
+      "sd_fun": 0.4828,
+      "best_fun": 3.3741,
+      "median_fun": 3.6029,
+      "mean_nfev": 8182.8,
+      "mean_time_s": 8.9671
+    },
+    {
+      "function_name": "Ackley",
+      "algorithm": "GRASP-only",
+      "mean_fun": 19.3834,
+      "sd_fun": 0.3657,
+      "best_fun": 18.9452,
+      "median_fun": 19.554,
+      "mean_nfev": 754,
+      "mean_time_s": 0.3784
+    },
+    {
+      "function_name": "Rastrigin",
+      "algorithm": "GIVP-full",
+      "mean_fun": 48.8712,
+      "sd_fun": 6.7673,
+      "best_fun": 41.9854,
+      "median_fun": 48.8383,
+      "mean_nfev": 6108,
+      "mean_time_s": 6.6203
+    },
+    {
+      "function_name": "Rastrigin",
+      "algorithm": "GRASP-only",
+      "mean_fun": 85.1809,
+      "sd_fun": 13.9539,
+      "best_fun": 73.8557,
+      "median_fun": 75.5868,
+      "mean_nfev": 757.6,
+      "mean_time_s": 0.4065
+    },
+    {
+      "function_name": "Rosenbrock",
+      "algorithm": "GIVP-full",
+      "mean_fun": 30.7507,
+      "sd_fun": 12.2042,
+      "best_fun": 19.1233,
+      "median_fun": 23.9709,
+      "mean_nfev": 10492.2,
+      "mean_time_s": 13.3699
+    },
+    {
+      "function_name": "Rosenbrock",
+      "algorithm": "GRASP-only",
+      "mean_fun": 53734.4248,
+      "sd_fun": 22511.0726,
+      "best_fun": 20201.8781,
+      "median_fun": 54448.4947,
+      "mean_nfev": 741.8,
+      "mean_time_s": 0.4136
+    },
+    {
+      "function_name": "Sphere",
+      "algorithm": "GIVP-full",
+      "mean_fun": 0.0403,
+      "sd_fun": 0.0178,
+      "best_fun": 0.0205,
+      "median_fun": 0.0392,
+      "mean_nfev": 10295.2,
+      "mean_time_s": 8.865
+    },
+    {
+      "function_name": "Sphere",
+      "algorithm": "GRASP-only",
+      "mean_fun": 26.912,
+      "sd_fun": 7.1326,
+      "best_fun": 18.0632,
+      "median_fun": 24.2945,
+      "mean_nfev": 754,
+      "mean_time_s": 0.4568
+    }
+  ],
+  "records": [
+    {
+      "algorithm": "GIVP-full",
+      "function_name": "Sphere",
+      "seed": 0,
+      "fun": 0.0329,
+      "nit": 30,
+      "nfev": 10354,
+      "time_s": 8.4887
+    },
+    {
+      "algorithm": "GIVP-full",
+      "function_name": "Sphere",
+      "seed": 1,
+      "fun": 0.069,
+      "nit": 30,
+      "nfev": 10311,
+      "time_s": 7.9853
+    },
+    {
+      "algorithm": "GIVP-full",
+      "function_name": "Sphere",
+      "seed": 2,
+      "fun": 0.0401,
+      "nit": 30,
+      "nfev": 10233,
+      "time_s": 8.2818
+    },
+    {
+      "algorithm": "GIVP-full",
+      "function_name": "Sphere",
+      "seed": 3,
+      "fun": 0.0205,
+      "nit": 30,
+      "nfev": 10325,
+      "time_s": 10.3987
+    },
+    {
+      "algorithm": "GIVP-full",
+      "function_name": "Sphere",
+      "seed": 4,
+      "fun": 0.0392,
+      "nit": 30,
+      "nfev": 10253,
+      "time_s": 9.1703
+    },
+    {
+      "algorithm": "GIVP-full",
+      "function_name": "Rosenbrock",
+      "seed": 0,
+      "fun": 46.2732,
+      "nit": 30,
+      "nfev": 10484,
+      "time_s": 12.8248
+    },
+    {
+      "algorithm": "GIVP-full",
+      "function_name": "Rosenbrock",
+      "seed": 1,
+      "fun": 19.1233,
+      "nit": 30,
+      "nfev": 10553,
+      "time_s": 16.4453
+    },
+    {
+      "algorithm": "GIVP-full",
+      "function_name": "Rosenbrock",
+      "seed": 2,
+      "fun": 22.9871,
+      "nit": 30,
+      "nfev": 10405,
+      "time_s": 12.6446
+    },
+    {
+      "algorithm": "GIVP-full",
+      "function_name": "Rosenbrock",
+      "seed": 3,
+      "fun": 41.3989,
+      "nit": 30,
+      "nfev": 10551,
+      "time_s": 13.5136
+    },
+    {
+      "algorithm": "GIVP-full",
+      "function_name": "Rosenbrock",
+      "seed": 4,
+      "fun": 23.9709,
+      "nit": 30,
+      "nfev": 10468,
+      "time_s": 11.4214
+    },
+    {
+      "algorithm": "GIVP-full",
+      "function_name": "Rastrigin",
+      "seed": 0,
+      "fun": 49.7433,
+      "nit": 30,
+      "nfev": 6058,
+      "time_s": 7.4003
+    },
+    {
+      "algorithm": "GIVP-full",
+      "function_name": "Rastrigin",
+      "seed": 1,
+      "fun": 44.2549,
+      "nit": 30,
+      "nfev": 6227,
+      "time_s": 6.9345
+    },
+    {
+      "algorithm": "GIVP-full",
+      "function_name": "Rastrigin",
+      "seed": 2,
+      "fun": 41.9854,
+      "nit": 30,
+      "nfev": 5956,
+      "time_s": 6.0251
+    },
+    {
+      "algorithm": "GIVP-full",
+      "function_name": "Rastrigin",
+      "seed": 3,
+      "fun": 59.5341,
+      "nit": 30,
+      "nfev": 6116,
+      "time_s": 6.1412
+    },
+    {
+      "algorithm": "GIVP-full",
+      "function_name": "Rastrigin",
+      "seed": 4,
+      "fun": 48.8383,
+      "nit": 30,
+      "nfev": 6183,
+      "time_s": 6.6005
+    },
+    {
+      "algorithm": "GIVP-full",
+      "function_name": "Ackley",
+      "seed": 0,
+      "fun": 3.5446,
+      "nit": 30,
+      "nfev": 8256,
+      "time_s": 8.9164
+    },
+    {
+      "algorithm": "GIVP-full",
+      "function_name": "Ackley",
+      "seed": 1,
+      "fun": 3.7587,
+      "nit": 30,
+      "nfev": 7975,
+      "time_s": 9.1134
+    },
+    {
+      "algorithm": "GIVP-full",
+      "function_name": "Ackley",
+      "seed": 2,
+      "fun": 3.6029,
+      "nit": 30,
+      "nfev": 8093,
+      "time_s": 8.778
+    },
+    {
+      "algorithm": "GIVP-full",
+      "function_name": "Ackley",
+      "seed": 3,
+      "fun": 3.3741,
+      "nit": 30,
+      "nfev": 8315,
+      "time_s": 8.6254
+    },
+    {
+      "algorithm": "GIVP-full",
+      "function_name": "Ackley",
+      "seed": 4,
+      "fun": 4.6049,
+      "nit": 30,
+      "nfev": 8275,
+      "time_s": 9.4022
+    },
+    {
+      "algorithm": "GRASP-only",
+      "function_name": "Sphere",
+      "seed": 0,
+      "fun": 36.114,
+      "nit": 30,
+      "nfev": 730,
+      "time_s": 0.3944
+    },
+    {
+      "algorithm": "GRASP-only",
+      "function_name": "Sphere",
+      "seed": 1,
+      "fun": 24.1008,
+      "nit": 30,
+      "nfev": 770,
+      "time_s": 0.4735
+    },
+    {
+      "algorithm": "GRASP-only",
+      "function_name": "Sphere",
+      "seed": 2,
+      "fun": 24.2945,
+      "nit": 30,
+      "nfev": 770,
+      "time_s": 0.3545
+    },
+    {
+      "algorithm": "GRASP-only",
+      "function_name": "Sphere",
+      "seed": 3,
+      "fun": 31.9877,
+      "nit": 30,
+      "nfev": 750,
+      "time_s": 0.3754
+    },
+    {
+      "algorithm": "GRASP-only",
+      "function_name": "Sphere",
+      "seed": 4,
+      "fun": 18.0632,
+      "nit": 30,
+      "nfev": 750,
+      "time_s": 0.686
+    },
+    {
+      "algorithm": "GRASP-only",
+      "function_name": "Rosenbrock",
+      "seed": 0,
+      "fun": 20201.8781,
+      "nit": 30,
+      "nfev": 750,
+      "time_s": 0.4707
+    },
+    {
+      "algorithm": "GRASP-only",
+      "function_name": "Rosenbrock",
+      "seed": 1,
+      "fun": 49217.1863,
+      "nit": 30,
+      "nfev": 750,
+      "time_s": 0.4203
+    },
+    {
+      "algorithm": "GRASP-only",
+      "function_name": "Rosenbrock",
+      "seed": 2,
+      "fun": 54448.4947,
+      "nit": 30,
+      "nfev": 730,
+      "time_s": 0.497
+    },
+    {
+      "algorithm": "GRASP-only",
+      "function_name": "Rosenbrock",
+      "seed": 3,
+      "fun": 62793.2056,
+      "nit": 30,
+      "nfev": 730,
+      "time_s": 0.3377
+    },
+    {
+      "algorithm": "GRASP-only",
+      "function_name": "Rosenbrock",
+      "seed": 4,
+      "fun": 82011.3592,
+      "nit": 30,
+      "nfev": 749,
+      "time_s": 0.3422
+    },
+    {
+      "algorithm": "GRASP-only",
+      "function_name": "Rastrigin",
+      "seed": 0,
+      "fun": 75.5868,
+      "nit": 30,
+      "nfev": 750,
+      "time_s": 0.4968
+    },
+    {
+      "algorithm": "GRASP-only",
+      "function_name": "Rastrigin",
+      "seed": 1,
+      "fun": 75.5868,
+      "nit": 30,
+      "nfev": 770,
+      "time_s": 0.3553
+    },
+    {
+      "algorithm": "GRASP-only",
+      "function_name": "Rastrigin",
+      "seed": 2,
+      "fun": 101.1318,
+      "nit": 30,
+      "nfev": 750,
+      "time_s": 0.3856
+    },
+    {
+      "algorithm": "GRASP-only",
+      "function_name": "Rastrigin",
+      "seed": 3,
+      "fun": 73.8557,
+      "nit": 30,
+      "nfev": 769,
+      "time_s": 0.4039
+    },
+    {
+      "algorithm": "GRASP-only",
+      "function_name": "Rastrigin",
+      "seed": 4,
+      "fun": 99.7432,
+      "nit": 30,
+      "nfev": 749,
+      "time_s": 0.3908
+    },
+    {
+      "algorithm": "GRASP-only",
+      "function_name": "Ackley",
+      "seed": 0,
+      "fun": 19.7476,
+      "nit": 30,
+      "nfev": 770,
+      "time_s": 0.3428
+    },
+    {
+      "algorithm": "GRASP-only",
+      "function_name": "Ackley",
+      "seed": 1,
+      "fun": 19.6322,
+      "nit": 30,
+      "nfev": 730,
+      "time_s": 0.3402
+    },
+    {
+      "algorithm": "GRASP-only",
+      "function_name": "Ackley",
+      "seed": 2,
+      "fun": 18.9452,
+      "nit": 30,
+      "nfev": 770,
+      "time_s": 0.4124
+    },
+    {
+      "algorithm": "GRASP-only",
+      "function_name": "Ackley",
+      "seed": 3,
+      "fun": 19.554,
+      "nit": 30,
+      "nfev": 770,
+      "time_s": 0.3824
+    },
+    {
+      "algorithm": "GRASP-only",
+      "function_name": "Ackley",
+      "seed": 4,
+      "fun": 19.0381,
+      "nit": 30,
+      "nfev": 730,
+      "time_s": 0.4141
+    }
+  ]
+}

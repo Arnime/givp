@@ -85,6 +85,22 @@ def quad(x: np.ndarray) -> float:
     return float(np.sum(x**2))
 
 
+def _noop_neighborhood(*args, **_kwargs):
+    return args[1].copy(), args[2]
+
+
+def _patch_try_neighborhood_noops(
+    monkeypatch: pytest.MonkeyPatch,
+    *,
+    group_fn=None,
+    block_fn=None,
+) -> None:
+    monkeypatch.setattr(core_vnd, "_neighborhood_flip", _noop_neighborhood)
+    monkeypatch.setattr(core_vnd, "_neighborhood_swap", _noop_neighborhood)
+    monkeypatch.setattr(core_vnd, "_neighborhood_group", group_fn or _noop_neighborhood)
+    monkeypatch.setattr(core_vnd, "_neighborhood_block", block_fn or _noop_neighborhood)
+
+
 # ----------------------------- _safe_evaluate -----------------------------
 
 
@@ -1874,12 +1890,7 @@ def test_try_neighborhoods_expired_after_swap(monkeypatch):
         return call_count[0] >= 3
 
     monkeypatch.setattr(core_vnd, "_expired", count_expired)
-    monkeypatch.setattr(
-        core_vnd, "_neighborhood_flip", lambda *a, **kw: (a[1].copy(), a[2])
-    )
-    monkeypatch.setattr(
-        core_vnd, "_neighborhood_swap", lambda *a, **kw: (a[1].copy(), a[2])
-    )
+    _patch_try_neighborhood_noops(monkeypatch)
     _set_integer_split(1)
     sol = np.array([1.0, 1.0])
     _, _, improved = core_vnd._try_neighborhoods(
@@ -1903,15 +1914,9 @@ def test_try_neighborhoods_expired_after_swap(monkeypatch):
 def test_try_neighborhoods_group_neighborhood_improves(monkeypatch):
     """Line 710: _neighborhood_group returns an improvement -> early True return."""
     monkeypatch.setattr(core_vnd, "_expired", lambda _: False)
-    monkeypatch.setattr(
-        core_vnd, "_neighborhood_flip", lambda *a, **kw: (a[1].copy(), a[2])
-    )
-    monkeypatch.setattr(
-        core_vnd, "_neighborhood_swap", lambda *a, **kw: (a[1].copy(), a[2])
-    )
     improved_sol = np.zeros(2)
-    monkeypatch.setattr(
-        core_vnd, "_neighborhood_group", lambda *a, **kw: (improved_sol, 0.0)
+    _patch_try_neighborhood_noops(
+        monkeypatch, group_fn=lambda *a, **kw: (improved_sol, 0.0)
     )
     _set_integer_split(1)
     sol = np.array([1.0, 1.0])
@@ -1942,15 +1947,7 @@ def test_try_neighborhoods_expired_after_group(monkeypatch):
         return call_count[0] >= 4
 
     monkeypatch.setattr(core_vnd, "_expired", count_expired)
-    monkeypatch.setattr(
-        core_vnd, "_neighborhood_flip", lambda *a, **kw: (a[1].copy(), a[2])
-    )
-    monkeypatch.setattr(
-        core_vnd, "_neighborhood_swap", lambda *a, **kw: (a[1].copy(), a[2])
-    )
-    monkeypatch.setattr(
-        core_vnd, "_neighborhood_group", lambda *a, **kw: (a[1].copy(), a[2])
-    )
+    _patch_try_neighborhood_noops(monkeypatch)
     _set_integer_split(1)
     sol = np.array([1.0, 1.0])
     _, _, improved = core_vnd._try_neighborhoods(
@@ -1974,18 +1971,9 @@ def test_try_neighborhoods_expired_after_group(monkeypatch):
 def test_try_neighborhoods_block_neighborhood_improves(monkeypatch):
     """Line 726: _neighborhood_block returns an improvement -> early True return."""
     monkeypatch.setattr(core_vnd, "_expired", lambda _: False)
-    monkeypatch.setattr(
-        core_vnd, "_neighborhood_flip", lambda *a, **kw: (a[1].copy(), a[2])
-    )
-    monkeypatch.setattr(
-        core_vnd, "_neighborhood_swap", lambda *a, **kw: (a[1].copy(), a[2])
-    )
-    monkeypatch.setattr(
-        core_vnd, "_neighborhood_group", lambda *a, **kw: (a[1].copy(), a[2])
-    )
     improved_sol = np.zeros(2)
-    monkeypatch.setattr(
-        core_vnd, "_neighborhood_block", lambda *a, **kw: (improved_sol, 0.0)
+    _patch_try_neighborhood_noops(
+        monkeypatch, block_fn=lambda *a, **kw: (improved_sol, 0.0)
     )
     _set_integer_split(1)
     sol = np.array([1.0, 1.0])
@@ -2016,18 +2004,7 @@ def test_try_neighborhoods_expired_in_multiflip_check(monkeypatch):
         return call_count[0] >= 5
 
     monkeypatch.setattr(core_vnd, "_expired", count_expired)
-    monkeypatch.setattr(
-        core_vnd, "_neighborhood_flip", lambda *a, **kw: (a[1].copy(), a[2])
-    )
-    monkeypatch.setattr(
-        core_vnd, "_neighborhood_swap", lambda *a, **kw: (a[1].copy(), a[2])
-    )
-    monkeypatch.setattr(
-        core_vnd, "_neighborhood_group", lambda *a, **kw: (a[1].copy(), a[2])
-    )
-    monkeypatch.setattr(
-        core_vnd, "_neighborhood_block", lambda *a, **kw: (a[1].copy(), a[2])
-    )
+    _patch_try_neighborhood_noops(monkeypatch)
     _set_integer_split(1)
     sol = np.array([1.0, 1.0])
     # iteration=0, no_improve_flip_limit=1 -> 0 % 1 == 0 -> multiflip check fires

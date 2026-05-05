@@ -2,13 +2,21 @@ __pycache__/
 *.py[cod]
 *.egg-info/
 .eggs/
-build/
+build*/
 dist/
 .venv/
+.venv-ci/
+.julia-env/
+.scannerwork/
 .env
 .pytest_cache/
 .coverage
 coverage.xml
+coverage-python.xml
+coverage.info
+coverage_raw.info
+julia-lcov.info
+rust/lcov.info
 htmlcov/
 .ruff_cache/
 .mypy_cache/
@@ -27,9 +35,23 @@ julia/benchmarks/Manifest.toml
 
 # Rust
 rust/target/
+Notebooks/_rust_*/
+Notebooks/_cpp_*/
 
 Notebooks/Resultados_Dissertacao/
 Notebooks/*/*.png
 
+# R build artifacts
+*.tar.gz
+r/*.Rcheck/
+r/man/*.Rd
+
+# Local downloads
+mutmut_download/
+
 # github copilot
 .github/agents/
+
+# C/C++ compilation database (generated locally)
+compile_commands.json
+build/compile_commands.json

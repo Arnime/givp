@@ -86,8 +86,11 @@ include = [
 
 [tool.pytest.ini_options]
 testpaths = ["python/tests"]
-addopts = "-q --cov=givp --cov-report=term-missing --cov-fail-under=95 --strict-markers -m 'not slow'"
-markers = ["slow: tests that are not run by default; use -m slow to enable"]
+addopts = "-q --cov=givp --cov-report=term-missing --cov-fail-under=95 --strict-markers -m 'not slow and not quality_gate'"
+markers = [
+    "slow: tests that are not run by default; use -m slow to enable",
+    "quality_gate: statistical convergence gate — verifies algorithm achieves minimum quality threshold; use -m quality_gate to run",
+]
 
 [tool.pytest-benchmark]
 storage = "python/benchmarks/.results"
@@ -185,3 +188,9 @@ packages = [{ include = "givp", from = "python/src" }]
 [tool.poetry.group.dev.dependencies]
 nox = "^2026.4.10"
 notebook = "^7.5.5"
+
+[tool.poetry.group.docs.dependencies]
+mkdocs = ">=1.6"
+mkdocs-material = ">=9.5"
+mkdocstrings = { version = ">=0.26", extras = ["python"] }
+ruff = ">=0.15.12"

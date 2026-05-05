@@ -17,7 +17,8 @@ on:
 env:
     FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
-permissions: read-all
+permissions:
+  contents: read
 
 jobs:
     build:
@@ -54,3 +55,5 @@ jobs:
                   name: julia-docs-preview
                   path: julia/docs/build/
                   retention-days: 14
+
+
