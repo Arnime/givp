@@ -68,8 +68,8 @@ static std::size_t select_from_rcl(const std::vector<double> &costs, double alph
 // ── Candidate builders ────────────────────────────────────────────────────────
 
 template <typename RngT> static double sample_integer_from_bounds(double lo, double hi, RngT &rng) {
-    std::int64_t lo_i = static_cast<std::int64_t>(std::ceil(lo));
-    std::int64_t hi_i = static_cast<std::int64_t>(std::floor(hi));
+    auto lo_i = static_cast<std::int64_t>(std::ceil(lo));
+    auto hi_i = static_cast<std::int64_t>(std::floor(hi));
     if (lo_i > hi_i)
         return std::round((lo + hi) / 2.0);
     return static_cast<double>(rng.uniform_int(lo_i, hi_i));
