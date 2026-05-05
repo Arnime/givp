@@ -60,6 +60,71 @@ jobs:
                   echo "Skipping SonarQube scan because required secrets are missing."
                   echo "Set SONAR_TOKEN and SONAR_HOST_URL in repository secrets to enable CI SonarQube analysis."
 
+            - name: Set up Python 3.13
+              if: steps.preflight.outputs.enabled == 'true'
+              uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+              with:
+                  python-version: "3.13"
+
+            - name: Generate Python coverage
+              if: steps.preflight.outputs.enabled == 'true'
+              run: |
+                  pip install --require-hashes -r python/requirements/ci.txt
+                  sh .github/scripts/install-package.sh
+                  pytest --cov=givp --cov-report=xml:coverage-python.xml
+
+            - name: Set up Rust toolchain
+              if: steps.preflight.outputs.enabled == 'true'
+              uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+              with:
+                  toolchain: stable
+                  components: llvm-tools-preview
+
+            - name: Install cargo-llvm-cov
+              if: steps.preflight.outputs.enabled == 'true'
+              uses: taiki-e/install-action@7ea35f098a7369cd23488403f58be9c491a6c55f # v2.77.0
+              with:
+                  tool: cargo-llvm-cov
+
+            - name: Generate Rust coverage
+              if: steps.preflight.outputs.enabled == 'true'
+              working-directory: rust
+              run: cargo llvm-cov --all-features --lcov --output-path lcov.info
+
+            - name: Set up Julia
+              if: steps.preflight.outputs.enabled == 'true'
+              uses: julia-actions/setup-julia@f6f565d9f7cf12f53dc8045742460d6260ad3b39 # v3.0.1
+              with:
+                  version: "1"
+
+            - name: Cache Julia packages
+              if: steps.preflight.outputs.enabled == 'true'
+              uses: julia-actions/cache@a45e8fa8be21c18a06b7177052533149e61e9b38 # v3.1.0
+
+            - name: Install Julia dependencies
+              if: steps.preflight.outputs.enabled == 'true'
+              run: |
+                  julia --project=julia -e '
+                    using Pkg
+                    Pkg.Registry.update()
+                    rm(joinpath("julia", "Manifest.toml"); force=true)
+                    Pkg.instantiate()
+                  '
+
+            - name: Generate Julia coverage
+              if: steps.preflight.outputs.enabled == 'true'
+              env:
+                  JULIA_NUM_THREADS: auto
+              run: |
+                  julia --project=julia -e 'using Pkg; Pkg.test(; coverage=true)'
+                  julia -e '
+                    using Pkg
+                    Pkg.add("CoverageTools")
+                    using CoverageTools
+                    coverage = process_folder("julia/src")
+                    LCOV.writefile("julia-lcov.info", coverage)
+                  '
+
             - name: Prepare C++ compile database
               if: steps.preflight.outputs.enabled == 'true'
               run: |

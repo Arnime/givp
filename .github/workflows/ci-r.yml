@@ -42,7 +42,7 @@ jobs:
         if: runner.os == 'Linux'
         shell: bash
         run: |
-          sudo apt-get update
+          sudo apt-get -o Acquire::Retries=2 -o Acquire::http::Timeout=20 -o Acquire::https::Timeout=20 update
           sudo apt-get install -y \
             cmake \
             libcurl4-openssl-dev \
@@ -81,7 +81,7 @@ jobs:
       - name: Install system dependencies
         shell: bash
         run: |
-          sudo apt-get update
+          sudo apt-get -o Acquire::Retries=2 -o Acquire::http::Timeout=20 -o Acquire::https::Timeout=20 update
           sudo apt-get install -y \
             cmake \
             libcurl4-openssl-dev \
@@ -127,7 +127,7 @@ jobs:
       - name: Install system dependencies
         shell: bash
         run: |
-          sudo apt-get update
+          sudo apt-get -o Acquire::Retries=2 -o Acquire::http::Timeout=20 -o Acquire::https::Timeout=20 update
           sudo apt-get install -y \
             cmake \
             libcurl4-openssl-dev \
@@ -173,7 +173,7 @@ jobs:
       - name: Install system dependencies
         shell: bash
         run: |
-          sudo apt-get update
+          sudo apt-get -o Acquire::Retries=2 -o Acquire::http::Timeout=20 -o Acquire::https::Timeout=20 update
           sudo apt-get install -y \
             cmake \
             libcurl4-openssl-dev \
@@ -210,7 +210,7 @@ jobs:
       - name: Install system dependencies
         shell: bash
         run: |
-          sudo apt-get update
+          sudo apt-get -o Acquire::Retries=2 -o Acquire::http::Timeout=20 -o Acquire::https::Timeout=20 update
           sudo apt-get install -y \
             cmake \
             libcurl4-openssl-dev \
@@ -251,7 +251,7 @@ jobs:
       - name: Install system dependencies
         shell: bash
         run: |
-          sudo apt-get update
+          sudo apt-get -o Acquire::Retries=2 -o Acquire::http::Timeout=20 -o Acquire::https::Timeout=20 update
           sudo apt-get install -y \
             cmake \
             libcurl4-openssl-dev \
