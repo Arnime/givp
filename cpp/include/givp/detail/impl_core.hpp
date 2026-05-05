@@ -370,17 +370,17 @@ OptimizeResult run(F &&func, const std::vector<std::pair<double, double>> &bound
         if (!should_break) {
             iterations_executed = iteration + 1;
 
-            double alpha = get_current_alpha(AlphaScheduleParams{iteration, config.max_iterations,
-                                                                 config.alpha_min, config.alpha_max,
-                                                                 config.adaptive_alpha, config.alpha});
+            double alpha = get_current_alpha(
+                AlphaScheduleParams{iteration, config.max_iterations, config.alpha_min,
+                                    config.alpha_max, config.adaptive_alpha, config.alpha});
             const auto iter_ctx = CoreIterationContext<decltype(wrapped)>{core_ctx, alpha};
 
             const std::vector<double> *ig =
                 iteration_initial_guess(iteration, config.initial_guess);
 
-            CandidateCost iteration_result = (config.n_workers <= 1)
-                                                 ? run_single_worker_iteration(iter_ctx, ig, cache, rng)
-                                                 : run_multi_worker_iteration(iter_ctx, ig, rng);
+            CandidateCost iteration_result =
+                (config.n_workers <= 1) ? run_single_worker_iteration(iter_ctx, ig, cache, rng)
+                                        : run_multi_worker_iteration(iter_ctx, ig, rng);
 
             std::vector<double> candidate = std::move(iteration_result.candidate);
             double ils_cost = iteration_result.cost;
