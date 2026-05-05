@@ -105,8 +105,7 @@ struct ProblemShape {
 template <typename F>
 static std::pair<std::vector<double>, double>
 initialize_best_solution(const F &wrapped, const GivpConfig &config, const ProblemShape &shape,
-                         const std::vector<double> &lower,
-                         const std::vector<double> &upper,
+                         const std::vector<double> &lower, const std::vector<double> &upper,
                          std::optional<EvaluationCache> &cache, Rng &rng,
                          const Deadline &deadline) {
     if (config.initial_guess) {
@@ -125,9 +124,8 @@ initialize_best_solution(const F &wrapped, const GivpConfig &config, const Probl
 
 template <typename F>
 static CandidateCost
-run_single_worker_iteration(const F &wrapped, const GivpConfig &config,
-                            const ProblemShape &shape, const std::vector<double> &lower,
-                            const std::vector<double> &upper,
+run_single_worker_iteration(const F &wrapped, const GivpConfig &config, const ProblemShape &shape,
+                            const std::vector<double> &lower, const std::vector<double> &upper,
                             const std::vector<double> *initial_guess_ptr,
                             std::optional<EvaluationCache> &cache, Rng &rng,
                             const Deadline &deadline, double alpha) {
@@ -140,17 +138,16 @@ run_single_worker_iteration(const F &wrapped, const GivpConfig &config,
     double grasp_eval = evaluate_with_cache(candidate, wrapped, cache, shape.half);
     double vnd_cost = local_search_vnd(wrapped, candidate, grasp_eval, shape.half, lower, upper,
                                        config.vnd_iterations, cache, rng, deadline);
-    double ils_cost = ils_search(wrapped, candidate, vnd_cost, shape.half, lower, upper,
-                                 config.ils_iterations, config.vnd_iterations,
-                                 config.perturbation_strength, cache, rng, deadline);
+    double ils_cost =
+        ils_search(wrapped, candidate, vnd_cost, shape.half, lower, upper, config.ils_iterations,
+                   config.vnd_iterations, config.perturbation_strength, cache, rng, deadline);
     return {std::move(candidate), ils_cost};
 }
 
 template <typename F>
 static CandidateCost
-run_multi_worker_iteration(const F &wrapped, const GivpConfig &config,
-                           const ProblemShape &shape, const std::vector<double> &lower,
-                           const std::vector<double> &upper,
+run_multi_worker_iteration(const F &wrapped, const GivpConfig &config, const ProblemShape &shape,
+                           const std::vector<double> &lower, const std::vector<double> &upper,
                            const std::vector<double> *initial_guess_ptr, Rng &rng,
                            const Deadline &deadline, double alpha) {
     struct WorkerResult {
@@ -181,8 +178,7 @@ run_multi_worker_iteration(const F &wrapped, const GivpConfig &config,
                 double grasp_eval =
                     evaluate_with_cache(local_candidate, wrapped, local_cache, shape.half);
                 double vnd_cost =
-                    local_search_vnd(wrapped, local_candidate, grasp_eval, shape.half, lower,
-                                     upper,
+                    local_search_vnd(wrapped, local_candidate, grasp_eval, shape.half, lower, upper,
                                      config.vnd_iterations, local_cache, worker_rng, deadline);
                 double local_cost =
                     ils_search(wrapped, local_candidate, vnd_cost, shape.half, lower, upper,
@@ -205,8 +201,8 @@ run_multi_worker_iteration(const F &wrapped, const GivpConfig &config,
 }
 
 inline std::optional<std::size_t>
-update_convergence_monitor(std::optional<ConvergenceMonitor> &conv_monitor,
-                           ElitePool &elite_pool, double best_cost, std::size_t &stagnation,
+update_convergence_monitor(std::optional<ConvergenceMonitor> &conv_monitor, ElitePool &elite_pool,
+                           double best_cost, std::size_t &stagnation,
                            std::optional<EvaluationCache> &cache) {
     if (!conv_monitor)
         return std::nullopt;
@@ -233,26 +229,23 @@ inline bool should_run_path_relinking(const GivpConfig &config, std::size_t iter
 
 template <typename F>
 static void
-apply_stagnation_restart(const F &wrapped, const GivpConfig &config,
-                         const ProblemShape &shape, const std::vector<double> &lower,
-                         const std::vector<double> &upper,
-                         std::optional<EvaluationCache> &cache, Rng &rng,
-                         const Deadline &deadline, double alpha, std::size_t &stagnation,
-                         std::vector<double> &best_solution, double &best_cost) {
+apply_stagnation_restart(const F &wrapped, const GivpConfig &config, const ProblemShape &shape,
+                         const std::vector<double> &lower, const std::vector<double> &upper,
+                         std::optional<EvaluationCache> &cache, Rng &rng, const Deadline &deadline,
+                         double alpha, std::size_t &stagnation, std::vector<double> &best_solution,
+                         double &best_cost) {
     if (stagnation <= config.max_iterations / 4)
         return;
 
     auto child = rng.child();
     const GraspConstructParams restart_params{nullptr, alpha, shape.half,
                                               config.num_candidates_per_step};
-    auto [rsol, rcost0] =
-        construct_grasp(shape.num_vars, lower, upper, wrapped, restart_params, cache, child,
-                        deadline);
+    auto [rsol, rcost0] = construct_grasp(shape.num_vars, lower, upper, wrapped, restart_params,
+                                          cache, child, deadline);
     double rcost = local_search_vnd(wrapped, rsol, rcost0, shape.half, lower, upper,
                                     config.vnd_iterations, cache, child, deadline);
     rcost = ils_search(wrapped, rsol, rcost, shape.half, lower, upper, config.ils_iterations,
-                       config.vnd_iterations, config.perturbation_strength, cache, child,
-                       deadline);
+                       config.vnd_iterations, config.perturbation_strength, cache, child, deadline);
     if (rcost < best_cost) {
         best_cost = rcost;
         best_solution = std::move(rsol);
@@ -335,8 +328,8 @@ OptimizeResult run(F &&func, const std::vector<std::pair<double, double>> &bound
 
         CandidateCost iteration_result =
             (config.n_workers <= 1)
-                ? run_single_worker_iteration(wrapped, config, shape, lower, upper, ig,
-                                              cache, rng, deadline, alpha)
+                ? run_single_worker_iteration(wrapped, config, shape, lower, upper, ig, cache, rng,
+                                              deadline, alpha)
                 : run_multi_worker_iteration(wrapped, config, shape, lower, upper, ig, rng,
                                              deadline, alpha);
 
@@ -367,8 +360,8 @@ OptimizeResult run(F &&func, const std::vector<std::pair<double, double>> &bound
         }
 
         // Stagnation restart
-        apply_stagnation_restart(wrapped, config, shape, lower, upper, cache, rng,
-                                 deadline, alpha, stagnation, best_solution, best_cost);
+        apply_stagnation_restart(wrapped, config, shape, lower, upper, cache, rng, deadline, alpha,
+                                 stagnation, best_solution, best_cost);
 
         // Early stop — reuse the same convergence signal from this iteration.
         if (no_improve_count.has_value() && *no_improve_count >= config.early_stop_threshold) {
