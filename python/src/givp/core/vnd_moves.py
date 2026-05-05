@@ -37,7 +37,7 @@ def _try_integer_moves_module(
     cost_fn: Callable,
     lower_arr: np.ndarray | None,
     upper_arr: np.ndarray | None,
-):
+) -> tuple[np.ndarray, float, bool]:
     """Try +/-1 integer moves at *idx*; return first improvement or original."""
     old = sol[idx]
     base = int(np.rint(old))
@@ -63,7 +63,7 @@ def _try_continuous_move_module(
     rng: np.random.Generator,
     lower_arr: np.ndarray | None,
     upper_arr: np.ndarray | None,
-):
+) -> tuple[bool, float]:
     """Perturb *sol[idx]* by +/-5% of its span; accept if strictly better."""
     old = sol[idx]
     if lower_arr is not None and upper_arr is not None:
@@ -88,7 +88,7 @@ def _modify_indices_for_multiflip(
     rng: np.random.Generator,
     lower_arr: np.ndarray | None,
     upper_arr: np.ndarray | None,
-):
+) -> np.ndarray:
     """Apply simultaneous perturbations to *indices* for k-opt; return old values."""
     half = _get_half(solution.size)
     old_vals = solution[indices].copy()
@@ -120,7 +120,7 @@ def _modify_indices_for_multiflip(
             )
         solution[cont_indices] = new_vals
 
-    return old_vals
+    return old_vals.copy()  # type: ignore[no-any-return]  # ndarray fancy-index returns Any
 
 
 def _perturb_index(
@@ -130,7 +130,7 @@ def _perturb_index(
     rng: np.random.Generator,
     lower_arr: np.ndarray | None,
     upper_arr: np.ndarray | None,
-):
+) -> None:
     """Perturb a single variable in-place (integer +/-step, continuous +/-15% span)."""
     half = _get_half(perturbed.size)
     old = perturbed[idx]

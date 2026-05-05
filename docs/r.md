@@ -80,6 +80,27 @@ specialized subclasses such as:
 Rscript -e "testthat::test_dir('r/tests/testthat')"
 ```
 
+## Parallel evaluation (`n_workers`)
+
+The `n_workers` parameter controls how many worker processes evaluate
+GRASP candidate solutions in parallel.
+
+| Platform | Behaviour |
+|---|---|
+| Linux / macOS | Uses `parallel::mclapply`; `n_workers > 1` is fully supported |
+| Windows | `mclapply` forks are not available; evaluation falls back silently to sequential (`n_workers = 1`) |
+
+On Windows set `n_workers = 1L` explicitly to avoid confusion:
+
+```r
+cfg <- givp_config(n_workers = 1L)
+res <- givp(sphere, bounds = list(c(-5, 5), c(-5, 5)), config = cfg)
+```
+
+This limitation is inherent to R's `parallel` package on Windows and cannot
+be worked around without additional infrastructure (e.g. `doParallel` +
+`foreach`). A future version may add Windows-compatible parallelism.
+
 ## Literature Comparison Results (Notebook)
 
 R benchmark results are currently tracked from

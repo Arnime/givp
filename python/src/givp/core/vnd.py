@@ -79,12 +79,12 @@ def _create_cached_cost_fn(
 ) -> Callable:
     """Create a cost-function wrapper with evaluation caching."""
 
-    def cached_cost_fn(sol):
+    def cached_cost_fn(sol: np.ndarray) -> float:
         if cache is not None:
             cached = cache.get(sol)
             if cached is not None:
                 return cached
-        cost = cost_fn(sol)
+        cost: float = cost_fn(sol)
         if cache is not None:
             cache.put(sol, cost)
         return cost

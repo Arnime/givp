@@ -1,19 +1,5 @@
 // SPDX-FileCopyrightText: 2026 Arnaldo Mendes Pires Junior
 // SPDX-License-Identifier: MIT
-//
-// givp/givp.hpp — single include for the GIVP C++17 optimizer.
-//
-// Quick start:
-//
-//   #include <givp/givp.hpp>
-//
-//   auto sphere = [](const std::vector<double>& x) {
-//       double s = 0; for (auto v : x) s += v*v; return s;
-//   };
-//   std::vector<std::pair<double,double>> bounds(5, {-5.12, 5.12});
-//   givp::OptimizeResult r = givp::givp(sphere, bounds);
-//   std::cout << "best: " << r.fun << "\n";
-//
 #pragma once
 
 #include "config.hpp"

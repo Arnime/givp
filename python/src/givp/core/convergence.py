@@ -4,7 +4,12 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
+
+if TYPE_CHECKING:
+    from givp.core.elite import ElitePool
 
 
 class ConvergenceMonitor:
@@ -31,7 +36,7 @@ class ConvergenceMonitor:
         self.best_ever = float("inf")
         self.diversity_scores: list[float] = []
 
-    def update(self, current_cost: float, elite_pool=None) -> dict:
+    def update(self, current_cost: float, elite_pool: ElitePool | None = None) -> dict:
         """Update the monitor with the latest cost and return recommendations.
 
         Returns:

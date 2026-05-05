@@ -14,6 +14,7 @@ import secrets
 import time as _time_mod
 from collections.abc import Callable
 from contextvars import ContextVar
+from typing import Protocol
 
 import numpy as np
 
@@ -142,3 +143,33 @@ def _safe_evaluate(evaluator: EvaluatorFn, candidate: np.ndarray) -> float:
     if not np.isfinite(cost):
         return np.inf
     return cost
+
+
+class _CoreConfigProto(Protocol):
+    """Structural protocol satisfied by ``givp.config.GIVPConfig`` and any
+    compatible config object passed to core functions.
+
+    Core functions accept any object with these attributes, so ``GIVPConfig``
+    can be passed directly without copying field values into a separate class.
+    """
+
+    max_iterations: int
+    alpha: float
+    vnd_iterations: int
+    ils_iterations: int
+    perturbation_strength: int
+    use_elite_pool: bool
+    elite_size: int
+    path_relink_frequency: int
+    adaptive_alpha: bool
+    alpha_min: float
+    alpha_max: float
+    num_candidates_per_step: int
+    use_cache: bool
+    cache_size: int
+    early_stop_threshold: int
+    use_convergence_monitor: bool
+    n_workers: int
+    time_limit: float
+    integer_split: int | None
+    group_size: int | None

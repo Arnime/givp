@@ -36,7 +36,6 @@ from givp import GIVPConfig, OptimizeResult, TerminationReason, givp
 # ---------------------------------------------------------------------------
 
 _BOUNDS_3D = [(-5.0, 5.0)] * 3
-_BOUNDS_1D = [(-1.0, 1.0)]
 
 
 def _fast_cfg(max_iterations: int = 3, **kwargs: object) -> GIVPConfig:

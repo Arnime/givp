@@ -7,7 +7,7 @@ set -euo pipefail
 cd /workspace
 
 echo "[python] Installing dependencies"
-python -m pip install --upgrade pip
+python -m pip install --upgrade "pip==25.1.1"
 pip install --require-hashes -r python/requirements/ci.txt
 pip install --require-hashes -r python/requirements/benchmarks.txt
 bash .github/scripts/install-package.sh
@@ -51,7 +51,7 @@ pytest python/benchmarks/test_benchmarks.py \
 
 if [ "${RUN_MUTATION:-false}" = "true" ]; then
   echo "[python] Mutation testing"
-  pip install mutmut==2.4.4
+  pip install --require-hashes -r python/requirements/mutation.txt
   BROKEN_LINKS=$(find . -xtype l | wc -l)
   if [ "$BROKEN_LINKS" -gt 0 ]; then
     find . -xtype l -print -delete

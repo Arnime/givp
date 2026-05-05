@@ -145,7 +145,7 @@ GIVP-full vs GRASP-only) are documented in the comparison page under the
 
 ## Coverage
 
-The CI enforces a minimum of 80% line coverage for the C++ port.
+The CI enforces a minimum of 90% line coverage for the C++ port.
 
 ## API parity with Python
 

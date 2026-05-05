@@ -18,7 +18,7 @@ def evaluate_candidates(
     c_arr: np.ndarray,
     a_arr: np.ndarray,
     b: int,
-):
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Evaluate legacy SOG2 candidates and return ratio/cost/validity arrays."""
     warnings.warn(
         "evaluate_candidates is a legacy discrete-packing helper and will be removed "

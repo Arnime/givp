@@ -1,0 +1,511 @@
+{
+  "metadata": {
+    "givp_version": "1.0.0",
+    "dims": 5,
+    "n_runs": 3,
+    "seed_start": 0,
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "max_iter": 200,
+    "time_limit": 30.0,
+    "algorithms": [
+      "GIVP-full",
+      "GRASP-only"
+    ],
+    "functions": [
+      "Sphere",
+      "Rosenbrock",
+      "Rastrigin",
+      "Ackley",
+      "Griewank",
+      "Schwefel"
+    ],
+    "problem_references": {
+      "Sphere": "De Jong (1975)",
+      "Rosenbrock": "Rosenbrock (1960)",
+      "Rastrigin": "Rastrigin (1974); M\u00fchlenbein et al. (1991)",
+      "Ackley": "Ackley (1987)",
+      "Griewank": "Griewank (1981)",
+      "Schwefel": "Schwefel (1981)"
+    },
+    "algo_descriptions": {
+      "GIVP-full": "GRASP-ILS-VND-PR -- full hybrid pipeline (this work)",
+      "GRASP-only": "GRASP-only baseline (Feo & Resende 1995)"
+    }
+  },
+  "summary": [
+    {
+      "function": "Sphere",
+      "algorithm": "GIVP-full",
+      "n_runs": 3,
+      "mean": 5.2276203776953806e-05,
+      "std": 1.9778806180024958e-05,
+      "best": 2.9468707849362817e-05,
+      "median": 6.264807430535114e-05,
+      "worst": 6.471182917614746e-05,
+      "nfev_mean": 414036.6666666667
+    },
+    {
+      "function": "Sphere",
+      "algorithm": "GRASP-only",
+      "n_runs": 3,
+      "mean": 0.3430947483966495,
+      "std": 0.0870324666077033,
+      "best": 0.27760705493406934,
+      "median": 0.3098221445452679,
+      "worst": 0.44185504571061135,
+      "nfev_mean": 4822.666666666667
+    },
+    {
+      "function": "Rosenbrock",
+      "algorithm": "GIVP-full",
+      "n_runs": 3,
+      "mean": 0.16226576947741483,
+      "std": 0.09082176230521286,
+      "best": 0.08401054568503269,
+      "median": 0.14093114133796278,
+      "worst": 0.261855621409249,
+      "nfev_mean": 483160.0
+    },
+    {
+      "function": "Rosenbrock",
+      "algorithm": "GRASP-only",
+      "n_runs": 3,
+      "mean": 228.88287376454898,
+      "std": 225.5676893220782,
+      "best": 82.60559584986072,
+      "median": 115.38550081501755,
+      "worst": 488.6575246287686,
+      "nfev_mean": 4799.333333333333
+    },
+    {
+      "function": "Rastrigin",
+      "algorithm": "GIVP-full",
+      "n_runs": 3,
+      "mean": 0.0018629127682340634,
+      "std": 0.0012453513086774955,
+      "best": 0.0008752484470520017,
+      "median": 0.0014515989331300716,
+      "worst": 0.0032618909245201166,
+      "nfev_mean": 510626.0
+    },
+    {
+      "function": "Rastrigin",
+      "algorithm": "GRASP-only",
+      "n_runs": 3,
+      "mean": 5.571632345945282,
+      "std": 1.108889599231771,
+      "best": 4.538412590607749,
+      "median": 5.433277456493265,
+      "worst": 6.7432069907348335,
+      "nfev_mean": 4914.666666666667
+    },
+    {
+      "function": "Ackley",
+      "algorithm": "GIVP-full",
+      "n_runs": 3,
+      "mean": 0.09023639115437065,
+      "std": 0.007564929029093592,
+      "best": 0.0857565963613145,
+      "median": 0.08598192713700259,
+      "worst": 0.09897064996479488,
+      "nfev_mean": 424843.3333333333
+    },
+    {
+      "function": "Ackley",
+      "algorithm": "GRASP-only",
+      "n_runs": 3,
+      "mean": 4.360718607157402,
+      "std": 1.7100490662304273,
+      "best": 3.3239400662111867,
+      "median": 3.423743489688221,
+      "worst": 6.334472265572799,
+      "nfev_mean": 4852.666666666667
+    },
+    {
+      "function": "Griewank",
+      "algorithm": "GIVP-full",
+      "n_runs": 3,
+      "mean": 0.05511641143699264,
+      "std": 0.013615640729850751,
+      "best": 0.03944372659439355,
+      "median": 0.06187531019257497,
+      "worst": 0.0640301975240094,
+      "nfev_mean": 482476.0
+    },
+    {
+      "function": "Griewank",
+      "algorithm": "GRASP-only",
+      "n_runs": 3,
+      "mean": 1.7010307696438576,
+      "std": 0.32449499432824824,
+      "best": 1.3263630103805448,
+      "median": 1.8844847046179038,
+      "worst": 1.892244593933124,
+      "nfev_mean": 4830.666666666667
+    },
+    {
+      "function": "Schwefel",
+      "algorithm": "GIVP-full",
+      "n_runs": 3,
+      "mean": 6.545054596548046e-05,
+      "std": 1.1565056663752348e-06,
+      "best": 6.416777432605159e-05,
+      "median": 6.577040721822414e-05,
+      "worst": 6.641345635216567e-05,
+      "nfev_mean": 505257.6666666667
+    },
+    {
+      "function": "Schwefel",
+      "algorithm": "GRASP-only",
+      "n_runs": 3,
+      "mean": 546.3407871733502,
+      "std": 82.39763548282295,
+      "best": 484.29550158559096,
+      "median": 514.8961806648138,
+      "worst": 639.830679269646,
+      "nfev_mean": 4863.333333333333
+    }
+  ],
+  "records": {
+    "Sphere": [
+      {
+        "algorithm": "GIVP-full",
+        "seed": 0,
+        "fun": 2.9468707849362817e-05,
+        "nit": 143,
+        "nfev": 562119,
+        "time_s": 26.797,
+        "trace": null
+      },
+      {
+        "algorithm": "GIVP-full",
+        "seed": 1,
+        "fun": 6.471182917614746e-05,
+        "nit": 82,
+        "nfev": 320919,
+        "time_s": 15.6104,
+        "trace": null
+      },
+      {
+        "algorithm": "GIVP-full",
+        "seed": 2,
+        "fun": 6.264807430535114e-05,
+        "nit": 93,
+        "nfev": 359072,
+        "time_s": 16.8605,
+        "trace": null
+      },
+      {
+        "algorithm": "GRASP-only",
+        "seed": 0,
+        "fun": 0.44185504571061135,
+        "nit": 200,
+        "nfev": 4829,
+        "time_s": 0.178,
+        "trace": null
+      },
+      {
+        "algorithm": "GRASP-only",
+        "seed": 1,
+        "fun": 0.27760705493406934,
+        "nit": 200,
+        "nfev": 4818,
+        "time_s": 0.1664,
+        "trace": null
+      },
+      {
+        "algorithm": "GRASP-only",
+        "seed": 2,
+        "fun": 0.3098221445452679,
+        "nit": 200,
+        "nfev": 4821,
+        "time_s": 0.1674,
+        "trace": null
+      }
+    ],
+    "Rosenbrock": [
+      {
+        "algorithm": "GIVP-full",
+        "seed": 0,
+        "fun": 0.14093114133796278,
+        "nit": 127,
+        "nfev": 547561,
+        "time_s": 30.0009,
+        "trace": null
+      },
+      {
+        "algorithm": "GIVP-full",
+        "seed": 1,
+        "fun": 0.261855621409249,
+        "nit": 116,
+        "nfev": 498801,
+        "time_s": 30.0014,
+        "trace": null
+      },
+      {
+        "algorithm": "GIVP-full",
+        "seed": 2,
+        "fun": 0.08401054568503269,
+        "nit": 94,
+        "nfev": 403118,
+        "time_s": 23.2344,
+        "trace": null
+      },
+      {
+        "algorithm": "GRASP-only",
+        "seed": 0,
+        "fun": 488.6575246287686,
+        "nit": 200,
+        "nfev": 4809,
+        "time_s": 0.267,
+        "trace": null
+      },
+      {
+        "algorithm": "GRASP-only",
+        "seed": 1,
+        "fun": 82.60559584986072,
+        "nit": 200,
+        "nfev": 4784,
+        "time_s": 0.2544,
+        "trace": null
+      },
+      {
+        "algorithm": "GRASP-only",
+        "seed": 2,
+        "fun": 115.38550081501755,
+        "nit": 200,
+        "nfev": 4805,
+        "time_s": 0.2276,
+        "trace": null
+      }
+    ],
+    "Rastrigin": [
+      {
+        "algorithm": "GIVP-full",
+        "seed": 0,
+        "fun": 0.0014515989331300716,
+        "nit": 159,
+        "nfev": 557124,
+        "time_s": 30.0009,
+        "trace": null
+      },
+      {
+        "algorithm": "GIVP-full",
+        "seed": 1,
+        "fun": 0.0032618909245201166,
+        "nit": 146,
+        "nfev": 509182,
+        "time_s": 30.001,
+        "trace": null
+      },
+      {
+        "algorithm": "GIVP-full",
+        "seed": 2,
+        "fun": 0.0008752484470520017,
+        "nit": 134,
+        "nfev": 465572,
+        "time_s": 30.0019,
+        "trace": null
+      },
+      {
+        "algorithm": "GRASP-only",
+        "seed": 0,
+        "fun": 6.7432069907348335,
+        "nit": 200,
+        "nfev": 4925,
+        "time_s": 0.1931,
+        "trace": null
+      },
+      {
+        "algorithm": "GRASP-only",
+        "seed": 1,
+        "fun": 4.538412590607749,
+        "nit": 200,
+        "nfev": 4913,
+        "time_s": 0.1845,
+        "trace": null
+      },
+      {
+        "algorithm": "GRASP-only",
+        "seed": 2,
+        "fun": 5.433277456493265,
+        "nit": 200,
+        "nfev": 4906,
+        "time_s": 0.1823,
+        "trace": null
+      }
+    ],
+    "Ackley": [
+      {
+        "algorithm": "GIVP-full",
+        "seed": 0,
+        "fun": 0.0857565963613145,
+        "nit": 98,
+        "nfev": 393899,
+        "time_s": 24.7602,
+        "trace": null
+      },
+      {
+        "algorithm": "GIVP-full",
+        "seed": 1,
+        "fun": 0.09897064996479488,
+        "nit": 131,
+        "nfev": 521484,
+        "time_s": 30.0015,
+        "trace": null
+      },
+      {
+        "algorithm": "GIVP-full",
+        "seed": 2,
+        "fun": 0.08598192713700259,
+        "nit": 90,
+        "nfev": 359147,
+        "time_s": 25.2349,
+        "trace": null
+      },
+      {
+        "algorithm": "GRASP-only",
+        "seed": 0,
+        "fun": 3.3239400662111867,
+        "nit": 200,
+        "nfev": 4850,
+        "time_s": 0.2974,
+        "trace": null
+      },
+      {
+        "algorithm": "GRASP-only",
+        "seed": 1,
+        "fun": 3.423743489688221,
+        "nit": 200,
+        "nfev": 4872,
+        "time_s": 0.2211,
+        "trace": null
+      },
+      {
+        "algorithm": "GRASP-only",
+        "seed": 2,
+        "fun": 6.334472265572799,
+        "nit": 200,
+        "nfev": 4836,
+        "time_s": 0.2054,
+        "trace": null
+      }
+    ],
+    "Griewank": [
+      {
+        "algorithm": "GIVP-full",
+        "seed": 0,
+        "fun": 0.0640301975240094,
+        "nit": 114,
+        "nfev": 452118,
+        "time_s": 29.8403,
+        "trace": null
+      },
+      {
+        "algorithm": "GIVP-full",
+        "seed": 1,
+        "fun": 0.06187531019257497,
+        "nit": 115,
+        "nfev": 450425,
+        "time_s": 30.0008,
+        "trace": null
+      },
+      {
+        "algorithm": "GIVP-full",
+        "seed": 2,
+        "fun": 0.03944372659439355,
+        "nit": 139,
+        "nfev": 544885,
+        "time_s": 30.0008,
+        "trace": null
+      },
+      {
+        "algorithm": "GRASP-only",
+        "seed": 0,
+        "fun": 1.892244593933124,
+        "nit": 200,
+        "nfev": 4839,
+        "time_s": 0.1874,
+        "trace": null
+      },
+      {
+        "algorithm": "GRASP-only",
+        "seed": 1,
+        "fun": 1.3263630103805448,
+        "nit": 200,
+        "nfev": 4814,
+        "time_s": 0.1957,
+        "trace": null
+      },
+      {
+        "algorithm": "GRASP-only",
+        "seed": 2,
+        "fun": 1.8844847046179038,
+        "nit": 200,
+        "nfev": 4839,
+        "time_s": 0.1906,
+        "trace": null
+      }
+    ],
+    "Schwefel": [
+      {
+        "algorithm": "GIVP-full",
+        "seed": 0,
+        "fun": 6.577040721822414e-05,
+        "nit": 147,
+        "nfev": 571106,
+        "time_s": 30.0009,
+        "trace": null
+      },
+      {
+        "algorithm": "GIVP-full",
+        "seed": 1,
+        "fun": 6.416777432605159e-05,
+        "nit": 114,
+        "nfev": 433470,
+        "time_s": 23.2129,
+        "trace": null
+      },
+      {
+        "algorithm": "GIVP-full",
+        "seed": 2,
+        "fun": 6.641345635216567e-05,
+        "nit": 134,
+        "nfev": 511197,
+        "time_s": 30.001,
+        "trace": null
+      },
+      {
+        "algorithm": "GRASP-only",
+        "seed": 0,
+        "fun": 514.8961806648138,
+        "nit": 200,
+        "nfev": 4890,
+        "time_s": 0.1748,
+        "trace": null
+      },
+      {
+        "algorithm": "GRASP-only",
+        "seed": 1,
+        "fun": 639.830679269646,
+        "nit": 200,
+        "nfev": 4858,
+        "time_s": 0.1751,
+        "trace": null
+      },
+      {
+        "algorithm": "GRASP-only",
+        "seed": 2,
+        "fun": 484.29550158559096,
+        "nit": 200,
+        "nfev": 4842,
+        "time_s": 0.1767,
+        "trace": null
+      }
+    ]
+  }
+}

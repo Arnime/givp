@@ -18,7 +18,16 @@ enum class Direction : std::uint8_t {
 };
 
 /// Algorithm hyper-parameters.  Defaults mirror the Rust implementation.
-struct GivpConfig {
+struct GivpConfigRuntime {
+    std::optional<std::size_t> integer_split;
+    std::optional<std::size_t> group_size;
+    std::optional<std::vector<double>> initial_guess;
+    std::optional<std::uint64_t> seed;
+    bool verbose = false;
+};
+
+/// Algorithm hyper-parameters. Defaults mirror the Rust implementation.
+struct GivpConfig : public GivpConfigRuntime {
     std::size_t max_iterations = 100;
     double alpha = 0.12;
     std::size_t vnd_iterations = 200;
@@ -38,12 +47,6 @@ struct GivpConfig {
     std::size_t n_workers = 1;
     double time_limit = 0.0;
     Direction direction = Direction::Minimize;
-
-    std::optional<std::size_t> integer_split;
-    std::optional<std::size_t> group_size;
-    std::optional<std::vector<double>> initial_guess;
-    std::optional<std::uint64_t> seed;
-    bool verbose = false;
 
     /// Validate all numeric ranges; throws InvalidConfig on failure.
     void validate() const {

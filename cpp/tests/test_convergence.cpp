@@ -91,19 +91,19 @@ TEST_CASE("cache clear removes all entries", "[cache]") {
 // ── ElitePool ─────────────────────────────────────────────────────────────────
 
 TEST_CASE("empty pool get_best throws", "[elite]") {
-    ElitePool pool{5, 0.01, {-5.0, -5.0}, {5.0, 5.0}};
+    ElitePool pool{ElitePoolMaxSize{5}, ElitePoolMinDistance{0.01}, {-5.0, -5.0}, {5.0, 5.0}};
     REQUIRE_THROWS_AS(pool.get_best(), EmptyPool);
 }
 
 TEST_CASE("pool accepts distinct solutions", "[elite]") {
-    ElitePool pool{5, 0.01, {-5.0, -5.0}, {5.0, 5.0}};
+    ElitePool pool{ElitePoolMaxSize{5}, ElitePoolMinDistance{0.01}, {-5.0, -5.0}, {5.0, 5.0}};
     REQUIRE(pool.add({1.0, 0.0}, 5.0));
     REQUIRE(pool.add({-3.0, 2.0}, 1.0));
     REQUIRE(pool.len() == 2);
 }
 
 TEST_CASE("pool get_best returns lowest cost", "[elite]") {
-    ElitePool pool{5, 0.01, {-5.0, -5.0}, {5.0, 5.0}};
+    ElitePool pool{ElitePoolMaxSize{5}, ElitePoolMinDistance{0.01}, {-5.0, -5.0}, {5.0, 5.0}};
     pool.add({1.0, 0.0}, 5.0);
     pool.add({-3.0, 2.0}, 1.0);
     auto [ptr, cost] = pool.get_best();
@@ -111,14 +111,14 @@ TEST_CASE("pool get_best returns lowest cost", "[elite]") {
 }
 
 TEST_CASE("pool rejects duplicate (too-close) solution", "[elite]") {
-    ElitePool pool{5, 0.5, {-5.0, -5.0}, {5.0, 5.0}};
+    ElitePool pool{ElitePoolMaxSize{5}, ElitePoolMinDistance{0.5}, {-5.0, -5.0}, {5.0, 5.0}};
     pool.add({0.0, 0.0}, 3.0);
     // Very close solution should be rejected
     REQUIRE_FALSE(pool.add({0.01, 0.0}, 2.0));
 }
 
 TEST_CASE("pool replaces worst when full and new is better", "[elite]") {
-    ElitePool pool{2, 0.01, {-10.0, -10.0}, {10.0, 10.0}};
+    ElitePool pool{ElitePoolMaxSize{2}, ElitePoolMinDistance{0.01}, {-10.0, -10.0}, {10.0, 10.0}};
     pool.add({1.0, 0.0}, 10.0);
     pool.add({5.0, 0.0}, 8.0);
     bool replaced = pool.add({-5.0, 0.0}, 1.0);
@@ -129,7 +129,7 @@ TEST_CASE("pool replaces worst when full and new is better", "[elite]") {
 }
 
 TEST_CASE("pool keep_top trims to n", "[elite]") {
-    ElitePool pool{5, 0.01, {-5.0, -5.0}, {5.0, 5.0}};
+    ElitePool pool{ElitePoolMaxSize{5}, ElitePoolMinDistance{0.01}, {-5.0, -5.0}, {5.0, 5.0}};
     pool.add({1.0, 0.0}, 3.0);
     pool.add({-3.0, 2.0}, 2.0);
     pool.add({4.0, -4.0}, 5.0);
@@ -138,7 +138,7 @@ TEST_CASE("pool keep_top trims to n", "[elite]") {
 }
 
 TEST_CASE("pool clear empties", "[elite]") {
-    ElitePool pool{5, 0.01, {-5.0, -5.0}, {5.0, 5.0}};
+    ElitePool pool{ElitePoolMaxSize{5}, ElitePoolMinDistance{0.01}, {-5.0, -5.0}, {5.0, 5.0}};
     pool.add({1.0, 0.0}, 3.0);
     pool.clear();
     REQUIRE(pool.empty());
@@ -147,21 +147,21 @@ TEST_CASE("pool clear empties", "[elite]") {
 // ── ConvergenceMonitor ────────────────────────────────────────────────────────
 
 TEST_CASE("monitor first update resets no_improve_count", "[convergence]") {
-    ConvergenceMonitor m{10, 20};
+    ConvergenceMonitor m{ConvergenceWindowSize{10}, ConvergenceRestartThreshold{20}};
     auto sig = m.update(1.0, nullptr);
     REQUIRE(sig.no_improve_count == 0);
     REQUIRE(sig.diversity == Catch::Approx(1.0));
 }
 
 TEST_CASE("monitor increments no_improve_count on plateau", "[convergence]") {
-    ConvergenceMonitor m{10, 20};
+    ConvergenceMonitor m{ConvergenceWindowSize{10}, ConvergenceRestartThreshold{20}};
     m.update(1.0, nullptr);
     auto sig = m.update(2.0, nullptr); // no improvement
     REQUIRE(sig.no_improve_count == 1);
 }
 
 TEST_CASE("monitor resets no_improve_count when improved", "[convergence]") {
-    ConvergenceMonitor m{10, 20};
+    ConvergenceMonitor m{ConvergenceWindowSize{10}, ConvergenceRestartThreshold{20}};
     m.update(5.0, nullptr);
     m.update(6.0, nullptr);            // no improve
     m.update(6.0, nullptr);            // no improve
@@ -170,15 +170,15 @@ TEST_CASE("monitor resets no_improve_count when improved", "[convergence]") {
 }
 
 TEST_CASE("monitor single-solution pool has diversity = 1", "[convergence]") {
-    ConvergenceMonitor m{10, 20};
-    ElitePool pool{5, 0.01, {-1.0}, {1.0}};
+    ConvergenceMonitor m{ConvergenceWindowSize{10}, ConvergenceRestartThreshold{20}};
+    ElitePool pool{ElitePoolMaxSize{5}, ElitePoolMinDistance{0.01}, {-1.0}, {1.0}};
     pool.add({0.5}, 0.5);
     auto sig = m.update(0.5, &pool);
     REQUIRE(sig.diversity == Catch::Approx(1.0));
 }
 
 TEST_CASE("monitor reset_no_improve resets counter", "[convergence]") {
-    ConvergenceMonitor m{10, 20};
+    ConvergenceMonitor m{ConvergenceWindowSize{10}, ConvergenceRestartThreshold{20}};
     m.update(1.0, nullptr);
     m.update(2.0, nullptr);
     m.reset_no_improve();

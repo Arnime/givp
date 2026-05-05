@@ -16,15 +16,22 @@ namespace givp::detail {
 
 static constexpr std::size_t MAX_PR_VARS = 25;
 
+struct PrSource {
+    const std::vector<double> &value;
+};
+
+struct PrTarget {
+    const std::vector<double> &value;
+};
+
 /// Greedy (best-move) path relinking from source toward target.
 template <typename F>
 static std::pair<std::vector<double>, double>
-path_relinking_best(const F &func, const std::vector<double> &source,
-                    const std::vector<double> &target, std::vector<std::size_t> diff_indices,
-                    std::optional<EvaluationCache> &cache, std::size_t half,
-                    const Deadline &deadline) {
+path_relinking_best(const F &func, PrSource source, PrTarget target,
+                    std::vector<std::size_t> diff_indices, std::optional<EvaluationCache> &cache,
+                    std::size_t half, const Deadline &deadline) {
 
-    std::vector<double> current = source;
+    std::vector<double> current = source.value;
     std::vector<double> best = current;
     double best_cost = evaluate_with_cache(current, func, cache, half);
 
@@ -39,12 +46,12 @@ path_relinking_best(const F &func, const std::vector<double> &source,
         for (std::size_t pos = 0; pos < diff_indices.size(); ++pos) {
             std::size_t idx = diff_indices[pos];
             double old = current[idx];
-            current[idx] = target[idx];
-            double cost = evaluate_with_cache(current, func, cache, half);
-            if (cost < best_mv_cost) {
+            current[idx] = target.value[idx];
+            if (double cost = evaluate_with_cache(current, func, cache, half);
+                cost < best_mv_cost) {
                 best_mv_cost = cost;
                 best_idx_pos = pos;
-                best_mv_val = target[idx];
+                best_mv_val = target.value[idx];
             }
             current[idx] = old;
         }
@@ -92,10 +99,10 @@ std::pair<std::vector<double>, double> bidirectional_path_relinking(
         std::swap(diff_indices[i], diff_indices[j]);
     }
 
-    auto [best_fwd, cost_fwd] =
-        path_relinking_best(func, sol1, sol2, diff_indices, cache, half, deadline);
-    auto [best_bwd, cost_bwd] =
-        path_relinking_best(func, sol2, sol1, diff_indices, cache, half, deadline);
+    auto [best_fwd, cost_fwd] = path_relinking_best(func, PrSource{sol1}, PrTarget{sol2},
+                                                    diff_indices, cache, half, deadline);
+    auto [best_bwd, cost_bwd] = path_relinking_best(func, PrSource{sol2}, PrTarget{sol1},
+                                                    diff_indices, cache, half, deadline);
 
     return (cost_fwd <= cost_bwd) ? std::make_pair(std::move(best_fwd), cost_fwd)
                                   : std::make_pair(std::move(best_bwd), cost_bwd);

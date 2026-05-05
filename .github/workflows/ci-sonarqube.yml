@@ -60,6 +60,37 @@ jobs:
                   echo "Skipping SonarQube scan because required secrets are missing."
                   echo "Set SONAR_TOKEN and SONAR_HOST_URL in repository secrets to enable CI SonarQube analysis."
 
+            - name: Set up Python 3.13
+              if: steps.preflight.outputs.enabled == 'true'
+              uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+              with:
+                  python-version: "3.13"
+
+            - name: Generate Python coverage
+              if: steps.preflight.outputs.enabled == 'true'
+              run: |
+                  pip install --require-hashes -r python/requirements/ci.txt
+                  sh .github/scripts/install-package-editable.sh
+                  pytest --cov=givp --cov-report=xml:coverage-python.xml python/tests/
+
+            - name: Set up Rust toolchain
+              if: steps.preflight.outputs.enabled == 'true'
+              uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+              with:
+                  toolchain: stable
+                  components: llvm-tools-preview
+
+            - name: Install cargo-llvm-cov
+              if: steps.preflight.outputs.enabled == 'true'
+              uses: taiki-e/install-action@7ea35f098a7369cd23488403f58be9c491a6c55f # v2.77.0
+              with:
+                  tool: cargo-llvm-cov
+
+            - name: Generate Rust coverage
+              if: steps.preflight.outputs.enabled == 'true'
+              working-directory: rust
+              run: cargo llvm-cov --all-features --lcov --output-path lcov.info
+
             - name: Prepare C++ compile database
               if: steps.preflight.outputs.enabled == 'true'
               run: |
@@ -77,9 +108,13 @@ jobs:
                     build-sonar/compile_commands.json > /tmp/cc_filtered.json
                   mv /tmp/cc_filtered.json build-sonar/compile_commands.json
 
+            - name: Remove compiled Python artefacts before scan
+              if: steps.preflight.outputs.enabled == 'true'
+              run: find . -type d -name '__pycache__' -exec rm -rf {} + 2>/dev/null || true
+
             - name: SonarQube scan
               if: steps.preflight.outputs.enabled == 'true'
-              uses: SonarSource/sonarqube-scan-action@v5.3.0
+              uses: SonarSource/sonarqube-scan-action@8c71dc039c2dd71d3821e89a2b58ecc7fee6ced9 # v5.3.0
               env:
                   SONAR_TOKEN: ${{ secrets['SONAR_TOKEN'] }}
                   SONAR_HOST_URL: ${{ secrets['SONAR_HOST_URL'] }}

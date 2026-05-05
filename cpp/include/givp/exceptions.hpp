@@ -10,7 +10,7 @@ namespace givp {
 /// Base exception for all GIVP errors.
 class GivpError : public std::runtime_error {
   public:
-    explicit GivpError(const std::string &msg) : std::runtime_error(msg) {}
+    using std::runtime_error::runtime_error;
 };
 
 class InvalidBounds : public GivpError {

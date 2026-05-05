@@ -11,6 +11,14 @@
 
 namespace givp::detail {
 
+struct ElitePoolMaxSize {
+    std::size_t value;
+};
+
+struct ElitePoolMinDistance {
+    double value;
+};
+
 /// Diversity-aware elite pool of best solutions.
 class ElitePool {
     std::size_t max_size_;
@@ -19,7 +27,7 @@ class ElitePool {
     std::vector<double> range_;
 
     double relative_distance(const std::vector<double> &a, const std::vector<double> &b) const {
-        double n = static_cast<double>(a.size());
+        const auto n = static_cast<double>(a.size());
         double total = 0.0;
         for (std::size_t i = 0; i < a.size(); ++i)
             total += std::abs(a[i] - b[i]) / range_[i];
@@ -27,13 +35,13 @@ class ElitePool {
     }
 
   public:
-    ElitePool(std::size_t max_size, double min_distance, const std::vector<double> &lower,
-              const std::vector<double> &upper)
-        : max_size_(max_size), min_distance_(min_distance) {
+    ElitePool(ElitePoolMaxSize max_size, ElitePoolMinDistance min_distance,
+              const std::vector<double> &lower, const std::vector<double> &upper)
+        : max_size_(max_size.value), min_distance_(min_distance.value) {
         range_.resize(lower.size());
         for (std::size_t i = 0; i < lower.size(); ++i)
             range_[i] = std::max(upper[i] - lower[i], 1e-12);
-        pool_.reserve(max_size + 1);
+        pool_.reserve(max_size_ + 1);
     }
 
     bool add(std::vector<double> solution, double cost) {
