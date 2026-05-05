@@ -13,7 +13,8 @@ on:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
-permissions: read-all
+permissions:
+  contents: read
 
 jobs:
   TagBot:
@@ -37,3 +38,5 @@ jobs:
           ssh: ${{ secrets.DOCUMENTER_KEY }}
           subdir: julia
           lookback: ${{ github.event.inputs.lookback || '3' }}
+
+

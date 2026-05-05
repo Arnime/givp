@@ -22,10 +22,8 @@
 #include <chrono>
 #include <cmath>
 #include <cstddef>
-#include <cstdint>
 #include <exception>
 #include <iostream>
-#include <optional>
 #include <utility>
 #include <vector>
 
@@ -63,16 +61,27 @@ static double rastrigin(const std::vector<double> &x) {
 
 // Deliberately lean config for CI smoke benchmarks.
 // These values prioritise speed, not solution quality.
-static givp::GivpConfig fast_config(std::uint64_t seed = 42) {
+static givp::GivpConfig fast_config(std::size_t integer_split) {
     givp::GivpConfig cfg;
-    cfg.seed = seed;
+    cfg.seed = 42;
     cfg.max_iterations = 8;
     cfg.vnd_iterations = 15;
     cfg.ils_iterations = 2;
     cfg.use_convergence_monitor = false; // skip overhead
     cfg.path_relink_frequency = 4;
-    cfg.integer_split = std::nullopt; // set per call
+    cfg.integer_split = integer_split;
     return cfg;
+}
+
+using ObjFn = double (*)(const std::vector<double> &);
+
+static void run_bench(ankerl::nanobench::Bench &bench, const char *name, ObjFn fn,
+                      std::vector<std::pair<double, double>> bounds, std::size_t integer_split) {
+    bench.run(name, [&, integer_split] {
+        auto cfg = fast_config(integer_split);
+        auto r = givp::givp(fn, bounds, cfg);
+        ankerl::nanobench::doNotOptimizeAway(r.fun);
+    });
 }
 
 // ── Benchmarks
@@ -89,48 +98,20 @@ int main() try {
         .maxEpochTime(std::chrono::milliseconds{5'000});
 
     // sphere 5D
-    {
-        std::vector<std::pair<double, double>> bounds(5, {-5.12, 5.12});
-        bench.run("sphere_5d", [&] {
-            auto cfg = fast_config(42);
-            cfg.integer_split = 5; // all continuous
-            auto r = givp::givp(sphere, bounds, cfg);
-            ankerl::nanobench::doNotOptimizeAway(r.fun);
-        });
-    }
+    run_bench(bench, "sphere_5d", sphere, std::vector<std::pair<double, double>>(5, {-5.12, 5.12}),
+              5);
 
     // rosenbrock 5D
-    {
-        std::vector<std::pair<double, double>> bounds(5, {-5.0, 10.0});
-        bench.run("rosenbrock_5d", [&] {
-            auto cfg = fast_config(42);
-            cfg.integer_split = 5;
-            auto r = givp::givp(rosenbrock, bounds, cfg);
-            ankerl::nanobench::doNotOptimizeAway(r.fun);
-        });
-    }
+    run_bench(bench, "rosenbrock_5d", rosenbrock,
+              std::vector<std::pair<double, double>>(5, {-5.0, 10.0}), 5);
 
     // rastrigin 10D
-    {
-        std::vector<std::pair<double, double>> bounds(10, {-5.12, 5.12});
-        bench.run("rastrigin_10d", [&] {
-            auto cfg = fast_config(42);
-            cfg.integer_split = 10;
-            auto r = givp::givp(rastrigin, bounds, cfg);
-            ankerl::nanobench::doNotOptimizeAway(r.fun);
-        });
-    }
+    run_bench(bench, "rastrigin_10d", rastrigin,
+              std::vector<std::pair<double, double>>(10, {-5.12, 5.12}), 10);
 
     // rastrigin 30D (heavier — matches Python/Julia/Rust comparison)
-    {
-        std::vector<std::pair<double, double>> bounds(30, {-5.12, 5.12});
-        bench.run("rastrigin_30d", [&] {
-            auto cfg = fast_config(42);
-            cfg.integer_split = 30;
-            auto r = givp::givp(rastrigin, bounds, cfg);
-            ankerl::nanobench::doNotOptimizeAway(r.fun);
-        });
-    }
+    run_bench(bench, "rastrigin_30d", rastrigin,
+              std::vector<std::pair<double, double>>(30, {-5.12, 5.12}), 30);
 } catch (const std::exception &e) {
     std::cerr << "benchmark fatal error: " << e.what() << "\n";
     return 1;

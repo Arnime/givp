@@ -21,7 +21,8 @@ on:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
-permissions: read-all
+permissions:
+  contents: read
 
 jobs:
   setup:
@@ -513,3 +514,5 @@ jobs:
       - name: Run convergence quality gate
         run: |
           julia --project=julia julia/test/test_quality_gate.jl
+
+

@@ -17,6 +17,7 @@ import importlib
 import json
 import sys
 from pathlib import Path
+from typing import Any, cast
 
 import pytest
 
@@ -33,6 +34,67 @@ def _import_script(script_name: str):
     return importlib.import_module(script_name)
 
 
+def _run_script_main(script_name: str, args: list[str]) -> Any:
+    """Run benchmark script main with CLI-like args."""
+    return _import_script(script_name).main(args)
+
+
+def _read_json(path: Path) -> dict[str, Any]:
+    return cast(dict[str, Any], json.loads(path.read_text(encoding="utf-8")))
+
+
+def _tune_smoke_args(output: Path, *, include_sampler_seed: bool) -> list[str]:
+    args = [
+        "--n-trials",
+        "2",
+        "--dims",
+        "3",
+        "--n-eval-seeds",
+        "1",
+        "--functions",
+        "Sphere",
+        "--max-iter",
+        "10",
+        "--time-limit",
+        "5",
+    ]
+    if include_sampler_seed:
+        args.extend(["--sampler-seed", "0"])
+    args.extend(["--output", str(output)])
+    return args
+
+
+def _rlc_smoke_args(
+    output: Path,
+    *,
+    functions: list[str],
+    algorithms: list[str],
+    tune_config: Path | None = None,
+    resume: bool = False,
+) -> list[str]:
+    args = [
+        "--dims",
+        "3",
+        "--n-runs",
+        "2",
+        "--max-iter",
+        "10",
+        "--time-limit",
+        "5",
+        "--functions",
+        *functions,
+        "--algorithms",
+        *algorithms,
+        "--output",
+        str(output),
+    ]
+    if tune_config is not None:
+        args.extend(["--tune-config", str(tune_config)])
+    if resume:
+        args.append("--resume")
+    return args
+
+
 # ---------------------------------------------------------------------------
 # tune_hyperparams smoke test
 # ---------------------------------------------------------------------------
@@ -42,33 +104,15 @@ def _import_script(script_name: str):
 def test_tune_hyperparams_smoke(tmp_path):
     """tune_hyperparams.main() produces a valid JSON config with best_params."""
     output = tmp_path / "best_config.json"
-    tune = _import_script("tune_hyperparams")
 
-    exit_code = tune.main(
-        [
-            "--n-trials",
-            "2",
-            "--dims",
-            "3",
-            "--n-eval-seeds",
-            "1",
-            "--functions",
-            "Sphere",
-            "--max-iter",
-            "10",
-            "--time-limit",
-            "5",
-            "--sampler-seed",
-            "0",
-            "--output",
-            str(output),
-        ]
+    exit_code = _run_script_main(
+        "tune_hyperparams", _tune_smoke_args(output, include_sampler_seed=True)
     )
 
     assert exit_code == 0, "tune_hyperparams.main() returned non-zero exit code"
     assert output.exists(), "Output JSON not created"
 
-    data = json.loads(output.read_text(encoding="utf-8"))
+    data = _read_json(output)
     assert "best_params" in data, "JSON missing 'best_params' key"
     assert "metadata" in data, "JSON missing 'metadata' key"
     assert data["metadata"]["n_trials"] == 2
@@ -90,34 +134,22 @@ def test_tune_hyperparams_smoke(tmp_path):
 def test_run_literature_comparison_smoke(tmp_path):
     """run_literature_comparison.main() produces valid results JSON."""
     output = tmp_path / "results.json"
-    rlc = _import_script("run_literature_comparison")
 
-    exit_code = rlc.main(
-        [
-            "--dims",
-            "3",
-            "--n-runs",
-            "2",
-            "--max-iter",
-            "10",
-            "--time-limit",
-            "5",
-            "--functions",
-            "Sphere",
-            "--algorithms",
-            "GIVP-full",
-            "GRASP-only",
-            "--output",
-            str(output),
-        ]
+    exit_code = _run_script_main(
+        "run_literature_comparison",
+        _rlc_smoke_args(
+            output,
+            functions=["Sphere"],
+            algorithms=["GIVP-full", "GRASP-only"],
+        ),
     )
 
-    assert (
-        exit_code == 0
-    ), "run_literature_comparison.main() returned non-zero exit code"
+    assert exit_code == 0, (
+        "run_literature_comparison.main() returned non-zero exit code"
+    )
     assert output.exists(), "Output JSON not created"
 
-    data = json.loads(output.read_text(encoding="utf-8"))
+    data = _read_json(output)
     assert "metadata" in data
     assert "records" in data
     assert "summary" in data
@@ -130,53 +162,25 @@ def test_run_literature_comparison_smoke(tmp_path):
 @pytest.mark.slow
 def test_run_literature_comparison_with_tuned_config(tmp_path):
     """GIVP-tuned algorithm works when --tune-config is supplied."""
-    tune = _import_script("tune_hyperparams")
     tune_output = tmp_path / "best_config.json"
-    tune.main(
-        [
-            "--n-trials",
-            "2",
-            "--dims",
-            "3",
-            "--n-eval-seeds",
-            "1",
-            "--functions",
-            "Sphere",
-            "--max-iter",
-            "10",
-            "--time-limit",
-            "5",
-            "--output",
-            str(tune_output),
-        ]
+    _run_script_main(
+        "tune_hyperparams",
+        _tune_smoke_args(tune_output, include_sampler_seed=False),
     )
 
-    rlc = _import_script("run_literature_comparison")
     results_output = tmp_path / "results_tuned.json"
-    exit_code = rlc.main(
-        [
-            "--dims",
-            "3",
-            "--n-runs",
-            "2",
-            "--max-iter",
-            "10",
-            "--time-limit",
-            "5",
-            "--functions",
-            "Sphere",
-            "--algorithms",
-            "GIVP-full",
-            "GIVP-tuned",
-            "--tune-config",
-            str(tune_output),
-            "--output",
-            str(results_output),
-        ]
+    exit_code = _run_script_main(
+        "run_literature_comparison",
+        _rlc_smoke_args(
+            results_output,
+            functions=["Sphere"],
+            algorithms=["GIVP-full", "GIVP-tuned"],
+            tune_config=tune_output,
+        ),
     )
 
     assert exit_code == 0
-    data = json.loads(results_output.read_text(encoding="utf-8"))
+    data = _read_json(results_output)
     algos_in_results = {r["algorithm"] for r in data["records"]["Sphere"]}
     assert "GIVP-tuned" in algos_in_results
 
@@ -184,56 +188,30 @@ def test_run_literature_comparison_with_tuned_config(tmp_path):
 @pytest.mark.slow
 def test_run_literature_comparison_resume(tmp_path):
     """--resume skips already-completed functions."""
-    rlc = _import_script("run_literature_comparison")
     output = tmp_path / "results_resume.json"
 
     # First pass: run only Sphere
-    rlc.main(
-        [
-            "--dims",
-            "3",
-            "--n-runs",
-            "2",
-            "--max-iter",
-            "10",
-            "--time-limit",
-            "5",
-            "--functions",
-            "Sphere",
-            "--algorithms",
-            "GIVP-full",
-            "--output",
-            str(output),
-        ]
+    _run_script_main(
+        "run_literature_comparison",
+        _rlc_smoke_args(output, functions=["Sphere"], algorithms=["GIVP-full"]),
     )
     assert output.exists()
-    data_first = json.loads(output.read_text(encoding="utf-8"))
+    data_first = _read_json(output)
     sphere_records_first = list(data_first["records"]["Sphere"])
 
     # Second pass: resume — Sphere should be skipped; Rastrigin added
-    exit_code = rlc.main(
-        [
-            "--dims",
-            "3",
-            "--n-runs",
-            "2",
-            "--max-iter",
-            "10",
-            "--time-limit",
-            "5",
-            "--functions",
-            "Sphere",
-            "Rastrigin",
-            "--algorithms",
-            "GIVP-full",
-            "--output",
-            str(output),
-            "--resume",
-        ]
+    exit_code = _run_script_main(
+        "run_literature_comparison",
+        _rlc_smoke_args(
+            output,
+            functions=["Sphere", "Rastrigin"],
+            algorithms=["GIVP-full"],
+            resume=True,
+        ),
     )
 
     assert exit_code == 0
-    data_resumed = json.loads(output.read_text(encoding="utf-8"))
+    data_resumed = _read_json(output)
     # Sphere records must be identical (skipped, not re-run)
     assert data_resumed["records"]["Sphere"] == sphere_records_first
     # Rastrigin must now be present

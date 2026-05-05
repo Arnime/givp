@@ -15,7 +15,8 @@ on:
 env:
     FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
-permissions: read-all
+permissions:
+  contents: read
 
 jobs:
     auto-tag:
@@ -68,3 +69,5 @@ jobs:
                     --repo "${{ github.repository }}" \
                     --field tag="${{ steps.version.outputs.tag }}"
                   echo "Release workflow dispatched for ${{ steps.version.outputs.tag }}."
+
+

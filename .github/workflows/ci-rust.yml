@@ -22,7 +22,8 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   CARGO_TERM_COLOR: always
 
-permissions: read-all
+permissions:
+  contents: read
 
 jobs:
   setup:
@@ -169,3 +170,5 @@ jobs:
       - name: Run benchmarks (smoke test)
         working-directory: rust
         run: cargo bench -- --test
+
+

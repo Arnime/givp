@@ -11,7 +11,8 @@ on:
     schedule:
         - cron: "0 3 * * *"
 
-permissions: read-all
+permissions:
+  contents: read
 
 jobs:
     pip-audit:
@@ -53,3 +54,5 @@ jobs:
               uses: semgrep/semgrep-action@713efdd345f3035192eaa63f56867b88e63e4e5d # v1
               with:
                   config: "p/ci"
+
+

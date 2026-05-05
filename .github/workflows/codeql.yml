@@ -12,7 +12,8 @@ on:
     schedule:
         - cron: "27 4 * * 1"
 
-permissions: read-all
+permissions:
+  contents: read
 
 jobs:
     analyze:
@@ -30,3 +31,5 @@ jobs:
             - uses: github/codeql-action/analyze@95e58e9a2cdfd71adc6e0353d5c52f41a045d225 # v4.35.2
               with:
                   category: "/language:python"
+
+

@@ -22,7 +22,8 @@ on:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
-permissions: read-all
+permissions:
+  contents: read
 
 jobs:
   setup:
@@ -297,3 +298,5 @@ jobs:
           sh .github/scripts/install-package.sh
       - name: Build docs (strict)
         run: mkdocs build --strict
+
+

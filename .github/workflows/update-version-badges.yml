@@ -9,7 +9,8 @@ on:
             - "rust/Cargo.toml"
     workflow_dispatch:
 
-permissions: read-all
+permissions:
+  contents: read
 
 jobs:
     update-badges:
@@ -95,3 +96,5 @@ jobs:
                       Automated update of Python / Julia / Rust version badges in README.md
                       triggered by a change to a version config file.
                   labels: "documentation,automated"
+
+

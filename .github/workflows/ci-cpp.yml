@@ -21,7 +21,8 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   CMAKE_BUILD_PARALLEL_LEVEL: "4"
 
-permissions: read-all
+permissions:
+  contents: read
 
 jobs:
   setup:
@@ -186,3 +187,5 @@ jobs:
 
       - name: Run benchmarks (smoke)
         run: ./build_bench/benchmarks/givp_benchmarks
+
+
