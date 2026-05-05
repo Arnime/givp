@@ -308,6 +308,68 @@ static void apply_stagnation_restart(const CoreIterationContext<F> &ctx,
     stagnation = 0;
 }
 
+template <typename WrappedF>
+static bool
+run_main_iteration(const CoreContext<WrappedF> &core_ctx, std::optional<EvaluationCache> &cache,
+                   Rng &rng, ElitePool &elite_pool, std::optional<ConvergenceMonitor> &conv_monitor,
+                   const std::vector<double> &lower, const std::vector<double> &upper,
+                   std::size_t iteration, std::vector<double> &best_solution, double &best_cost,
+                   std::size_t &stagnation, std::string &message) {
+    double alpha = get_current_alpha(AlphaScheduleParams{
+        iteration, core_ctx.config.max_iterations, core_ctx.config.alpha_min,
+        core_ctx.config.alpha_max, core_ctx.config.adaptive_alpha, core_ctx.config.alpha});
+    const auto iter_ctx = CoreIterationContext<WrappedF>{core_ctx, alpha};
+
+    const std::vector<double> *ig =
+        iteration_initial_guess(iteration, core_ctx.config.initial_guess);
+
+    CandidateCost iteration_result = (core_ctx.config.n_workers <= 1)
+                                         ? run_single_worker_iteration(iter_ctx, ig, cache, rng)
+                                         : run_multi_worker_iteration(iter_ctx, ig, rng);
+
+    std::vector<double> candidate = std::move(iteration_result.candidate);
+    double ils_cost = iteration_result.cost;
+
+    update_best_and_stagnation(ils_cost, candidate, best_cost, best_solution, stagnation);
+
+    if (core_ctx.config.use_elite_pool)
+        elite_pool.add(candidate, ils_cost);
+
+    // Convergence monitor — single update per iteration
+    std::optional<std::size_t> no_improve_count =
+        update_convergence_monitor(conv_monitor, elite_pool, best_cost, stagnation, cache);
+
+    // Path relinking
+    if (should_run_path_relinking(core_ctx.config, iteration, elite_pool)) {
+        auto child = rng.child();
+        PathRelinkingContext pr_ctx{elite_pool,
+                                    best_solution,
+                                    best_cost,
+                                    core_ctx.shape.half,
+                                    lower,
+                                    upper,
+                                    core_ctx.config.vnd_iterations,
+                                    cache,
+                                    child,
+                                    core_ctx.deadline};
+        do_path_relinking(core_ctx.wrapped, pr_ctx);
+    }
+
+    // Stagnation restart
+    apply_stagnation_restart(iter_ctx, cache, rng, stagnation, best_solution, best_cost);
+
+    // Early stop — reuse the same convergence signal from this iteration.
+    if (reached_early_stop(no_improve_count, core_ctx.config.early_stop_threshold)) {
+        message = "early stop due to stagnation";
+        return true;
+    }
+
+    if (iteration == core_ctx.config.max_iterations - 1)
+        message = "max iterations reached";
+
+    return false;
+}
+
 /// Main optimizer loop.
 template <typename F>
 OptimizeResult run(F &&func, const std::vector<std::pair<double, double>> &bounds,
@@ -362,61 +424,13 @@ OptimizeResult run(F &&func, const std::vector<std::pair<double, double>> &bound
 
     // ── Main loop ─────────────────────────────────────────────────────────────
     for (std::size_t iteration = 0; iteration < config.max_iterations; ++iteration) {
-        bool should_break = false;
         if (expired(deadline)) {
             message = "time limit reached";
-            should_break = true;
+            break;
         }
-        if (!should_break) {
-            iterations_executed = iteration + 1;
-
-            double alpha = get_current_alpha(
-                AlphaScheduleParams{iteration, config.max_iterations, config.alpha_min,
-                                    config.alpha_max, config.adaptive_alpha, config.alpha});
-            const auto iter_ctx = CoreIterationContext<decltype(wrapped)>{core_ctx, alpha};
-
-            const std::vector<double> *ig =
-                iteration_initial_guess(iteration, config.initial_guess);
-
-            CandidateCost iteration_result =
-                (config.n_workers <= 1) ? run_single_worker_iteration(iter_ctx, ig, cache, rng)
-                                        : run_multi_worker_iteration(iter_ctx, ig, rng);
-
-            std::vector<double> candidate = std::move(iteration_result.candidate);
-            double ils_cost = iteration_result.cost;
-
-            update_best_and_stagnation(ils_cost, candidate, best_cost, best_solution, stagnation);
-
-            if (config.use_elite_pool)
-                elite_pool.add(candidate, ils_cost);
-
-            // Convergence monitor — single update per iteration
-            std::optional<std::size_t> no_improve_count =
-                update_convergence_monitor(conv_monitor, elite_pool, best_cost, stagnation, cache);
-
-            // Path relinking
-            if (should_run_path_relinking(config, iteration, elite_pool)) {
-                auto child = rng.child();
-                PathRelinkingContext pr_ctx{
-                    elite_pool, best_solution,         best_cost, half,  lower,
-                    upper,      config.vnd_iterations, cache,     child, deadline};
-                do_path_relinking(wrapped, pr_ctx);
-            }
-
-            // Stagnation restart
-            apply_stagnation_restart(iter_ctx, cache, rng, stagnation, best_solution, best_cost);
-
-            // Early stop — reuse the same convergence signal from this iteration.
-            if (reached_early_stop(no_improve_count, config.early_stop_threshold)) {
-                message = "early stop due to stagnation";
-                should_break = true;
-            }
-
-            if (iteration == config.max_iterations - 1)
-                message = "max iterations reached";
-        }
-
-        if (should_break)
+        iterations_executed = iteration + 1;
+        if (run_main_iteration(core_ctx, cache, rng, elite_pool, conv_monitor, lower, upper,
+                               iteration, best_solution, best_cost, stagnation, message))
             break;
     }
 
