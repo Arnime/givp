@@ -187,7 +187,7 @@ packages = [{ include = "givp", from = "python/src" }]
 
 [tool.poetry.group.dev.dependencies]
 nox = "^2026.4.10"
-notebook = "^7.5.5"
+notebook = "^7.5.6"
 
 [tool.poetry.group.docs.dependencies]
 mkdocs = ">=1.6"
