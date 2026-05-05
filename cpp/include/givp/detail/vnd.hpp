@@ -138,7 +138,8 @@ static std::pair<double, bool> neighborhood_swap(std::vector<double> &solution, 
         std::size_t j = ctx.rng.uniform_index(0, n - 1);
         if (i == j)
             continue;
-        double old_i = solution[i], old_j = solution[j];
+        double old_i = solution[i];
+        double old_j = solution[j];
         perturb_index(solution, i, PerturbStrength{4}, ctx);
         perturb_index(solution, j, PerturbStrength{4}, ctx);
         normalize_integer_tail(solution, ctx.half);

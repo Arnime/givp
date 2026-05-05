@@ -34,22 +34,23 @@ class Rng {
 
     /// Spawn an independent child RNG seeded from this parent.
     Rng child() {
-        std::uniform_int_distribution<std::uint64_t> d;
+        std::uniform_int_distribution d(std::uint64_t{0},
+                                        std::numeric_limits<std::uint64_t>::max());
         return Rng(d(engine_));
     }
 
     double uniform(double lo, double hi) {
-        std::uniform_real_distribution<double> d(lo, hi);
+        std::uniform_real_distribution d(lo, hi);
         return d(engine_);
     }
 
     std::int64_t uniform_int(std::int64_t lo, std::int64_t hi) {
-        std::uniform_int_distribution<std::int64_t> d(lo, hi);
+        std::uniform_int_distribution d(lo, hi);
         return d(engine_);
     }
 
     std::size_t uniform_index(std::size_t lo, std::size_t hi) {
-        std::uniform_int_distribution<std::size_t> d(lo, hi);
+        std::uniform_int_distribution d(lo, hi);
         return d(engine_);
     }
 

@@ -27,8 +27,8 @@ struct AlphaScheduleParams {
 inline double get_current_alpha(const AlphaScheduleParams &params) {
     if (!params.adaptive)
         return params.alpha;
-    double progress = static_cast<double>(params.iter_idx) /
-                      static_cast<double>(std::max(params.max_iterations, std::size_t{1}));
+    const auto progress = static_cast<double>(params.iter_idx) /
+                          static_cast<double>(std::max(params.max_iterations, std::size_t{1}));
     return params.alpha_min + (params.alpha_max - params.alpha_min) * progress;
 }
 
@@ -97,9 +97,9 @@ static std::vector<double> build_heuristic_candidate(const CandidateBuildParams 
                                                      RngT &rng) {
     std::vector<double> sol(params.num_vars);
     for (std::size_t i = 0; i < params.half; ++i) {
-        double mid = (params.lower[i] + params.upper[i]) / 2.0;
-        double span = params.upper[i] - params.lower[i];
-        double noise = rng.uniform(-0.15, 0.15) * span;
+        const auto mid = (params.lower[i] + params.upper[i]) / 2.0;
+        const auto span = params.upper[i] - params.lower[i];
+        const auto noise = rng.uniform(-0.15, 0.15) * span;
         sol[i] = clamp_val(mid + noise, params.lower[i], params.upper[i]);
     }
     for (std::size_t i = params.half; i < params.num_vars; ++i)

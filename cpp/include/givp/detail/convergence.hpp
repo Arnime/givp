@@ -11,6 +11,14 @@
 
 namespace givp::detail {
 
+struct ConvergenceWindowSize {
+    std::size_t value;
+};
+
+struct ConvergenceRestartThreshold {
+    std::size_t value;
+};
+
 struct ConvergenceSignal {
     bool should_restart;
     bool should_intensify;
@@ -48,8 +56,9 @@ class ConvergenceMonitor {
     }
 
   public:
-    ConvergenceMonitor(std::size_t window_size, std::size_t restart_threshold)
-        : window_size_(window_size), restart_threshold_(restart_threshold) {}
+        ConvergenceMonitor(ConvergenceWindowSize window_size,
+                                             ConvergenceRestartThreshold restart_threshold)
+                : window_size_(window_size.value), restart_threshold_(restart_threshold.value) {}
 
     ConvergenceSignal update(double current_cost, const ElitePool *elite_pool = nullptr) {
         if (current_cost < best_ever_) {
@@ -63,7 +72,7 @@ class ConvergenceMonitor {
         if (history_.size() > window_size_)
             history_.erase(history_.begin());
 
-        double diversity = elite_pool ? compute_diversity(*elite_pool) : 1.0;
+        double diversity = (elite_pool != nullptr) ? compute_diversity(*elite_pool) : 1.0;
         diversity_scores_.push_back(diversity);
 
         bool should_restart = no_improve_count_ >= restart_threshold_;

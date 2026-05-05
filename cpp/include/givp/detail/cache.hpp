@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 #pragma once
 
+#include <cstddef>
 #include <cmath>
 #include <cstdint>
 #include <cstring>
@@ -32,9 +33,9 @@ class EvaluationCache {
             std::int64_t rounded = (i < half)
                                        ? static_cast<std::int64_t>(std::round(solution[i] * 1000.0))
                                        : static_cast<std::int64_t>(std::round(solution[i]));
-            const auto *bytes = reinterpret_cast<const std::uint8_t *>(&rounded);
+            const auto *bytes = reinterpret_cast<const std::byte *>(&rounded);
             for (std::size_t b = 0; b < sizeof(std::int64_t); ++b) {
-                h ^= bytes[b];
+                h ^= static_cast<std::uint64_t>(std::to_integer<unsigned char>(bytes[b]));
                 h *= 1099511628211ULL;
             }
         }
@@ -49,8 +50,7 @@ class EvaluationCache {
 
     std::optional<double> get(const std::vector<double> &solution, std::size_t half) {
         auto key = hash_solution(solution, half);
-        auto it = cache_.find(key);
-        if (it != cache_.end()) {
+        if (auto it = cache_.find(key); it != cache_.end()) {
             ++hits_;
             return it->second;
         }
@@ -76,7 +76,8 @@ class EvaluationCache {
     }
 
     struct Stats {
-        std::size_t hits, misses;
+        std::size_t hits;
+        std::size_t misses;
         double hit_rate;
         std::size_t size;
     };

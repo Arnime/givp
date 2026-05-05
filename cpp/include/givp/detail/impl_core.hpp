@@ -37,7 +37,8 @@ validate_bounds(const std::vector<std::pair<double, double>> &bounds,
     upper.reserve(bounds.size());
 
     for (std::size_t i = 0; i < bounds.size(); ++i) {
-        double lo = bounds[i].first, hi = bounds[i].second;
+        double lo = bounds[i].first;
+        double hi = bounds[i].second;
         if (lo >= hi)
             throw InvalidBounds("lower >= upper at index " + std::to_string(i) + ": " +
                                 std::to_string(lo) + " >= " + std::to_string(hi));
@@ -63,30 +64,42 @@ validate_bounds(const std::vector<std::pair<double, double>> &bounds,
     return {std::move(lower), std::move(upper)};
 }
 
-template <typename F>
-static void
-do_path_relinking(const F &func, const ElitePool &elite_pool, std::vector<double> &best_solution,
-                  double &best_cost, std::size_t half, const std::vector<double> &lower,
-                  const std::vector<double> &upper, std::size_t vnd_iterations,
-                  std::optional<EvaluationCache> &cache, Rng &rng, const Deadline &deadline) {
+struct PathRelinkingContext {
+    const ElitePool &elite_pool;
+    std::vector<double> &best_solution;
+    double &best_cost;
+    std::size_t half;
+    const std::vector<double> &lower;
+    const std::vector<double> &upper;
+    std::size_t vnd_iterations;
+    std::optional<EvaluationCache> &cache;
+    Rng &rng;
+    const Deadline &deadline;
+};
 
-    const auto &all = elite_pool.get_all();
+template <typename F>
+static void do_path_relinking(const F &func, PathRelinkingContext &ctx) {
+
+    const auto &all = ctx.elite_pool.get_all();
     std::size_t max_pairs = std::min(std::size_t{3}, all.size());
 
     for (std::size_t i = 0; i < max_pairs; ++i) {
         for (std::size_t j = i + 1; j < std::min(all.size(), i + 4); ++j) {
-            if (expired(deadline))
+            if (expired(ctx.deadline))
                 return;
 
             auto [pr_sol, pr_cost] = bidirectional_path_relinking(func, all[i].first, all[j].first,
-                                                                  half, cache, rng, deadline);
-            VndContext<Rng> vnd_ctx{lower, upper, cache, half, rng, deadline};
-            double refined_cost = local_search_vnd(func, pr_sol, pr_cost,
-                                                   VndMaxIterations{vnd_iterations / 2}, vnd_ctx);
+                                                                  ctx.half, ctx.cache, ctx.rng,
+                                                                  ctx.deadline);
+            VndContext<Rng> vnd_ctx{ctx.lower, ctx.upper, ctx.cache, ctx.half, ctx.rng,
+                                    ctx.deadline};
+            double refined_cost =
+                local_search_vnd(func, pr_sol, pr_cost,
+                                 VndMaxIterations{ctx.vnd_iterations / 2}, vnd_ctx);
 
-            if (refined_cost < best_cost) {
-                best_cost = refined_cost;
-                best_solution = std::move(pr_sol);
+            if (refined_cost < ctx.best_cost) {
+                ctx.best_cost = refined_cost;
+                ctx.best_solution = std::move(pr_sol);
             }
         }
     }
@@ -328,10 +341,11 @@ OptimizeResult run(F &&func, const std::vector<std::pair<double, double>> &bound
     if (config.use_cache)
         cache.emplace(config.cache_size);
 
-    ElitePool elite_pool{config.elite_size, 0.05, lower, upper};
+    ElitePool elite_pool{ElitePoolMaxSize{config.elite_size}, ElitePoolMinDistance{0.05}, lower,
+                         upper};
     std::optional<ConvergenceMonitor> conv_monitor;
     if (config.use_convergence_monitor)
-        conv_monitor.emplace(20, 50);
+        conv_monitor.emplace(ConvergenceWindowSize{20}, ConvergenceRestartThreshold{50});
 
     Deadline deadline = compute_deadline(config.time_limit);
 
@@ -350,10 +364,13 @@ OptimizeResult run(F &&func, const std::vector<std::pair<double, double>> &bound
 
     // ── Main loop ─────────────────────────────────────────────────────────────
     for (std::size_t iteration = 0; iteration < config.max_iterations; ++iteration) {
+        bool should_break = false;
         if (expired(deadline)) {
             message = "time limit reached";
-            break;
+            should_break = true;
         }
+        if (should_break)
+            break;
         iterations_executed = iteration + 1;
 
         double alpha = get_current_alpha(AlphaScheduleParams{iteration, config.max_iterations,
@@ -382,8 +399,10 @@ OptimizeResult run(F &&func, const std::vector<std::pair<double, double>> &bound
         // Path relinking
         if (should_run_path_relinking(config, iteration, elite_pool)) {
             auto child = rng.child();
-            do_path_relinking(wrapped, elite_pool, best_solution, best_cost, half, lower, upper,
-                              config.vnd_iterations, cache, child, deadline);
+            PathRelinkingContext pr_ctx{elite_pool,   best_solution, best_cost, half,
+                                        lower,        upper,         config.vnd_iterations,
+                                        cache,        child,         deadline};
+            do_path_relinking(wrapped, pr_ctx);
         }
 
         // Stagnation restart
@@ -392,11 +411,14 @@ OptimizeResult run(F &&func, const std::vector<std::pair<double, double>> &bound
         // Early stop — reuse the same convergence signal from this iteration.
         if (reached_early_stop(no_improve_count, config.early_stop_threshold)) {
             message = "early stop due to stagnation";
-            break;
+            should_break = true;
         }
 
         if (iteration == config.max_iterations - 1)
             message = "max iterations reached";
+
+        if (should_break)
+            break;
     }
 
     // ── Build result ─────────────────────────────────────────────────────────
