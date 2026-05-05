@@ -114,7 +114,7 @@ test_that("helpers normalize and clamp bounds correctly", {
   )
 })
 
-test_that("integer tail normalization and comparison helpers behave as expected", {
+test_that("integer tail normalization and comparison helpers work", {
   x <- c(1.1, 2.2, 3.3)
   expect_equal(normalize_integer_tail(x, integer_split = 1L), c(1.1, 2, 3))
   expect_equal(normalize_integer_tail(x, integer_split = NULL), x)

@@ -108,10 +108,19 @@ test_that("path relinking variants return finite objective on simple quadratic",
 
 test_that("termination reason inference covers all message branches", {
   expect_equal(infer_termination_reason("Convergence reached"), "converged")
-  expect_equal(infer_termination_reason("Time limit reached"), "time_limit_reached")
-  expect_equal(infer_termination_reason("Early stop due to stagnation"), "early_stop")
+  expect_equal(
+    infer_termination_reason("Time limit reached"),
+    "time_limit_reached"
+  )
+  expect_equal(
+    infer_termination_reason("Early stop due to stagnation"),
+    "early_stop"
+  )
   expect_equal(infer_termination_reason("No feasible solution found"), "no_feasible")
-  expect_equal(infer_termination_reason("Max iterations reached"), "max_iterations_reached")
+  expect_equal(
+    infer_termination_reason("Max iterations reached"),
+    "max_iterations_reached"
+  )
   expect_equal(infer_termination_reason("other status"), "unknown")
 })
 

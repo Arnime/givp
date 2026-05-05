@@ -14,7 +14,12 @@ test_that("givp returns structured result", {
 
 test_that("givp handles maximize direction", {
   f <- function(x) -sum(x * x)
-  res <- givp(f, bounds = list(c(-3, 3), c(-3, 3)), direction = "maximize", seed = 1)
+  res <- givp(
+    f,
+    bounds = list(c(-3, 3), c(-3, 3)),
+    direction = "maximize",
+    seed = 1
+  )
   expect_equal(res$direction, "maximize")
   expect_true(is.numeric(res$fun))
 })
@@ -48,11 +53,17 @@ test_that("givp executes iteration callback and direction overrides minimize", {
 })
 
 test_that("givp validates objective", {
-  expect_error(givp(1, bounds = list(c(-1, 1))), class = "givp_error_invalid_objective")
+  expect_error(
+    givp(1, bounds = list(c(-1, 1))),
+    class = "givp_error_invalid_objective"
+  )
 })
 
 test_that("givp validates bounds empty", {
-  expect_error(givp(function(x) sum(x), bounds = list()), class = "givp_error_invalid_bounds")
+  expect_error(
+    givp(function(x) sum(x), bounds = list()),
+    class = "givp_error_invalid_bounds"
+  )
 })
 
 test_that("givp validates non-finite bounds", {
@@ -71,7 +82,11 @@ test_that("givp validates inverted bounds", {
 
 test_that("givp validates initial guess length", {
   expect_error(
-    givp(function(x) sum(x * x), bounds = list(c(-1, 1), c(-1, 1)), initial_guess = c(0)),
+    givp(
+      function(x) sum(x * x),
+      bounds = list(c(-1, 1), c(-1, 1)),
+      initial_guess = c(0)
+    ),
     class = "givp_error_invalid_initial_guess"
   )
 })
