@@ -34,7 +34,7 @@ class EvaluationCache:
         misses: Number of cache misses.
     """
 
-    def __init__(self, maxsize: int = 10000):
+    def __init__(self, maxsize: int = 10000) -> None:
         """Initialize the evaluation cache."""
         self.maxsize = maxsize
         self.cache: OrderedDict[int, float] = OrderedDict()
@@ -89,7 +89,7 @@ class EvaluationCache:
         self.hits = 0
         self.misses = 0
 
-    def stats(self) -> dict:
+    def stats(self) -> dict[str, float | int]:
         """Return cache statistics as a plain dict."""
         total = self.hits + self.misses
         hit_rate = (self.hits / total * 100) if total > 0 else 0

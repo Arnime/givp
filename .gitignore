@@ -42,6 +42,7 @@ Notebooks/Resultados_Dissertacao/
 Notebooks/*/*.png
 
 # R build artifacts
+givp.Rcheck/
 *.tar.gz
 r/*.Rcheck/
 r/man/*.Rd

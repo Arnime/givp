@@ -44,6 +44,7 @@ import json
 import logging
 import sys
 import textwrap
+from collections.abc import Callable
 from pathlib import Path
 from typing import NamedTuple
 
@@ -382,7 +383,9 @@ def to_markdown(
 _LATEX_MIDRULE = r"\midrule"
 
 
-def _latex_wilcoxon_subtable(wilcoxon: list[WilcoxonRow], _esc) -> list[str]:
+def _latex_wilcoxon_subtable(
+    wilcoxon: list[WilcoxonRow], _esc: Callable[[str], str]
+) -> list[str]:
     """Build the Wilcoxon significance sub-table lines for the LaTeX report."""
     lines: list[str] = []
     lines.append("")
@@ -772,10 +775,12 @@ def main(argv: list[str] | None = None) -> int:
     print_console_summary(summary, wrows)
 
     if not _SCIPY_OK:
-        _log.warning(textwrap.dedent("""\
+        _log.warning(
+            textwrap.dedent("""\
             [note] scipy not installed — statistical significance tests skipped.
                    Install with:  pip install scipy
-            """))
+            """)
+        )
 
     # Markdown
     if args.format in ("markdown", "both"):

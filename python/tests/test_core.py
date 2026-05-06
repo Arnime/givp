@@ -7,6 +7,9 @@ from __future__ import annotations
 import contextlib
 import logging
 import time
+from collections.abc import Callable, Generator
+from types import ModuleType
+from typing import Any, cast
 
 import givp.core.pr as pr_module
 import numpy as np
@@ -73,7 +76,7 @@ from givp.core.vnd_moves import _perturb_index
 
 
 @pytest.fixture(autouse=True)
-def reset_context():
+def reset_context() -> Generator:
     _set_integer_split(None)
     _set_group_size(None)
     yield
@@ -85,15 +88,19 @@ def quad(x: np.ndarray) -> float:
     return float(np.sum(x**2))
 
 
-def _noop_neighborhood(*args, **_kwargs):
-    return args[1].copy(), args[2]
+def _noop_neighborhood(
+    *args: object, **_kwargs: object
+) -> tuple[np.ndarray[Any, Any], float]:
+    solution = cast(np.ndarray[Any, Any], args[1])
+    benefit = float(cast(float, args[2]))
+    return solution.copy(), benefit
 
 
 def _patch_try_neighborhood_noops(
     monkeypatch: pytest.MonkeyPatch,
     *,
-    group_fn=None,
-    block_fn=None,
+    group_fn: object = None,
+    block_fn: object = None,
 ) -> None:
     monkeypatch.setattr(core_vnd, "_neighborhood_flip", _noop_neighborhood)
     monkeypatch.setattr(core_vnd, "_neighborhood_swap", _noop_neighborhood)
@@ -101,22 +108,44 @@ def _patch_try_neighborhood_noops(
     monkeypatch.setattr(core_vnd, "_neighborhood_block", block_fn or _noop_neighborhood)
 
 
+def test_core_module_getattr_loads_legacy_sog2_lazily(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import givp.core as core_module
+
+    sentinel = ModuleType("givp.core.legacy_sog2")
+
+    def _fake_import_module(name: str) -> object:
+        assert name == "givp.core.legacy_sog2"
+        return sentinel
+
+    monkeypatch.setattr(core_module.importlib, "import_module", _fake_import_module)
+    assert core_module.__getattr__("legacy_sog2") is sentinel
+
+
+def test_core_module_getattr_raises_for_unknown_name() -> None:
+    import givp.core as core_module
+
+    with pytest.raises(AttributeError, match="no attribute"):
+        core_module.__getattr__("does_not_exist")
+
+
 # ----------------------------- _safe_evaluate -----------------------------
 
 
-def test_safe_evaluate_returns_inf_on_exception():
-    def boom(_x):
+def test_safe_evaluate_returns_inf_on_exception() -> None:
+    def boom(_x: np.ndarray[Any, Any]) -> float:
         raise RuntimeError("explode")
 
     assert _safe_evaluate(boom, np.zeros(3)) == np.inf
 
 
-def test_safe_evaluate_returns_inf_on_nonfinite():
+def test_safe_evaluate_returns_inf_on_nonfinite() -> None:
     assert _safe_evaluate(lambda _x: float("nan"), np.zeros(3)) == np.inf
     assert _safe_evaluate(lambda _x: float("inf"), np.zeros(3)) == np.inf
 
 
-def test_safe_evaluate_returns_value_on_success():
+def test_safe_evaluate_returns_value_on_success() -> None:
     assert _safe_evaluate(
         lambda x: float(np.sum(x)), np.array([1.0, 2.0])
     ) == pytest.approx(3.0)
@@ -126,33 +155,33 @@ def test_safe_evaluate_returns_value_on_success():
 
 
 class TestEvaluationCache:
-    def test_get_miss_returns_none(self):
+    def test_get_miss_returns_none(self) -> None:
         cache = EvaluationCache(maxsize=4)
         assert cache.get(np.array([1.0, 2.0])) is None
         assert cache.misses == 1
 
-    def test_put_then_get_returns_cached_value(self):
+    def test_put_then_get_returns_cached_value(self) -> None:
         cache = EvaluationCache(maxsize=4)
         sol = np.array([1.0, 2.0])
         cache.put(sol, 42.0)
         assert cache.get(sol) == pytest.approx(42.0)
         assert cache.hits == 1
 
-    def test_put_overwrites_existing_key(self):
+    def test_put_overwrites_existing_key(self) -> None:
         cache = EvaluationCache(maxsize=4)
         sol = np.array([1.0])
         cache.put(sol, 1.0)
         cache.put(sol, 2.0)
         assert cache.get(sol) == pytest.approx(2.0)
 
-    def test_eviction_when_full(self):
+    def test_eviction_when_full(self) -> None:
         cache = EvaluationCache(maxsize=2)
         for i in range(3):
             cache.put(np.array([float(i), float(i)]), float(i))
         assert cache.get(np.array([0.0, 0.0])) is None
         assert cache.get(np.array([2.0, 2.0])) == pytest.approx(2.0)
 
-    def test_clear_resets_state(self):
+    def test_clear_resets_state(self) -> None:
         cache = EvaluationCache(maxsize=4)
         cache.put(np.array([1.0]), 1.0)
         cache.get(np.array([1.0]))
@@ -164,7 +193,7 @@ class TestEvaluationCache:
         assert stats["size"] == 0
         assert stats["hit_rate"] == 0
 
-    def test_stats_hit_rate(self):
+    def test_stats_hit_rate(self) -> None:
         cache = EvaluationCache(maxsize=4)
         sol = np.array([1.0])
         cache.put(sol, 1.0)
@@ -175,11 +204,11 @@ class TestEvaluationCache:
         assert stats["misses"] == 1
         assert stats["hit_rate"] == pytest.approx(50.0)
 
-    def test_evaluate_with_cache_uses_cache_on_repeat(self):
+    def test_evaluate_with_cache_uses_cache_on_repeat(self) -> None:
         cache = EvaluationCache(maxsize=4)
         calls = [0]
 
-        def evaluator(_x):
+        def evaluator(_x: np.ndarray[Any, Any]) -> float:
             calls[0] += 1
             return 1.0
 
@@ -189,10 +218,10 @@ class TestEvaluationCache:
         assert calls[0] == 1
         assert cache.hits == 1
 
-    def test_evaluate_without_cache(self):
+    def test_evaluate_without_cache(self) -> None:
         calls = [0]
 
-        def evaluator(_x):
+        def evaluator(_x: np.ndarray[Any, Any]) -> float:
             calls[0] += 1
             return 5.0
 
@@ -200,17 +229,17 @@ class TestEvaluationCache:
         assert out == pytest.approx(5.0)
         assert calls[0] == 1
 
-    def test_evaluate_with_cache_does_not_store_inf(self):
+    def test_evaluate_with_cache_does_not_store_inf(self) -> None:
         cache = EvaluationCache(maxsize=4)
 
-        def evaluator(_x):
+        def evaluator(_x: np.ndarray[Any, Any]) -> float:
             raise RuntimeError("boom")
 
         out = _evaluate_with_cache(np.array([1.0]), evaluator, cache)
         assert np.isinf(out)
         assert len(cache.cache) == 0
 
-    def test_hash_solution_sha1_fallback(self, monkeypatch):
+    def test_hash_solution_sha1_fallback(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Line 59: force the sha1 fallback path by patching _FAST_HASH to False."""
         import givp.core.cache as cache_module
 
@@ -225,14 +254,14 @@ class TestEvaluationCache:
 
 
 class TestConvergenceMonitor:
-    def test_update_tracks_improvements(self):
+    def test_update_tracks_improvements(self) -> None:
         mon = ConvergenceMonitor(window_size=5, restart_threshold=10)
         mon.update(10.0)
         info = mon.update(5.0)
         assert info["no_improve_count"] == 0
         assert mon.best_ever == pytest.approx(5.0)
 
-    def test_increments_no_improve_when_worse(self):
+    def test_increments_no_improve_when_worse(self) -> None:
         mon = ConvergenceMonitor(window_size=5, restart_threshold=3)
         mon.update(1.0)
         mon.update(2.0)
@@ -241,7 +270,7 @@ class TestConvergenceMonitor:
         assert info["no_improve_count"] == 3
         assert info["should_restart"] is True
 
-    def test_diversity_with_elite_pool(self):
+    def test_diversity_with_elite_pool(self) -> None:
         pool = ElitePool(max_size=4, min_distance=0.0)
         pool.add(np.array([0.0, 0.0]), 1.0)
         pool.add(np.array([5.0, 5.0]), 2.0)
@@ -249,7 +278,7 @@ class TestConvergenceMonitor:
         info = mon.update(1.0, elite_pool=pool)
         assert info["diversity"] > 0
 
-    def test_diversity_zero_with_singleton_pool(self):
+    def test_diversity_zero_with_singleton_pool(self) -> None:
         pool = ElitePool(max_size=2, min_distance=0.0)
         pool.add(np.array([0.0]), 1.0)
         mon = ConvergenceMonitor()
@@ -261,7 +290,7 @@ class TestConvergenceMonitor:
 
 
 class TestElitePool:
-    def test_add_and_get_best(self):
+    def test_add_and_get_best(self) -> None:
         pool = ElitePool(max_size=3, min_distance=0.0)
         pool.add(np.array([1.0, 2.0]), 5.0)
         pool.add(np.array([3.0, 4.0]), 1.0)
@@ -269,18 +298,18 @@ class TestElitePool:
         assert best_cost == pytest.approx(1.0)
         np.testing.assert_array_equal(best_sol, np.array([3.0, 4.0]))
 
-    def test_get_best_empty_raises(self):
+    def test_get_best_empty_raises(self) -> None:
         pool = ElitePool()
         with pytest.raises(EmptyPoolError):
             pool.get_best()
 
-    def test_rejects_too_close_solutions(self):
+    def test_rejects_too_close_solutions(self) -> None:
         pool = ElitePool(max_size=3, min_distance=10.0)
         assert pool.add(np.array([1.0, 1.0]), 1.0) is True
         assert pool.add(np.array([1.0, 1.0]), 0.5) is False
         assert pool.size() == 1
 
-    def test_replaces_worst_when_full_and_better(self):
+    def test_replaces_worst_when_full_and_better(self) -> None:
         pool = ElitePool(max_size=2, min_distance=0.0)
         pool.add(np.array([0.0]), 10.0)
         pool.add(np.array([1.0]), 5.0)
@@ -288,20 +317,20 @@ class TestElitePool:
         assert pool.size() == 2
         assert pool.get_best()[1] == pytest.approx(1.0)
 
-    def test_does_not_replace_when_full_and_worse(self):
+    def test_does_not_replace_when_full_and_worse(self) -> None:
         pool = ElitePool(max_size=2, min_distance=0.0)
         pool.add(np.array([0.0]), 1.0)
         pool.add(np.array([1.0]), 2.0)
         assert pool.add(np.array([2.0]), 100.0) is False
         assert pool.size() == 2
 
-    def test_clear_empties_pool(self):
+    def test_clear_empties_pool(self) -> None:
         pool = ElitePool(max_size=3, min_distance=0.0)
         pool.add(np.array([1.0]), 1.0)
         pool.clear()
         assert pool.size() == 0
 
-    def test_get_all_returns_copy(self):
+    def test_get_all_returns_copy(self) -> None:
         pool = ElitePool(max_size=2, min_distance=0.0)
         pool.add(np.array([1.0]), 1.0)
         out = pool.get_all()
@@ -309,7 +338,7 @@ class TestElitePool:
         out.clear()
         assert pool.size() == 1
 
-    def test_normalized_distance_with_bounds(self):
+    def test_normalized_distance_with_bounds(self) -> None:
         pool = ElitePool(
             max_size=2,
             min_distance=0.6,
@@ -324,7 +353,7 @@ class TestElitePool:
 # ----------------------------- selection helpers -----------------------------
 
 
-def test_select_rcl_picks_top_when_threshold_excludes_all():
+def test_select_rcl_picks_top_when_threshold_excludes_all() -> None:
     valid_indices = np.array([0, 1, 2, 3])
     # all-equal ratios: threshold == max == min, mask covers all
     valid_ratios = np.array([1.0, 1.0, 1.0, 1.0])
@@ -332,7 +361,7 @@ def test_select_rcl_picks_top_when_threshold_excludes_all():
     assert len(out) >= 1
 
 
-def test_select_rcl_empty_threshold_falls_back_to_top():
+def test_select_rcl_empty_threshold_falls_back_to_top() -> None:
     """When the alpha threshold excludes everything, fallback returns top 30%."""
     valid_indices = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
     # craft ratios so ``valid_ratios >= threshold`` is empty: only possible
@@ -343,19 +372,19 @@ def test_select_rcl_empty_threshold_falls_back_to_top():
     assert len(out) >= 1
 
 
-def test_select_from_rcl_returns_none_if_all_infinite():
+def test_select_from_rcl_returns_none_if_all_infinite() -> None:
     rng = np.random.default_rng(0)
     out = _select_from_rcl(np.array([np.inf, np.inf]), 0.5, rng)
     assert out is None
 
 
-def test_select_from_rcl_picks_finite_index():
+def test_select_from_rcl_picks_finite_index() -> None:
     rng = np.random.default_rng(0)
     out = _select_from_rcl(np.array([1.0, np.inf, 2.0]), 0.0, rng)
     assert out == 0
 
 
-def test_select_from_rcl_fallback_when_threshold_excludes_all():
+def test_select_from_rcl_fallback_when_threshold_excludes_all() -> None:
     rng = np.random.default_rng(0)
     # All identical -> threshold == all values; rcl_local non-empty
     out = _select_from_rcl(np.array([1.0, 1.0]), 0.0, rng)
@@ -365,7 +394,7 @@ def test_select_from_rcl_fallback_when_threshold_excludes_all():
 # ----------------------------- candidate builders -----------------------------
 
 
-def test_sample_integer_from_bounds_within_range():
+def test_sample_integer_from_bounds_within_range() -> None:
     rng = np.random.default_rng(0)
     for _ in range(10):
         v = _sample_integer_from_bounds(2.0, 5.0, rng)
@@ -373,13 +402,13 @@ def test_sample_integer_from_bounds_within_range():
         assert v == int(v)
 
 
-def test_sample_integer_when_bounds_collapse():
+def test_sample_integer_when_bounds_collapse() -> None:
     rng = np.random.default_rng(0)
     v = _sample_integer_from_bounds(3.7, 3.2, rng)
     assert v == int(v)
 
 
-def test_build_random_and_heuristic_candidates_respect_bounds():
+def test_build_random_and_heuristic_candidates_respect_bounds() -> None:
     _set_integer_split(2)
     rng = np.random.default_rng(0)
     lower = np.array([0.0, 0.0, 0.0, 0.0])
@@ -391,7 +420,7 @@ def test_build_random_and_heuristic_candidates_respect_bounds():
         assert np.all(sol >= lower - 1e-9) and np.all(sol <= upper + 1e-9)
 
 
-def test_build_heuristic_candidate_collapsed_int_bounds():
+def test_build_heuristic_candidate_collapsed_int_bounds() -> None:
     """Cover the else branch when ``hi <= lo`` for the integer block."""
     _set_integer_split(1)
     rng = np.random.default_rng(0)
@@ -401,7 +430,7 @@ def test_build_heuristic_candidate_collapsed_int_bounds():
     assert sol.shape == (2,)
 
 
-def test_construct_grasp_returns_array():
+def test_construct_grasp_returns_array() -> None:
     _set_integer_split(2)
     lower = np.array([0.0, 0.0, 0.0, 0.0])
     upper = np.array([1.0, 1.0, 4.0, 4.0])
@@ -420,7 +449,7 @@ def test_construct_grasp_returns_array():
     assert sol.shape == (4,)
 
 
-def test_construct_grasp_with_initial_guess():
+def test_construct_grasp_with_initial_guess() -> None:
     _set_integer_split(2)
     lower = np.array([0.0, 0.0, 0.0, 0.0])
     upper = np.array([1.0, 1.0, 4.0, 4.0])
@@ -440,12 +469,12 @@ def test_construct_grasp_with_initial_guess():
     assert sol.shape == (4,)
 
 
-def test_get_half_with_explicit_split():
+def test_get_half_with_explicit_split() -> None:
     _set_integer_split(3)
     assert _get_half(5) == 3
 
 
-def test_set_group_size_roundtrip():
+def test_set_group_size_roundtrip() -> None:
     _set_group_size(8)
     assert _get_group_size() == 8
 
@@ -453,66 +482,69 @@ def test_set_group_size_roundtrip():
 # ----------------------------- legacy evaluate_candidates -----------------------------
 
 
-def test_evaluate_candidates_legacy_returns_arrays():
+def test_evaluate_candidates_legacy_returns_arrays() -> None:
     available = np.array([0, 1, 2])
     deps_active = np.zeros(3, dtype=bool)
     deps_matrix = np.array([[0, 0], [1, 0], [0, 1]], dtype=int)
     deps_len = np.array([1, 2, 0])
     c_arr = np.array([10.0, 5.0, 3.0])
     a_arr = np.array([2.0, 3.0, 1.0])
-    ratios, inc_costs, valid = evaluate_candidates(
-        available,
-        deps_active,
-        current_cost=0,
-        deps_matrix=deps_matrix,
-        deps_len=deps_len,
-        c_arr=c_arr,
-        a_arr=a_arr,
-        b=100,
-    )
+    with pytest.warns(DeprecationWarning, match="legacy discrete-packing helper"):
+        ratios, inc_costs, valid = evaluate_candidates(
+            available,
+            deps_active,
+            current_cost=0,
+            deps_matrix=deps_matrix,
+            deps_len=deps_len,
+            c_arr=c_arr,
+            a_arr=a_arr,
+            b=100,
+        )
     assert ratios.shape == (3,)
     assert inc_costs.shape == (3,)
     assert valid.shape == (3,)
     assert valid.all()
 
 
-def test_evaluate_candidates_respects_budget():
+def test_evaluate_candidates_respects_budget() -> None:
     available = np.array([0])
     deps_active = np.zeros(2, dtype=bool)
     deps_matrix = np.array([[0, 1]], dtype=int)
     deps_len = np.array([2])
     c_arr = np.array([10.0])
     a_arr = np.array([100.0, 100.0])
-    _, _, valid = evaluate_candidates(
-        available,
-        deps_active,
-        current_cost=0,
-        deps_matrix=deps_matrix,
-        deps_len=deps_len,
-        c_arr=c_arr,
-        a_arr=a_arr,
-        b=10,
-    )
+    with pytest.warns(DeprecationWarning, match="legacy discrete-packing helper"):
+        _, _, valid = evaluate_candidates(
+            available,
+            deps_active,
+            current_cost=0,
+            deps_matrix=deps_matrix,
+            deps_len=deps_len,
+            c_arr=c_arr,
+            a_arr=a_arr,
+            b=10,
+        )
     assert not valid[0]
 
 
-def test_evaluate_candidates_with_active_dependencies():
+def test_evaluate_candidates_with_active_dependencies() -> None:
     available = np.array([0])
     deps_active = np.array([True, False])
     deps_matrix = np.array([[0, 1]], dtype=int)
     deps_len = np.array([2])
     c_arr = np.array([10.0])
     a_arr = np.array([5.0, 5.0])
-    _, inc_costs, valid = evaluate_candidates(
-        available,
-        deps_active,
-        current_cost=0,
-        deps_matrix=deps_matrix,
-        deps_len=deps_len,
-        c_arr=c_arr,
-        a_arr=a_arr,
-        b=100,
-    )
+    with pytest.warns(DeprecationWarning, match="legacy discrete-packing helper"):
+        _, inc_costs, valid = evaluate_candidates(
+            available,
+            deps_active,
+            current_cost=0,
+            deps_matrix=deps_matrix,
+            deps_len=deps_len,
+            c_arr=c_arr,
+            a_arr=a_arr,
+            b=100,
+        )
     assert valid[0]
     # only the inactive dep counts
     assert inc_costs[0] == pytest.approx(5)
@@ -521,14 +553,14 @@ def test_evaluate_candidates_with_active_dependencies():
 # ----------------------------- path relinking -----------------------------
 
 
-def test_path_relinking_identical_solutions():
+def test_path_relinking_identical_solutions() -> None:
     sol = np.array([1.0, 2.0, 3.0])
     out, cost = path_relinking(quad, sol, sol.copy())
     np.testing.assert_array_equal(out, sol)
     assert cost == pytest.approx(quad(sol))
 
 
-def test_path_relinking_best_strategy():
+def test_path_relinking_best_strategy() -> None:
     _set_integer_split(3)
     src = np.array([5.0, 5.0, 5.0])
     tgt = np.array([0.0, 0.0, 0.0])
@@ -536,7 +568,7 @@ def test_path_relinking_best_strategy():
     assert cost <= quad(src)
 
 
-def test_path_relinking_forward_strategy():
+def test_path_relinking_forward_strategy() -> None:
     _set_integer_split(3)
     src = np.array([5.0, 5.0, 5.0])
     tgt = np.array([1.0, 1.0, 1.0])
@@ -544,7 +576,7 @@ def test_path_relinking_forward_strategy():
     assert np.isfinite(cost)
 
 
-def test_path_relinking_truncates_when_many_diff_indices():
+def test_path_relinking_truncates_when_many_diff_indices() -> None:
     _set_integer_split(40)
     src = np.arange(40, dtype=float)
     tgt = src + 1.0
@@ -552,7 +584,7 @@ def test_path_relinking_truncates_when_many_diff_indices():
     assert out.shape == (40,)
 
 
-def test_bidirectional_path_relinking_returns_best():
+def test_bidirectional_path_relinking_returns_best() -> None:
     _set_integer_split(3)
     a = np.array([0.0, 0.0, 0.0])
     b = np.array([3.0, 3.0, 3.0])
@@ -560,13 +592,15 @@ def test_bidirectional_path_relinking_returns_best():
     assert cost <= max(quad(a), quad(b))
 
 
-def test_bidirectional_path_relinking_returns_first_when_cost1_wins(monkeypatch):
+def test_bidirectional_path_relinking_returns_first_when_cost1_wins(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Covers the `if cost1 <= cost2: return best1, cost1` branch."""
     _set_integer_split(3)
     expected = np.array([1.0, 0.0, 0.0])
     call_count = 0
 
-    def fake_path_relinking(*args, **kwargs):
+    def fake_path_relinking(*args: Any, **kwargs: Any) -> tuple[np.ndarray, float]:
         nonlocal call_count
         call_count += 1
         if call_count == 1:
@@ -578,13 +612,15 @@ def test_bidirectional_path_relinking_returns_first_when_cost1_wins(monkeypatch)
     assert result_cost == pytest.approx(0.5)
 
 
-def test_bidirectional_path_relinking_returns_second_when_cost2_wins(monkeypatch):
+def test_bidirectional_path_relinking_returns_second_when_cost2_wins(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Covers the `return best2, cost2` branch (cost2 < cost1)."""
     _set_integer_split(3)
     expected = np.array([1.0, 0.0, 0.0])
     call_count = 0
 
-    def fake_path_relinking(*args, **kwargs):
+    def fake_path_relinking(*args: Any, **kwargs: Any) -> tuple[np.ndarray, float]:
         nonlocal call_count
         call_count += 1
         if call_count == 1:
@@ -599,7 +635,7 @@ def test_bidirectional_path_relinking_returns_second_when_cost2_wins(monkeypatch
 # ----------------------------- perturb / alpha -----------------------------
 
 
-def test_perturb_solution_changes_some_values():
+def test_perturb_solution_changes_some_values() -> None:
     _set_integer_split(2)
     sol = np.array([0.5, 0.5, 2.0, 2.0])
     out = perturb_solution_numpy(
@@ -614,14 +650,14 @@ def test_perturb_solution_changes_some_values():
     assert not np.array_equal(out, sol)
 
 
-def test_perturb_solution_no_bounds():
+def test_perturb_solution_no_bounds() -> None:
     _set_integer_split(1)
     sol = np.array([0.5, 3.0])
     out = perturb_solution_numpy(sol, num_vars=2, strength=1, seed=0)
     assert out.shape == sol.shape
 
 
-def test_get_current_alpha_adaptive():
+def test_get_current_alpha_adaptive() -> None:
     cfg = CoreConfig(
         adaptive_alpha=True, alpha_min=0.1, alpha_max=0.5, max_iterations=10
     )
@@ -631,7 +667,7 @@ def test_get_current_alpha_adaptive():
     assert 0.1 - 0.02 <= a9 <= 0.5 + 0.02
 
 
-def test_get_current_alpha_static():
+def test_get_current_alpha_static() -> None:
     cfg = CoreConfig(adaptive_alpha=False, alpha=0.3)
     assert get_current_alpha(5, cfg) == pytest.approx(0.3)
 
@@ -639,7 +675,7 @@ def test_get_current_alpha_static():
 # ----------------------------- local search & ILS -----------------------------
 
 
-def test_local_search_vnd_runs():
+def test_local_search_vnd_runs() -> None:
     _set_integer_split(2)
     sol = np.array([0.5, 0.5, 1.0, 1.0])
     lower = np.array([-1.0, -1.0, 0.0, 0.0])
@@ -655,7 +691,7 @@ def test_local_search_vnd_runs():
     assert out.shape == sol.shape
 
 
-def test_local_search_vnd_adaptive_runs():
+def test_local_search_vnd_adaptive_runs() -> None:
     _set_integer_split(2)
     sol = np.array([0.5, 0.5, 1.0, 1.0])
     lower = np.array([-1.0, -1.0, 0.0, 0.0])
@@ -671,7 +707,7 @@ def test_local_search_vnd_adaptive_runs():
     assert out.shape == sol.shape
 
 
-def test_ils_search_returns_finite_cost():
+def test_ils_search_returns_finite_cost() -> None:
     _set_integer_split(2)
     cfg = CoreConfig(
         ils_iterations=2,
@@ -698,7 +734,7 @@ def test_ils_search_returns_finite_cost():
 # ----------------------------- group / block neighborhoods -----------------------------
 
 
-def test_local_search_vnd_with_group_size():
+def test_local_search_vnd_with_group_size() -> None:
     _set_integer_split(6)
     _set_group_size(2)
     sol = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6])
@@ -713,7 +749,7 @@ def test_local_search_vnd_with_group_size():
     assert out.shape == sol.shape
 
 
-def test_neighborhood_group_with_layout():
+def test_neighborhood_group_with_layout() -> None:
     _set_integer_split(4)
     _set_group_size(2)
     sol = np.array([0.5, 0.5, 0.5, 0.5, 1.0, 1.0, 1.0, 1.0])
@@ -732,7 +768,7 @@ def test_neighborhood_group_with_layout():
     assert out.shape == (8,)
 
 
-def test_neighborhood_group_disabled_without_group_size():
+def test_neighborhood_group_disabled_without_group_size() -> None:
     _set_integer_split(4)
     sol = np.array([0.5, 0.5, 0.5, 0.5, 1.0, 1.0, 1.0, 1.0])
     out, _ = _neighborhood_group(
@@ -748,7 +784,7 @@ def test_neighborhood_group_disabled_without_group_size():
     np.testing.assert_array_equal(out, sol)
 
 
-def test_neighborhood_group_disabled_without_bounds():
+def test_neighborhood_group_disabled_without_bounds() -> None:
     _set_integer_split(4)
     _set_group_size(2)
     sol = np.array([0.5, 0.5, 0.5, 0.5, 1.0, 1.0, 1.0, 1.0])
@@ -763,7 +799,7 @@ def test_neighborhood_group_disabled_without_bounds():
     np.testing.assert_array_equal(out, sol)
 
 
-def test_neighborhood_block_with_layout():
+def test_neighborhood_block_with_layout() -> None:
     _set_integer_split(8)
     _set_group_size(4)
     sol = np.full(16, 0.5)
@@ -781,7 +817,7 @@ def test_neighborhood_block_with_layout():
     assert out.shape == (16,)
 
 
-def test_neighborhood_block_disabled_without_group_size():
+def test_neighborhood_block_disabled_without_group_size() -> None:
     _set_integer_split(8)
     sol = np.full(16, 0.5)
     out, _ = _neighborhood_block(
@@ -797,7 +833,7 @@ def test_neighborhood_block_disabled_without_group_size():
     np.testing.assert_array_equal(out, sol)
 
 
-def test_neighborhood_block_disabled_without_bounds():
+def test_neighborhood_block_disabled_without_bounds() -> None:
     _set_integer_split(8)
     _set_group_size(4)
     sol = np.full(16, 0.5)
@@ -815,19 +851,19 @@ def test_neighborhood_block_disabled_without_bounds():
 # ----------------------------- _prepare_bounds + grasp_ils_vnd -----------------------------
 
 
-def test_prepare_bounds_missing_raises():
+def test_prepare_bounds_missing_raises() -> None:
     with pytest.raises(IBE):
         _prepare_bounds(None, [1.0])
     with pytest.raises(IBE):
         _prepare_bounds([0.0], None)
 
 
-def test_prepare_bounds_shape_mismatch_raises():
+def test_prepare_bounds_shape_mismatch_raises() -> None:
     with pytest.raises(IBE):
         _prepare_bounds([0.0, 0.0], [1.0])
 
 
-def test_prepare_bounds_upper_not_strictly_greater_raises():
+def test_prepare_bounds_upper_not_strictly_greater_raises() -> None:
     with pytest.raises(IBE):
         _prepare_bounds([0.0, 1.0], [1.0, 1.0])
 
@@ -840,7 +876,7 @@ def _past_deadline() -> float:
     return time.perf_counter() - 1.0
 
 
-def test_path_relinking_best_with_expired_deadline():
+def test_path_relinking_best_with_expired_deadline() -> None:
     _set_integer_split(3)
     src = np.array([5.0, 5.0, 5.0])
     tgt = np.array([0.0, 0.0, 0.0])
@@ -850,7 +886,7 @@ def test_path_relinking_best_with_expired_deadline():
     assert out.shape == (3,)
 
 
-def test_path_relinking_forward_with_expired_deadline():
+def test_path_relinking_forward_with_expired_deadline() -> None:
     _set_integer_split(3)
     src = np.array([5.0, 5.0, 5.0])
     tgt = np.array([1.0, 1.0, 1.0])
@@ -860,7 +896,7 @@ def test_path_relinking_forward_with_expired_deadline():
     assert out.shape == (3,)
 
 
-def test_bidirectional_pr_with_expired_deadline():
+def test_bidirectional_pr_with_expired_deadline() -> None:
     _set_integer_split(3)
     a = np.array([0.0, 0.0, 0.0])
     b = np.array([3.0, 3.0, 3.0])
@@ -868,7 +904,7 @@ def test_bidirectional_pr_with_expired_deadline():
     assert out.shape == (3,)
 
 
-def test_local_search_vnd_with_expired_deadline():
+def test_local_search_vnd_with_expired_deadline() -> None:
     _set_integer_split(2)
     sol = np.array([0.5, 0.5, 1.0, 1.0])
     out = local_search_vnd(
@@ -883,7 +919,7 @@ def test_local_search_vnd_with_expired_deadline():
     assert out.shape == sol.shape
 
 
-def test_neighborhood_group_with_expired_deadline():
+def test_neighborhood_group_with_expired_deadline() -> None:
     _set_integer_split(4)
     _set_group_size(2)
     sol = np.array([0.5, 0.5, 0.5, 0.5, 1.0, 1.0, 1.0, 1.0])
@@ -901,7 +937,7 @@ def test_neighborhood_group_with_expired_deadline():
     assert out.shape == (8,)
 
 
-def test_neighborhood_block_with_expired_deadline():
+def test_neighborhood_block_with_expired_deadline() -> None:
     _set_integer_split(8)
     _set_group_size(4)
     sol = np.full(16, 0.5)
@@ -920,7 +956,7 @@ def test_neighborhood_block_with_expired_deadline():
     assert out.shape == (16,)
 
 
-def test_ils_search_with_expired_deadline():
+def test_ils_search_with_expired_deadline() -> None:
     _set_integer_split(2)
     cfg = CoreConfig(
         ils_iterations=5,
@@ -942,7 +978,9 @@ def test_ils_search_with_expired_deadline():
     assert np.isfinite(cost)
 
 
-def test_search_continuous_flip_break_and_try_neighborhoods_second_expired(monkeypatch):
+def test_search_continuous_flip_break_and_try_neighborhoods_second_expired(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Covers line 145 (break in _search_continuous_flip_module) and
     line 693 (second _expired guard in _try_neighborhoods).
 
@@ -988,7 +1026,7 @@ def test_search_continuous_flip_break_and_try_neighborhoods_second_expired(monke
 # ----------------------------- adaptive VND extras -----------------------------
 
 
-def test_local_search_vnd_adaptive_with_groups():
+def test_local_search_vnd_adaptive_with_groups() -> None:
     _set_integer_split(8)
     _set_group_size(4)
     sol = np.full(16, 0.5)
@@ -1004,7 +1042,7 @@ def test_local_search_vnd_adaptive_with_groups():
     assert out.shape == sol.shape
 
 
-def test_local_search_vnd_adaptive_with_cache():
+def test_local_search_vnd_adaptive_with_cache() -> None:
     _set_integer_split(2)
     sol = np.array([0.5, 0.5, 1.0, 1.0])
     out = local_search_vnd_adaptive(
@@ -1022,7 +1060,7 @@ def test_local_search_vnd_adaptive_with_cache():
 # ----------------------------- _execute_neighborhood multiflip branch -----------------------------
 
 
-def test_execute_neighborhood_all_indices():
+def test_execute_neighborhood_all_indices() -> None:
     """Cover every branch of ``_execute_neighborhood`` (idx 0..4)."""
     _set_integer_split(8)
     _set_group_size(4)
@@ -1049,7 +1087,7 @@ def test_execute_neighborhood_all_indices():
 # ----------------------------- _evaluate_solution_with_cache branches -----------------------------
 
 
-def test_evaluate_solution_with_cache_branches():
+def test_evaluate_solution_with_cache_branches() -> None:
     cache = EvaluationCache(maxsize=4)
     sol = np.array([1.0, 2.0])
     # first call: miss -> compute and store
@@ -1063,7 +1101,7 @@ def test_evaluate_solution_with_cache_branches():
 # ----------------------------- _create_cached_cost_fn -----------------------------
 
 
-def test_create_cached_cost_fn_with_and_without_cache():
+def test_create_cached_cost_fn_with_and_without_cache() -> None:
     cache = EvaluationCache(maxsize=4)
     cached = _create_cached_cost_fn(quad, cache)
     sol = np.array([1.0, 2.0])
@@ -1077,7 +1115,7 @@ def test_create_cached_cost_fn_with_and_without_cache():
 # ----------------------------- restart-on-stagnation path -----------------------------
 
 
-def test_grasp_run_triggers_stagnation_restart():
+def test_grasp_run_triggers_stagnation_restart() -> None:
     """Constant-cost evaluator forces stagnation -> partial restart code path."""
     cfg = PublicConfig(
         max_iterations=12,
@@ -1091,7 +1129,7 @@ def test_grasp_run_triggers_stagnation_restart():
         use_convergence_monitor=False,
     )
 
-    def flat(_x):
+    def flat(_x: np.ndarray) -> float:
         return 1.0
 
     result = givp(flat, [(-1.0, 1.0)] * 4, config=cfg, verbose=True)
@@ -1101,7 +1139,7 @@ def test_grasp_run_triggers_stagnation_restart():
 # ----------------------------- direct-call helpers for fallback / verbose paths -----------------------------
 
 
-def test_select_rcl_fallback_with_nan_ratios():
+def test_select_rcl_fallback_with_nan_ratios() -> None:
     """Triggers the ``len(rcl_indices) == 0`` fallback in ``select_rcl``."""
     out = select_rcl(
         np.array([0, 1, 2]),
@@ -1111,7 +1149,7 @@ def test_select_rcl_fallback_with_nan_ratios():
     assert len(out) >= 1
 
 
-def test_handle_convergence_monitor_verbose_with_pool_trim():
+def test_handle_convergence_monitor_verbose_with_pool_trim() -> None:
     """Cover ``_handle_convergence_monitor`` verbose branch trimming the pool."""
     pool = ElitePool(max_size=10, min_distance=0.0)
     for i in range(5):
@@ -1127,17 +1165,17 @@ def test_handle_convergence_monitor_verbose_with_pool_trim():
     assert pool.size() == 2
 
 
-def test_handle_convergence_monitor_returns_neg1_when_no_restart():
+def test_handle_convergence_monitor_returns_neg1_when_no_restart() -> None:
     mon = ConvergenceMonitor(window_size=3, restart_threshold=10)
     out = _handle_convergence_monitor(mon, 1.0, None, verbose=False)
     assert out == -1
 
 
-def test_handle_convergence_monitor_returns_zero_when_no_monitor():
+def test_handle_convergence_monitor_returns_zero_when_no_monitor() -> None:
     assert _handle_convergence_monitor(None, 0.0, None, False) == 0
 
 
-def test_maybe_apply_warm_start_updates_best():
+def test_maybe_apply_warm_start_updates_best() -> None:
 
     pool = ElitePool(max_size=2, min_distance=0.0)
     init = np.array([0.5, 0.5])
@@ -1155,7 +1193,7 @@ def test_maybe_apply_warm_start_updates_best():
     np.testing.assert_array_equal(new_sol, init)
 
 
-def test_maybe_apply_warm_start_keeps_best_when_initial_worse():
+def test_maybe_apply_warm_start_keeps_best_when_initial_worse() -> None:
 
     pool = ElitePool(max_size=2, min_distance=0.0)
     init = np.array([5.0, 5.0])
@@ -1171,7 +1209,7 @@ def test_maybe_apply_warm_start_keeps_best_when_initial_worse():
     assert new_cost == pytest.approx(0.0)
 
 
-def test_maybe_apply_warm_start_no_pool_short_circuit():
+def test_maybe_apply_warm_start_no_pool_short_circuit() -> None:
 
     out_cost, _ = _maybe_apply_warm_start(
         None,
@@ -1185,7 +1223,7 @@ def test_maybe_apply_warm_start_no_pool_short_circuit():
     assert out_cost == pytest.approx(1.0)
 
 
-def test_print_cache_stats_runs(caplog):
+def test_print_cache_stats_runs(caplog: pytest.LogCaptureFixture) -> None:
     cache = EvaluationCache(maxsize=4)
     cache.put(np.array([1.0]), 1.0)
     cache.get(np.array([1.0]))
@@ -1195,7 +1233,7 @@ def test_print_cache_stats_runs(caplog):
         _print_cache_stats(cache, verbose=False)
 
 
-def test_check_early_stopping_branches(caplog):
+def test_check_early_stopping_branches(caplog: pytest.LogCaptureFixture) -> None:
     cfg = CoreConfig(early_stop_threshold=2)
     assert _check_early_stopping(None, cfg, False) is False
 
@@ -1208,7 +1246,7 @@ def test_check_early_stopping_branches(caplog):
     assert _check_early_stopping(mon, cfg, False) is False
 
 
-def test_apply_path_relinking_to_pair_runs():
+def test_apply_path_relinking_to_pair_runs() -> None:
     """Cover ``_apply_path_relinking_to_pair`` directly."""
     _set_integer_split(3)
     cfg = CoreConfig(vnd_iterations=4)
@@ -1225,7 +1263,7 @@ def test_apply_path_relinking_to_pair_runs():
     assert np.isfinite(cost)
 
 
-def test_initialize_optimization_components_all_off():
+def test_initialize_optimization_components_all_off() -> None:
     cfg = CoreConfig(
         use_elite_pool=False,
         use_cache=False,
@@ -1237,7 +1275,7 @@ def test_initialize_optimization_components_all_off():
     assert mon is None
 
 
-def test_initialize_optimization_components_all_on():
+def test_initialize_optimization_components_all_on() -> None:
     cfg = CoreConfig(
         use_elite_pool=True,
         use_cache=True,
@@ -1257,12 +1295,12 @@ def test_initialize_optimization_components_all_on():
 
 
 @pytest.fixture
-def expired_deadline(monkeypatch):
+def expired_deadline(monkeypatch: pytest.MonkeyPatch) -> None:
     """Make ``_expired`` always return True regardless of deadline value."""
     monkeypatch.setattr(core_impl, "_expired", lambda _d: True)
 
 
-def test_path_relinking_loops_short_circuit(expired_deadline):
+def test_path_relinking_loops_short_circuit(expired_deadline: None) -> None:
     """All loops guarded by ``_expired`` exit immediately."""
     _set_integer_split(3)
     src = np.array([5.0, 5.0, 5.0])
@@ -1273,7 +1311,7 @@ def test_path_relinking_loops_short_circuit(expired_deadline):
     assert out.shape == (3,)
 
 
-def test_local_search_vnd_short_circuit(expired_deadline):
+def test_local_search_vnd_short_circuit(expired_deadline: None) -> None:
     _set_integer_split(2)
     sol = np.array([0.5, 0.5, 1.0, 1.0])
     out = local_search_vnd(
@@ -1288,7 +1326,7 @@ def test_local_search_vnd_short_circuit(expired_deadline):
     assert out.shape == sol.shape
 
 
-def test_ils_search_short_circuit(expired_deadline):
+def test_ils_search_short_circuit(expired_deadline: None) -> None:
     _set_integer_split(2)
     cfg = CoreConfig(ils_iterations=5, vnd_iterations=4, perturbation_strength=2)
     sol = np.array([0.5, 0.5, 1.0, 1.0])
@@ -1305,7 +1343,7 @@ def test_ils_search_short_circuit(expired_deadline):
     assert out.shape == sol.shape
 
 
-def test_neighborhoods_short_circuit(expired_deadline):
+def test_neighborhoods_short_circuit(expired_deadline: None) -> None:
     _set_integer_split(8)
     _set_group_size(4)
     sol = np.full(16, 0.5)
@@ -1336,7 +1374,7 @@ def test_neighborhoods_short_circuit(expired_deadline):
     assert out.shape == (16,)
 
 
-def test_grasp_run_with_immediate_deadline(monkeypatch):
+def test_grasp_run_with_immediate_deadline(monkeypatch: pytest.MonkeyPatch) -> None:
     """Make the loop quit on first iteration via patched ``_expired``."""
     cfg = PublicConfig(
         max_iterations=5,
@@ -1350,7 +1388,7 @@ def test_grasp_run_with_immediate_deadline(monkeypatch):
 
     real_expired = core_impl._expired
 
-    def patched(d):
+    def patched(d: float) -> bool:
         calls["n"] += 1
         # Allow the first few internal calls but expire after a couple
         return calls["n"] > 3 or real_expired(d)
@@ -1360,7 +1398,7 @@ def test_grasp_run_with_immediate_deadline(monkeypatch):
     assert np.isfinite(result.fun)
 
 
-def test_perturb_index_no_bounds_int_branch():
+def test_perturb_index_no_bounds_int_branch() -> None:
     """Cover the ``_perturb_index`` integer branch with no bounds."""
     _set_integer_split(1)
     arr = np.array([0.5, 3.0])
@@ -1375,7 +1413,7 @@ def test_perturb_index_no_bounds_int_branch():
 class _ListHandler(logging.Handler):
     """Minimal in-memory log handler used by verbose tests."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.messages: list[str] = []
 
@@ -1383,11 +1421,13 @@ class _ListHandler(logging.Handler):
         self.messages.append(self.format(record))
 
 
-def _capture_logger(logger_name: str = "givp.core"):
+def _capture_logger(
+    logger_name: str = "givp.core",
+) -> contextlib.AbstractContextManager[_ListHandler]:
     """Context manager that attaches a ``_ListHandler`` to *logger_name* and yields it."""
 
     @contextlib.contextmanager
-    def _ctx():
+    def _ctx() -> Generator[_ListHandler, None, None]:
         log = logging.getLogger(logger_name)
         h = _ListHandler()
         h.setLevel(logging.DEBUG)
@@ -1400,7 +1440,7 @@ def _capture_logger(logger_name: str = "givp.core"):
     return _ctx()
 
 
-def test_ensure_verbose_handler_attaches_once():
+def test_ensure_verbose_handler_attaches_once() -> None:
     """``_ensure_verbose_handler`` adds a handler the first time and is idempotent."""
     # Force a clean state so we can exercise the "first call" branch.
     _VERBOSE_HANDLER_ATTACHED[0] = False
@@ -1423,7 +1463,7 @@ def test_ensure_verbose_handler_attaches_once():
         logger.addHandler(h)
 
 
-def test_print_run_header_verbose_true():
+def test_print_run_header_verbose_true() -> None:
     """``_print_run_header`` emits a log line when verbose=True."""
     cfg = CoreConfig(
         max_iterations=10,
@@ -1439,7 +1479,7 @@ def test_print_run_header_verbose_true():
     assert any("GRASP-ILS-VND-PR start" in m for m in h.messages)
 
 
-def test_print_run_header_verbose_false():
+def test_print_run_header_verbose_false() -> None:
     """``_print_run_header`` emits nothing when verbose=False."""
     cfg = CoreConfig()
     with _capture_logger() as h:
@@ -1447,7 +1487,7 @@ def test_print_run_header_verbose_false():
     assert not any("GRASP-ILS-VND-PR start" in m for m in h.messages)
 
 
-def test_print_run_header_non_adaptive_alpha():
+def test_print_run_header_non_adaptive_alpha() -> None:
     """Header uses fixed alpha values when adaptive_alpha=False."""
     cfg = CoreConfig(adaptive_alpha=False, alpha=0.15)
     with _capture_logger() as h:
@@ -1455,7 +1495,7 @@ def test_print_run_header_non_adaptive_alpha():
     assert any("0.150" in m for m in h.messages)
 
 
-def test_print_run_header_with_time_limit():
+def test_print_run_header_with_time_limit() -> None:
     """Header shows formatted time limit when time_limit > 0."""
     cfg = CoreConfig(time_limit=30.0)
     with _capture_logger() as h:
@@ -1463,7 +1503,7 @@ def test_print_run_header_with_time_limit():
     assert any("30.0s" in m for m in h.messages)
 
 
-def test_print_run_footer_verbose_true():
+def test_print_run_footer_verbose_true() -> None:
     """``_print_run_footer`` emits a log line when verbose=True."""
     start = time.monotonic()
     with _capture_logger() as h:
@@ -1472,7 +1512,7 @@ def test_print_run_footer_verbose_true():
     assert any("3.1400" in m for m in h.messages)
 
 
-def test_print_run_footer_verbose_false():
+def test_print_run_footer_verbose_false() -> None:
     """``_print_run_footer`` emits nothing when verbose=False."""
     start = time.monotonic()
     with _capture_logger() as h:
@@ -1480,7 +1520,7 @@ def test_print_run_footer_verbose_false():
     assert not any("GRASP-ILS-VND-PR end" in m for m in h.messages)
 
 
-def test_verbose_output_contains_iter_and_best():
+def test_verbose_output_contains_iter_and_best() -> None:
     """End-to-end: verbose run emits header, per-iteration lines, and footer."""
     cfg = GIVPConfig(
         max_iterations=4,
@@ -1507,7 +1547,7 @@ def test_verbose_output_contains_iter_and_best():
 # ----------------------------- _sign_from_delta ---------------------------
 
 
-def test_sign_from_delta_all_branches():
+def test_sign_from_delta_all_branches() -> None:
     """Lines 1234, 1244: cover negative (-1) and zero (0) return branches."""
     assert core_vnd._sign_from_delta(2.0) == 1
     assert core_vnd._sign_from_delta(-0.5) == -1
@@ -1517,7 +1557,7 @@ def test_sign_from_delta_all_branches():
 # ----------------------------- _neighborhood_pair invalid split -----------
 
 
-def test_neighborhood_swap_skips_when_half_equals_num_vars():
+def test_neighborhood_swap_skips_when_half_equals_num_vars() -> None:
     """Line 1132: half >= num_vars triggers early return in _neighborhood_swap."""
     _set_integer_split(4)  # _get_half(4) = 4 >= num_vars=4 -> early return
     sol = np.array([0.5, 0.5, 1.0, 1.0])
@@ -1529,7 +1569,7 @@ def test_neighborhood_swap_skips_when_half_equals_num_vars():
 # ----------------------------- _group_layout indivisible -----------------
 
 
-def test_group_layout_returns_none_when_indivisible():
+def test_group_layout_returns_none_when_indivisible() -> None:
     """Lines 1162->1165: half not divisible by n_steps -> return None."""
     _set_integer_split(5)
     _set_group_size(3)  # 5 // 3 = 1; 1 * 3 = 3 != 5 -> None
@@ -1539,7 +1579,7 @@ def test_group_layout_returns_none_when_indivisible():
 # ----------------------------- _modify_indices_for_multiflip no-bounds ---
 
 
-def test_modify_indices_continuous_no_bounds():
+def test_modify_indices_continuous_no_bounds() -> None:
     """Lines 622-623: continuous perturbation path without bounds supplied."""
     _set_integer_split(2)  # half=2; indices [0,1] are in the continuous region
     sol = np.array([0.5, 0.5, 1.0, 1.0])
@@ -1554,7 +1594,7 @@ def test_modify_indices_continuous_no_bounds():
 # ----------------------------- _perturb_index continuous no bounds -------
 
 
-def test_perturb_index_continuous_no_bounds():
+def test_perturb_index_continuous_no_bounds() -> None:
     """Line 662: continuous variable with no bounds uses normal perturbation."""
     _set_integer_split(1)  # half=1; idx=0 is in the continuous region
     arr = np.array([1.5, 2.0])
@@ -1566,7 +1606,7 @@ def test_perturb_index_continuous_no_bounds():
 # ----------------------------- grasp_ils_vnd config=None -----------------
 
 
-def test_grasp_ils_vnd_config_none_uses_default():
+def test_grasp_ils_vnd_config_none_uses_default() -> None:
     """Line 2316: grasp_ils_vnd auto-creates GIVPConfig when config=None."""
     _set_integer_split(2)
     _, cost, _nit, _msg = core_impl.grasp_ils_vnd(
@@ -1582,7 +1622,7 @@ def test_grasp_ils_vnd_config_none_uses_default():
 # ----------------------------- _path_relinking_best lines 1452-1491 ------
 
 
-def test_path_relinking_best_no_improving_move_breaks():
+def test_path_relinking_best_no_improving_move_breaks() -> None:
     """Line 1491->1475: break when _find_best_move returns None.
     Source is already optimal; every step toward target worsens cost."""
     _set_integer_split(3)
@@ -1593,7 +1633,7 @@ def test_path_relinking_best_no_improving_move_breaks():
     assert np.isfinite(cost)
 
 
-def test_path_relinking_best_processes_improving_moves():
+def test_path_relinking_best_processes_improving_moves() -> None:
     """Lines 1452, 1454: _find_best_move iterates indices and restores state."""
     _set_integer_split(3)
     src = np.array([3.0, 3.0, 3.0])
@@ -1606,7 +1646,7 @@ def test_path_relinking_best_processes_improving_moves():
 # ----------------------------- _find_best_move equal-index skip ----------
 
 
-def test_find_best_move_skips_index_already_equal_to_target():
+def test_find_best_move_skips_index_already_equal_to_target() -> None:
     """Line 1452: `continue` when current[idx] == target[idx]."""
     current = np.array([1.0, 2.0, 3.0], dtype=float)
     # idx=1: current[1] == target[1] == 2.0 -> the continue branch fires
@@ -1623,10 +1663,10 @@ def test_find_best_move_skips_index_already_equal_to_target():
 # ----------------------------- _safe_iteration_callback verbose=False ----
 
 
-def test_safe_iteration_callback_exception_verbose_false():
+def test_safe_iteration_callback_exception_verbose_false() -> None:
     """Line 1727->exit: exception in callback with verbose=False skips logger.info."""
 
-    def boom(_it, _cost, _sol):
+    def boom(_it: int, _cost: float, _sol: np.ndarray) -> None:
         raise RuntimeError("oops")
 
     # Must not raise; the False branch of `if verbose:` is taken
@@ -1638,7 +1678,7 @@ def test_safe_iteration_callback_exception_verbose_false():
 # ----------------------------- _search_*_module first_improvement --------
 
 
-def test_search_integer_flip_module_first_improvement():
+def test_search_integer_flip_module_first_improvement() -> None:
     """Line 515: early return when first_improvement=True and move improves cost."""
     _set_integer_split(2)
     # sol=[0,0,5,5], cost=50; moving idx=2 from 5->4 gives cost=41 < 50
@@ -1659,7 +1699,9 @@ def test_search_integer_flip_module_first_improvement():
     assert cost < initial_cost
 
 
-def test_search_continuous_flip_module_first_improvement(monkeypatch):
+def test_search_continuous_flip_module_first_improvement(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Line 550: early return when first_improvement=True and move improves cost."""
     # Patch _try_continuous_move_module to guarantee an improvement on first call
     monkeypatch.setattr(
@@ -1689,7 +1731,7 @@ def test_search_continuous_flip_module_first_improvement(monkeypatch):
 # ----------------------------- _compute_ratios_numpy dependency branch ---
 
 
-def test_evaluate_candidates_with_new_deps():
+def test_evaluate_candidates_with_new_deps() -> None:
     """Line 146->148: branch where a package has new (inactive) dependencies."""
     # Package 0 depends on package 1; package 1 has no dependencies
     available = np.array([0, 1])
@@ -1702,16 +1744,17 @@ def test_evaluate_candidates_with_new_deps():
     a_arr = np.array([10, 5])  # dependency costs
     b = 100  # budget
 
-    _, inc_costs, valid = evaluate_candidates(
-        available,
-        deps_active,
-        current_cost,
-        deps_matrix,
-        deps_len,
-        c_arr,
-        a_arr,
-        b,
-    )
+    with pytest.warns(DeprecationWarning, match="legacy discrete-packing helper"):
+        _, inc_costs, valid = evaluate_candidates(
+            available,
+            deps_active,
+            current_cost,
+            deps_matrix,
+            deps_len,
+            c_arr,
+            a_arr,
+            b,
+        )
     # pkg 0: n_deps=1, dep 1 not active -> incremental_cost = a_arr[1] = 5
     assert valid[0]
     assert inc_costs[0] == 5
@@ -1720,7 +1763,7 @@ def test_evaluate_candidates_with_new_deps():
 # ---- evaluate_candidates: all deps already active (146->148 False branch) ----
 
 
-def test_evaluate_candidates_all_deps_already_active():
+def test_evaluate_candidates_all_deps_already_active() -> None:
     """Line 146->148: n_deps > 0 but all deps already active -> incremental_cost = 0."""
     available = np.array([0])
     deps_active = np.array([False, True])  # dep pkg 1 is already active
@@ -1731,9 +1774,17 @@ def test_evaluate_candidates_all_deps_already_active():
     c_arr = np.array([20, 15])
     a_arr = np.array([10, 5])
     b = 100
-    _, inc_costs, valid = evaluate_candidates(
-        available, deps_active, current_cost, deps_matrix, deps_len, c_arr, a_arr, b
-    )
+    with pytest.warns(DeprecationWarning, match="legacy discrete-packing helper"):
+        _, inc_costs, valid = evaluate_candidates(
+            available,
+            deps_active,
+            current_cost,
+            deps_matrix,
+            deps_len,
+            c_arr,
+            a_arr,
+            b,
+        )
     assert valid[0]
     assert inc_costs[0] == 0  # dep already active -> no incremental cost
 
@@ -1741,7 +1792,7 @@ def test_evaluate_candidates_all_deps_already_active():
 # ---- _select_from_rcl: all-inf costs returns None (line 246) ----
 
 
-def test_select_from_rcl_all_costs_infinite():
+def test_select_from_rcl_all_costs_infinite() -> None:
     """Line 246: return None when all candidate costs are infinite."""
     costs = np.array([np.inf, np.inf, np.inf])
     rng = np.random.default_rng(0)
@@ -1752,7 +1803,7 @@ def test_select_from_rcl_all_costs_infinite():
 # ---- _select_from_rcl: empty RCL after filter falls back to valid_idx (line 254) ----
 
 
-def test_select_from_rcl_empty_rcl_fallback():
+def test_select_from_rcl_empty_rcl_fallback() -> None:
     """Line 254: rcl_local = valid_idx when threshold filters out all candidates (alpha<0)."""
     costs = np.array([1.0, 2.0, 3.0])
     rng = np.random.default_rng(0)
@@ -1765,7 +1816,9 @@ def test_select_from_rcl_empty_rcl_fallback():
 # ---- _search_integer_flip_module: deadline break (line 515) ----
 
 
-def test_search_integer_flip_module_deadline_break(monkeypatch):
+def test_search_integer_flip_module_deadline_break(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Line 515: break fires when _expired returns True on first loop iteration."""
     monkeypatch.setattr(core_vnd, "_expired", lambda _: True)
     _set_integer_split(2)
@@ -1790,7 +1843,7 @@ def test_search_integer_flip_module_deadline_break(monkeypatch):
 # ---- _search_integer_flip_module: improvement + first_improvement=False (522->513) ----
 
 
-def test_search_integer_flip_module_no_first_improvement():
+def test_search_integer_flip_module_no_first_improvement() -> None:
     """Line 522->513: improvement found but first_improvement=False continues loop."""
     _set_integer_split(2)
     sol = np.array([0.0, 0.0, 5.0, 5.0])
@@ -1812,11 +1865,13 @@ def test_search_integer_flip_module_no_first_improvement():
 # ---- _search_continuous_flip_module: improvement + first_improvement=False (550->552) ----
 
 
-def test_search_continuous_flip_module_no_first_improvement(monkeypatch):
+def test_search_continuous_flip_module_no_first_improvement(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Line 550->552: improvement found but first_improvement=False continues loop."""
     call_count = [0]
 
-    def always_improve(*_args, **_kwargs):
+    def always_improve(*_args: tuple, **_kwargs: dict) -> tuple[bool, float]:
         call_count[0] += 1
         return (True, 0.0)
 
@@ -1843,7 +1898,7 @@ def test_search_continuous_flip_module_no_first_improvement(monkeypatch):
 # ---- _modify_indices_for_multiflip: integer no-bounds path (572->576) ----
 
 
-def test_modify_indices_integer_no_bounds():
+def test_modify_indices_integer_no_bounds() -> None:
     """Line 572->576: integer indices with lower_arr=None skips the clip block."""
     _set_integer_split(2)
     sol = np.array([0.5, 0.5, 3.0, 5.0])
@@ -1857,7 +1912,7 @@ def test_modify_indices_integer_no_bounds():
 # ---- _try_neighborhoods: expired at very start (line 662) ----
 
 
-def test_try_neighborhoods_expired_immediately(monkeypatch):
+def test_try_neighborhoods_expired_immediately(monkeypatch: pytest.MonkeyPatch) -> None:
     """Line 662: _expired True before first neighborhood -> immediately returns False."""
     monkeypatch.setattr(core_vnd, "_expired", lambda _: True)
     _set_integer_split(1)
@@ -1881,11 +1936,11 @@ def test_try_neighborhoods_expired_immediately(monkeypatch):
 # ---- _try_neighborhoods: expired after swap no-improvement (line 696) ----
 
 
-def test_try_neighborhoods_expired_after_swap(monkeypatch):
+def test_try_neighborhoods_expired_after_swap(monkeypatch: pytest.MonkeyPatch) -> None:
     """Line 696: _expired fires after swap neighborhood finds no improvement."""
     call_count = [0]
 
-    def count_expired(d):
+    def count_expired(d: float) -> bool:
         call_count[0] += 1
         return call_count[0] >= 3
 
@@ -1911,7 +1966,9 @@ def test_try_neighborhoods_expired_after_swap(monkeypatch):
 # ---- _try_neighborhoods: group neighborhood improves (line 710) ----
 
 
-def test_try_neighborhoods_group_neighborhood_improves(monkeypatch):
+def test_try_neighborhoods_group_neighborhood_improves(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Line 710: _neighborhood_group returns an improvement -> early True return."""
     monkeypatch.setattr(core_vnd, "_expired", lambda _: False)
     improved_sol = np.zeros(2)
@@ -1938,11 +1995,11 @@ def test_try_neighborhoods_group_neighborhood_improves(monkeypatch):
 # ---- _try_neighborhoods: expired after group no-improvement (line 713) ----
 
 
-def test_try_neighborhoods_expired_after_group(monkeypatch):
+def test_try_neighborhoods_expired_after_group(monkeypatch: pytest.MonkeyPatch) -> None:
     """Line 713: _expired fires after group neighborhood finds no improvement."""
     call_count = [0]
 
-    def count_expired(d):
+    def count_expired(d: float) -> bool:
         call_count[0] += 1
         return call_count[0] >= 4
 
@@ -1968,7 +2025,9 @@ def test_try_neighborhoods_expired_after_group(monkeypatch):
 # ---- _try_neighborhoods: block neighborhood improves (line 726) ----
 
 
-def test_try_neighborhoods_block_neighborhood_improves(monkeypatch):
+def test_try_neighborhoods_block_neighborhood_improves(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Line 726: _neighborhood_block returns an improvement -> early True return."""
     monkeypatch.setattr(core_vnd, "_expired", lambda _: False)
     improved_sol = np.zeros(2)
@@ -1995,11 +2054,13 @@ def test_try_neighborhoods_block_neighborhood_improves(monkeypatch):
 # ---- _try_neighborhoods: expired in multiflip check (line 730) ----
 
 
-def test_try_neighborhoods_expired_in_multiflip_check(monkeypatch):
+def test_try_neighborhoods_expired_in_multiflip_check(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Line 730: _expired fires inside `if iteration % limit == 0:` block."""
     call_count = [0]
 
-    def count_expired(d):
+    def count_expired(d: float) -> bool:
         call_count[0] += 1
         return call_count[0] >= 5
 
@@ -2026,7 +2087,7 @@ def test_try_neighborhoods_expired_in_multiflip_check(monkeypatch):
 # ---- _neighborhood_swap: deadline break in loop (line 1132) ----
 
 
-def test_neighborhood_swap_deadline_break(monkeypatch):
+def test_neighborhood_swap_deadline_break(monkeypatch: pytest.MonkeyPatch) -> None:
     """Line 1132: break fires when _expired True inside the for-loop."""
     monkeypatch.setattr(core_vnd, "_expired", lambda _: True)
     _set_integer_split(2)  # half=2 < num_vars=4 -> we enter the loop
@@ -2047,7 +2108,7 @@ def test_neighborhood_swap_deadline_break(monkeypatch):
 # ---- _neighborhood_swap: else branch (no bounds, lines 1155-1156) ----
 
 
-def test_neighborhood_swap_no_bounds_else_branch():
+def test_neighborhood_swap_no_bounds_else_branch() -> None:
     """Lines 1155-1156: else branch (no bounds) perturbs cont+int without clipping."""
     _set_integer_split(2)
     sol = np.array([1.0, 1.0, 2.0, 2.0])
@@ -2067,7 +2128,7 @@ def test_neighborhood_swap_no_bounds_else_branch():
 # ---- _neighborhood_swap: improvement + first_improvement=False (1162->1165) ----
 
 
-def test_neighborhood_swap_improvement_no_first_improvement():
+def test_neighborhood_swap_improvement_no_first_improvement() -> None:
     """Line 1162->1165: improvement found but first_improvement=False -> restore+continue."""
     _set_integer_split(2)
     sol = np.array([1.0, 1.0, 2.0, 2.0])
@@ -2087,7 +2148,7 @@ def test_neighborhood_swap_improvement_no_first_improvement():
 # ---- _neighborhood_group: zero attempts (1340->1372) ----
 
 
-def test_neighborhood_group_zero_attempts():
+def test_neighborhood_group_zero_attempts() -> None:
     """Line 1340->1372: for loop runs 0 times with max_attempts=0."""
     _set_integer_split(4)
     _set_group_size(2)
@@ -2108,7 +2169,7 @@ def test_neighborhood_group_zero_attempts():
 # ---- _neighborhood_group: no improvement restores solution (lines 1369-1370) ----
 
 
-def test_neighborhood_group_no_improvement_restores():
+def test_neighborhood_group_no_improvement_restores() -> None:
     """Lines 1369-1370: restore after perturbation doesn't improve cost."""
     _set_integer_split(4)
     _set_group_size(2)
@@ -2128,7 +2189,7 @@ def test_neighborhood_group_no_improvement_restores():
 # ---- _neighborhood_group: improvement + first_improvement=False (1366->1369) ----
 
 
-def test_neighborhood_group_improvement_no_first_improvement():
+def test_neighborhood_group_improvement_no_first_improvement() -> None:
     """Line 1366->1369: improvement found but first_improvement=False -> restore+continue."""
     _set_integer_split(4)
     _set_group_size(2)
@@ -2149,7 +2210,7 @@ def test_neighborhood_group_improvement_no_first_improvement():
 # ---- _neighborhood_block: zero attempts (1403->1435) ----
 
 
-def test_neighborhood_block_zero_attempts():
+def test_neighborhood_block_zero_attempts() -> None:
     """Line 1403->1435: for loop runs 0 times with max_attempts=0."""
     _set_integer_split(5)
     _set_group_size(5)
@@ -2169,7 +2230,7 @@ def test_neighborhood_block_zero_attempts():
 # ---- _neighborhood_block: improvement + first_improvement=False (1430->1433) ----
 
 
-def test_neighborhood_block_improvement_no_first_improvement():
+def test_neighborhood_block_improvement_no_first_improvement() -> None:
     """Line 1430->1433: improvement found but first_improvement=False -> restore+continue."""
     _set_integer_split(5)
     _set_group_size(5)
@@ -2190,7 +2251,7 @@ def test_neighborhood_block_improvement_no_first_improvement():
 # ---- _find_best_move: deadline break (line 1452) ----
 
 
-def test_find_best_move_deadline_break(monkeypatch):
+def test_find_best_move_deadline_break(monkeypatch: pytest.MonkeyPatch) -> None:
     """Line 1452: break fires when _expired True in the for-loop."""
     monkeypatch.setattr(pr_module, "_expired", lambda _: True)
     current = np.array([1.0, 2.0, 3.0])
@@ -2206,7 +2267,7 @@ def test_find_best_move_deadline_break(monkeypatch):
 # ---- _neighborhood_multiflip: deadline break in loop (line 1204) ----
 
 
-def test_neighborhood_multiflip_deadline_break(monkeypatch):
+def test_neighborhood_multiflip_deadline_break(monkeypatch: pytest.MonkeyPatch) -> None:
     """Line 1204: break fires when _expired True inside the for-loop."""
     monkeypatch.setattr(core_vnd, "_expired", lambda _: True)
     _set_integer_split(2)
@@ -2225,7 +2286,7 @@ def test_neighborhood_multiflip_deadline_break(monkeypatch):
 # ---- _handle_convergence_monitor: restart+verbose+no-pool (1746->1751) ----
 
 
-def test_handle_convergence_monitor_restart_verbose_no_pool():
+def test_handle_convergence_monitor_restart_verbose_no_pool() -> None:
     """Line 1746->1751: restart+verbose but elite_pool is None -> skip to return 0."""
     monitor = ConvergenceMonitor(restart_threshold=1)
     monitor.update(10.0)
@@ -2237,7 +2298,9 @@ def test_handle_convergence_monitor_restart_verbose_no_pool():
 # ---- _process_path_relinking_pairs: expired break in inner j-loop (line 2011) ----
 
 
-def test_process_path_relinking_pairs_expired_break(monkeypatch):
+def test_process_path_relinking_pairs_expired_break(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Line 2011: break in inner j-loop when _expired fires."""
     monkeypatch.setattr(core_impl, "_expired", lambda _: True)
     _set_integer_split(2)
@@ -2267,7 +2330,7 @@ def test_process_path_relinking_pairs_expired_break(monkeypatch):
 # ---- grasp_ils_vnd: use_elite_pool=False covers 1885->1888 and 1961->1963 ----
 
 
-def test_grasp_ils_vnd_no_elite_pool_stagnation_branches():
+def test_grasp_ils_vnd_no_elite_pool_stagnation_branches() -> None:
     """Lines 1885->1888, 1961->1963: use_elite_pool=False skips elite-pool adds.
     Also covers line 1923: verbose logger.info inside stagnation restart."""
     _set_integer_split(2)
@@ -2295,7 +2358,9 @@ def test_grasp_ils_vnd_no_elite_pool_stagnation_branches():
 # ---- _path_relinking_best: move found but NOT better (1491->1475) ----
 
 
-def test_path_relinking_best_move_found_but_not_better(monkeypatch):
+def test_path_relinking_best_move_found_but_not_better(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Line 1491->1475: best_move_idx is not None but best_move_benefit >= best_benefit
     -> if-body skipped, loop continues to while check (the False branch of line 1491).
     """
@@ -2304,15 +2369,15 @@ def test_path_relinking_best_move_found_but_not_better(monkeypatch):
     call_count = [0]
 
     def fake_find_best_move(
-        cost_fn,
-        current,
-        target,
-        indices,
-        source,
-        best_benefit,
-        diff_indices,
-        deadline=0.0,
-    ):
+        cost_fn: Callable[[np.ndarray], float],
+        current: np.ndarray,
+        target: np.ndarray,
+        indices: np.ndarray,
+        source: np.ndarray,
+        best_benefit: float,
+        diff_indices: np.ndarray,
+        deadline: float = 0.0,
+    ) -> tuple[int | None, float]:
         call_count[0] += 1
         if call_count[0] == 1:
             # Pretend idx=0 was "best" but with cost equal to best_benefit (not better)
@@ -2338,7 +2403,7 @@ def _sphere_for_pickle(x: np.ndarray) -> float:
     return float(np.sum(x**2))
 
 
-def test_parallel_worker_picklable_function():
+def test_parallel_worker_picklable_function() -> None:
     """_parallel_worker returns correct value for a picklable module-level fn."""
     from givp.core.grasp import _parallel_worker
 
@@ -2347,7 +2412,7 @@ def test_parallel_worker_picklable_function():
     assert abs(result - 14.0) < 1e-10
 
 
-def test_parallel_worker_returns_inf_on_exception():
+def test_parallel_worker_returns_inf_on_exception() -> None:
     """_parallel_worker returns inf when the evaluator raises."""
     from givp.core.grasp import _parallel_worker
 
@@ -2358,7 +2423,7 @@ def test_parallel_worker_returns_inf_on_exception():
     assert result == float("inf")
 
 
-def test_parallel_worker_returns_inf_for_nonfinite():
+def test_parallel_worker_returns_inf_for_nonfinite() -> None:
     """_parallel_worker coerces NaN / inf results to float('inf')."""
     from givp.core.grasp import _parallel_worker
 
@@ -2366,7 +2431,7 @@ def test_parallel_worker_returns_inf_for_nonfinite():
     assert result == float("inf")
 
 
-def test_evaluate_candidates_batch_closure_fallback_uses_threads():
+def test_evaluate_candidates_batch_closure_fallback_uses_threads() -> None:
     """Non-picklable closure must not raise — falls back to ThreadPoolExecutor."""
     from givp.core.grasp import _evaluate_candidates_batch
 
@@ -2383,7 +2448,7 @@ def test_evaluate_candidates_batch_closure_fallback_uses_threads():
     assert all(np.isfinite(r) for r in results)
 
 
-def test_evaluate_candidates_batch_single_candidate_skips_parallel():
+def test_evaluate_candidates_batch_single_candidate_skips_parallel() -> None:
     """A single unevaluated candidate must not spin up a pool."""
     from givp.core.grasp import _evaluate_candidates_batch
 

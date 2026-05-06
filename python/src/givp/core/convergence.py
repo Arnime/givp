@@ -27,7 +27,7 @@ class ConvergenceMonitor:
         no_improve_count: Number of consecutive iterations without improvement.
     """
 
-    def __init__(self, window_size: int = 20, restart_threshold: int = 50):
+    def __init__(self, window_size: int = 20, restart_threshold: int = 50) -> None:
         """Initialize the convergence monitor."""
         self.window_size = window_size
         self.restart_threshold = restart_threshold
@@ -36,7 +36,9 @@ class ConvergenceMonitor:
         self.best_ever = float("inf")
         self.diversity_scores: list[float] = []
 
-    def update(self, current_cost: float, elite_pool: ElitePool | None = None) -> dict:
+    def update(
+        self, current_cost: float, elite_pool: ElitePool | None = None
+    ) -> dict[str, float | int | bool]:
         """Update the monitor with the latest cost and return recommendations.
 
         Returns:

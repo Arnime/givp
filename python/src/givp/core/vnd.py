@@ -1,4 +1,4 @@
-﻿# SPDX-FileCopyrightText: 2026 Arnaldo Mendes Pires Junior
+# SPDX-FileCopyrightText: 2026 Arnaldo Mendes Pires Junior
 # SPDX-License-Identifier: MIT
 """VND — Variable Neighborhood Descent (orchestration).
 

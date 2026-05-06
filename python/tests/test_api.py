@@ -42,7 +42,7 @@ def fixture_fast_config() -> GIVPConfig:
 # ----------------------------- core happy paths -----------------------------
 
 
-def test_minimize_sphere_returns_result(fast_config):
+def test_minimize_sphere_returns_result(fast_config: GIVPConfig) -> None:
     bounds = [(-5.0, 5.0)] * 4
     result = givp(sphere, bounds, config=fast_config)
     assert isinstance(result, OptimizeResult)
@@ -52,7 +52,7 @@ def test_minimize_sphere_returns_result(fast_config):
     assert result.nfev > 0
 
 
-def test_maximize_returns_value_in_original_sign(fast_config):
+def test_maximize_returns_value_in_original_sign(fast_config: GIVPConfig) -> None:
     bounds = [(-5.0, 5.0)] * 4
     result = givp(neg_sphere, bounds, direction="maximize", config=fast_config)
     assert result.direction == "maximize"
@@ -60,14 +60,14 @@ def test_maximize_returns_value_in_original_sign(fast_config):
     assert np.isfinite(result.fun)
 
 
-def test_bounds_as_lower_upper_tuple(fast_config):
+def test_bounds_as_lower_upper_tuple(fast_config: GIVPConfig) -> None:
     lower = [-1.0, -1.0, -1.0]
     upper = [1.0, 1.0, 1.0]
     result = givp(sphere, (lower, upper), config=fast_config)
     assert result.x.shape == (3,)
 
 
-def test_optimizer_class_keeps_history(fast_config):
+def test_optimizer_class_keeps_history(fast_config: GIVPConfig) -> None:
     opt = GIVPOptimizer(sphere, [(-2.0, 2.0)] * 3, config=fast_config)
     r1 = opt.run()
     r2 = opt.run()
@@ -76,7 +76,7 @@ def test_optimizer_class_keeps_history(fast_config):
     assert opt.best_x is not None
 
 
-def test_grasp_optimizer_maximize_tracks_best(fast_config):
+def test_grasp_optimizer_maximize_tracks_best(fast_config: GIVPConfig) -> None:
     opt = GIVPOptimizer(
         neg_sphere,
         [(-1.0, 1.0)] * 2,
@@ -89,7 +89,7 @@ def test_grasp_optimizer_maximize_tracks_best(fast_config):
     assert len(opt.history) == 2
 
 
-def test_result_is_iterable_for_legacy_unpacking(fast_config):
+def test_result_is_iterable_for_legacy_unpacking(fast_config: GIVPConfig) -> None:
     result = givp(sphere, [(-1.0, 1.0)] * 2, config=fast_config)
     x, fun = result
     assert np.allclose(x, result.x)
@@ -99,28 +99,28 @@ def test_result_is_iterable_for_legacy_unpacking(fast_config):
 # ----------------------------- error handling -----------------------------
 
 
-def test_objective_returning_nan_is_handled(fast_config):
-    def nan_func(_x):
+def test_objective_returning_nan_is_handled(fast_config: GIVPConfig) -> None:
+    def nan_func(_x: np.ndarray) -> float:
         return float("nan")
 
     result = givp(nan_func, [(0.0, 1.0)] * 2, config=fast_config)
     assert not result.success
 
 
-def test_evaluator_raising_exception_is_handled(fast_config):
-    def boom(_x):
+def test_evaluator_raising_exception_is_handled(fast_config: GIVPConfig) -> None:
+    def boom(_x: np.ndarray) -> float:
         raise RuntimeError("explode")
 
     result = givp(boom, [(0.0, 1.0)] * 2, config=fast_config)
     assert not result.success
 
 
-def test_invalid_direction_raises(fast_config):
+def test_invalid_direction_raises(fast_config: GIVPConfig) -> None:
     with pytest.raises(ValueError):
         givp(sphere, [(0.0, 1.0)], direction="bogus", config=fast_config)
 
 
-def test_minimize_and_direction_conflict_raises(fast_config):
+def test_minimize_and_direction_conflict_raises(fast_config: GIVPConfig) -> None:
     with pytest.raises(ValueError):
         givp(
             sphere,
@@ -131,17 +131,17 @@ def test_minimize_and_direction_conflict_raises(fast_config):
         )
 
 
-def test_bounds_num_vars_mismatch_raises(fast_config):
+def test_bounds_num_vars_mismatch_raises(fast_config: GIVPConfig) -> None:
     with pytest.raises(ValueError):
         givp(sphere, [(0.0, 1.0)] * 2, num_vars=5, config=fast_config)
 
 
-def test_bounds_none_raises():
+def test_bounds_none_raises() -> None:
     with pytest.raises(ValueError):
         givp(sphere, None)  # type: ignore[arg-type]
 
 
-def test_invalid_initial_guess_length_raises(fast_config):
+def test_invalid_initial_guess_length_raises(fast_config: GIVPConfig) -> None:
     with pytest.raises(InvalidInitialGuessError):
         givp(
             sphere,
@@ -151,7 +151,7 @@ def test_invalid_initial_guess_length_raises(fast_config):
         )
 
 
-def test_invalid_initial_guess_outside_bounds_raises(fast_config):
+def test_invalid_initial_guess_outside_bounds_raises(fast_config: GIVPConfig) -> None:
     with pytest.raises(InvalidInitialGuessError):
         givp(
             sphere,
@@ -161,7 +161,7 @@ def test_invalid_initial_guess_outside_bounds_raises(fast_config):
         )
 
 
-def test_invalid_bounds_via_core_validate():
+def test_invalid_bounds_via_core_validate() -> None:
     with pytest.raises(InvalidBoundsError):
         _validate_bounds_and_initial(
             np.array([0.0, 1.0]),
@@ -171,10 +171,10 @@ def test_invalid_bounds_via_core_validate():
         )
 
 
-def test_evaluator_raising_value_error_in_wrapper(fast_config):
+def test_evaluator_raising_value_error_in_wrapper(fast_config: GIVPConfig) -> None:
     """``_wrap_objective`` catches ValueError and returns +inf."""
 
-    def bad(_x):
+    def bad(_x: np.ndarray) -> float:
         raise ValueError("nope")
 
     result = givp(bad, [(0.0, 1.0)] * 2, config=fast_config)
@@ -184,7 +184,7 @@ def test_evaluator_raising_value_error_in_wrapper(fast_config):
 # ----------------------------- config code paths -----------------------------
 
 
-def test_initial_guess_warm_start(fast_config):
+def test_initial_guess_warm_start(fast_config: GIVPConfig) -> None:
     bounds = [(-3.0, 3.0)] * 3
     initial = [0.1, 0.1, 0.1]
     result = givp(sphere, bounds, config=fast_config, initial_guess=initial)
@@ -192,18 +192,18 @@ def test_initial_guess_warm_start(fast_config):
     assert np.isfinite(result.fun)
 
 
-def test_iteration_callback_is_invoked(fast_config):
+def test_iteration_callback_is_invoked(fast_config: GIVPConfig) -> None:
     calls = []
 
-    def cb(it, cost, sol):
+    def cb(it: int, cost: float, sol: np.ndarray) -> None:
         calls.append((it, float(cost), np.array(sol)))
 
     givp(sphere, [(-1.0, 1.0)] * 2, config=fast_config, iteration_callback=cb)
     assert len(calls) >= 1
 
 
-def test_iteration_callback_exception_is_swallowed(fast_config):
-    def cb(_it, _cost, _sol):
+def test_iteration_callback_exception_is_swallowed(fast_config: GIVPConfig) -> None:
+    def cb(_it: int, _cost: float, _sol: np.ndarray) -> None:
         raise RuntimeError("callback boom")
 
     result = givp(
@@ -216,25 +216,25 @@ def test_iteration_callback_exception_is_swallowed(fast_config):
     assert np.isfinite(result.fun)
 
 
-def test_use_cache_path(fast_config):
+def test_use_cache_path(fast_config: GIVPConfig) -> None:
     cfg = GIVPConfig(**{**fast_config.__dict__, "use_cache": True})
     result = givp(sphere, [(-1.0, 1.0)] * 2, config=cfg)
     assert np.isfinite(result.fun)
 
 
-def test_no_cache_path(fast_config):
+def test_no_cache_path(fast_config: GIVPConfig) -> None:
     cfg = GIVPConfig(**{**fast_config.__dict__, "use_cache": False})
     result = givp(sphere, [(-1.0, 1.0)] * 2, config=cfg)
     assert np.isfinite(result.fun)
 
 
-def test_adaptive_alpha_disabled(fast_config):
+def test_adaptive_alpha_disabled(fast_config: GIVPConfig) -> None:
     cfg = GIVPConfig(**{**fast_config.__dict__, "adaptive_alpha": False})
     result = givp(sphere, [(-1.0, 1.0)] * 2, config=cfg)
     assert np.isfinite(result.fun)
 
 
-def test_convergence_monitor_enabled(fast_config):
+def test_convergence_monitor_enabled(fast_config: GIVPConfig) -> None:
     cfg = GIVPConfig(
         **{
             **fast_config.__dict__,
@@ -246,13 +246,13 @@ def test_convergence_monitor_enabled(fast_config):
     assert np.isfinite(result.fun)
 
 
-def test_n_workers_parallel_path(fast_config):
+def test_n_workers_parallel_path(fast_config: GIVPConfig) -> None:
     cfg = GIVPConfig(**{**fast_config.__dict__, "n_workers": 2})
     result = givp(sphere, [(-1.0, 1.0)] * 3, config=cfg)
     assert np.isfinite(result.fun)
 
 
-def test_n_workers_parity_serial_vs_parallel(fast_config):
+def test_n_workers_parity_serial_vs_parallel(fast_config: GIVPConfig) -> None:
     """n_workers=2 must return a finite, valid result for the same objective.
 
     Strict value equality is not guaranteed because thread scheduling affects
@@ -289,7 +289,7 @@ def test_n_workers_parity_serial_vs_parallel(fast_config):
     )
 
 
-def test_time_limit_triggers_early_stop(fast_config):
+def test_time_limit_triggers_early_stop(fast_config: GIVPConfig) -> None:
     cfg = GIVPConfig(
         **{
             **fast_config.__dict__,
@@ -303,13 +303,15 @@ def test_time_limit_triggers_early_stop(fast_config):
     assert np.isfinite(result.fun)
 
 
-def test_verbose_runs_without_error(fast_config, caplog):
+def test_verbose_runs_without_error(
+    fast_config: GIVPConfig, caplog: pytest.LogCaptureFixture
+) -> None:
     with caplog.at_level("INFO"):
         result = givp(sphere, [(-1.0, 1.0)] * 2, config=fast_config, verbose=True)
     assert np.isfinite(result.fun)
 
 
-def test_long_run_triggers_path_relinking_and_restart(fast_config):
+def test_long_run_triggers_path_relinking_and_restart() -> None:
     cfg = GIVPConfig(
         max_iterations=8,
         vnd_iterations=6,
@@ -330,7 +332,7 @@ def test_long_run_triggers_path_relinking_and_restart(fast_config):
 # ----------------------------- _wrap_objective coverage --------------------
 
 
-def test_wrap_objective_invalid_direction_raises():
+def test_wrap_objective_invalid_direction_raises() -> None:
     """`_wrap_objective` raises ValueError for an unknown direction string."""
     from givp.api import _wrap_objective
 
@@ -339,7 +341,7 @@ def test_wrap_objective_invalid_direction_raises():
 
 
 @pytest.mark.parametrize("direction", ["minimize", "maximize"])
-def test_wrap_objective_valid_directions(direction):
+def test_wrap_objective_valid_directions(direction: str) -> None:
     """`_wrap_objective` accepts both valid direction strings."""
     from givp.api import _wrap_objective
 
@@ -353,7 +355,7 @@ def test_wrap_objective_valid_directions(direction):
 # ----------------------------- integer_split pre-set ----------------------
 
 
-def test_integer_split_preset_is_respected(fast_config):
+def test_integer_split_preset_is_respected(fast_config: GIVPConfig) -> None:
     """When ``integer_split`` is already set on the config the branch that
     auto-fills it from ``n`` must NOT overwrite it (line 178 false-branch)."""
     cfg = GIVPConfig(**{**fast_config.__dict__, "integer_split": 2})
@@ -362,7 +364,9 @@ def test_integer_split_preset_is_respected(fast_config):
     assert np.isfinite(result.fun)
 
 
-def test_grasp_optimizer_run_second_call_not_better(monkeypatch, fast_config):
+def test_grasp_optimizer_run_second_call_not_better(
+    monkeypatch: pytest.MonkeyPatch, fast_config: GIVPConfig
+) -> None:
     """Line 269->272: second run() result is NOT better -> best_fun/best_x unchanged."""
     from givp import api as api_mod
     from givp.result import OptimizeResult
@@ -389,7 +393,7 @@ def test_grasp_optimizer_run_second_call_not_better(monkeypatch, fast_config):
         ),
     ]
 
-    def fake_run(*_args, **_kwargs):
+    def fake_run(*_args: tuple, **_kwargs: dict) -> OptimizeResult:
         r = results[call_count[0]]
         call_count[0] += 1
         return r

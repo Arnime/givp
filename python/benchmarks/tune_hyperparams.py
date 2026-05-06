@@ -48,10 +48,12 @@ References
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import json
 import logging
 import sys
 import time
+from collections.abc import Callable, Mapping
 from pathlib import Path
 
 import numpy as np
@@ -63,6 +65,7 @@ import numpy as np
 try:
     import givp as _givp_mod
     import givp.benchmarks as bm
+
     GIVPConfig = _givp_mod.GIVPConfig
     givp = _givp_mod.givp
 except ImportError as exc:  # pragma: no cover
@@ -122,7 +125,9 @@ PROBLEM_REGISTRY: dict[str, dict] = {
 # to keep the search affordable in a short session.
 
 
-def _suggest_config(trial, max_iter: int, time_limit: float) -> GIVPConfig:
+def _suggest_config(
+    trial: optuna.trial.Trial, max_iter: int, time_limit: float
+) -> GIVPConfig:
     """Map an Optuna trial to a GIVPConfig.
 
     Parameters
@@ -188,6 +193,76 @@ def _suggest_config(trial, max_iter: int, time_limit: float) -> GIVPConfig:
     )
 
 
+def _config_from_params(
+    params: Mapping[str, object], max_iter: int, time_limit: float
+) -> GIVPConfig:
+    """Build ``GIVPConfig`` from Optuna params exported by a completed trial."""
+
+    def _as_float(key: str) -> float:
+        value = params[key]
+        if isinstance(value, bool):
+            raise TypeError(f"{key!r} must be float, got bool")
+        if not isinstance(value, (int, float)):
+            raise TypeError(f"{key!r} must be numeric, got {type(value).__name__}")
+        return float(value)
+
+    def _as_int(key: str) -> int:
+        value = params[key]
+        if isinstance(value, bool):
+            raise TypeError(f"{key!r} must be int, got bool")
+        if not isinstance(value, int):
+            raise TypeError(f"{key!r} must be int, got {type(value).__name__}")
+        return value
+
+    def _as_bool(key: str) -> bool:
+        value = params[key]
+        if not isinstance(value, bool):
+            raise TypeError(f"{key!r} must be bool, got {type(value).__name__}")
+        return value
+
+    alpha = _as_float("alpha")
+    adaptive_alpha = _as_bool("adaptive_alpha")
+
+    if adaptive_alpha:
+        alpha_min = _as_float("alpha_min")
+        alpha_max = _as_float("alpha_max")
+    else:
+        alpha_min = alpha
+        alpha_max = alpha
+
+    vnd_iterations = _as_int("vnd_iterations")
+    ils_iterations = _as_int("ils_iterations")
+    perturbation_strength = _as_int("perturbation_strength")
+
+    use_elite_pool = _as_bool("use_elite_pool")
+    elite_size = _as_int("elite_size") if use_elite_pool else 5
+    path_relink_frequency = (
+        _as_int("path_relink_frequency") if use_elite_pool else 10
+    )
+
+    early_stop_threshold = _as_int("early_stop_threshold")
+    use_convergence_monitor = _as_bool("use_convergence_monitor")
+
+    return GIVPConfig(
+        max_iterations=max_iter,
+        alpha=alpha,
+        adaptive_alpha=adaptive_alpha,
+        alpha_min=alpha_min,
+        alpha_max=alpha_max,
+        vnd_iterations=vnd_iterations,
+        ils_iterations=ils_iterations,
+        perturbation_strength=perturbation_strength,
+        use_elite_pool=use_elite_pool,
+        elite_size=elite_size,
+        path_relink_frequency=path_relink_frequency,
+        use_cache=True,
+        cache_size=10_000,
+        early_stop_threshold=early_stop_threshold,
+        use_convergence_monitor=use_convergence_monitor,
+        time_limit=time_limit,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Objective function
 # ---------------------------------------------------------------------------
@@ -199,7 +274,7 @@ def build_objective(
     n_eval_seeds: int,
     max_iter: int,
     time_limit: float,
-):
+) -> Callable[[optuna.trial.Trial], float]:
     """Return an Optuna objective callable.
 
     The objective averages ``result.fun`` over all (function, seed) pairs.
@@ -249,7 +324,7 @@ def build_objective(
         reference_scale[fn_name] = scale
         return scale
 
-    def objective(trial) -> float:
+    def objective(trial: optuna.trial.Trial) -> float:
         """Optuna objective: mean normalised best value over all (fn, seed) pairs."""
         cfg = _suggest_config(trial, max_iter, time_limit)
         scores: list[float] = []
@@ -334,9 +409,13 @@ def run_tuning(
     _log.info("Starting Optuna study: %r", study_name)
     _log.info(
         "  %d trials x %d function(s) x %d seed(s) each",
-        n_trials, len(functions), n_eval_seeds,
+        n_trials,
+        len(functions),
+        n_eval_seeds,
     )
-    _log.info("  sampler: TPE (seed=%d)  storage: %s", sampler_seed, storage or "in-memory")
+    _log.info(
+        "  sampler: TPE (seed=%d)  storage: %s", sampler_seed, storage or "in-memory"
+    )
     _log.info("")
 
     t0 = time.perf_counter()
@@ -351,11 +430,11 @@ def run_tuning(
     _log.info("\nBest trial: #%d  value=%.6f", best_trial.number, best_trial.value)
     _log.info("Duration: %.1fs", elapsed)
 
-    # Reconstruct the full GIVPConfig from the best trial params
-    best_cfg = _suggest_config(best_trial, max_iter, time_limit)
+    # Reconstruct the full GIVPConfig from the best trial params.
+    # `best_trial` is a FrozenTrial (not a suggest-capable Trial).
+    best_cfg = _config_from_params(dict(best_trial.params), max_iter, time_limit)
 
     # Serialise GIVPConfig to a plain dict (dataclass)
-    import dataclasses
 
     best_params = {
         f.name: getattr(best_cfg, f.name) for f in dataclasses.fields(best_cfg)
@@ -529,7 +608,9 @@ def main(argv: list[str] | None = None) -> int:
     _log.info("  output        : %s", args.output)
     est_runs = args.n_trials * len(args.functions) * args.n_eval_seeds
     est_min = est_runs * args.time_limit / 60
-    _log.info("  ~eval calls   : %d  (~%d min if all hit time_limit)", est_runs, int(est_min))
+    _log.info(
+        "  ~eval calls   : %d  (~%d min if all hit time_limit)", est_runs, int(est_min)
+    )
     _log.info("")
 
     payload = run_tuning(

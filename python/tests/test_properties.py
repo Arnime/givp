@@ -30,7 +30,9 @@ _FAST = settings(
 )
 
 
-def _bounds_strategy(min_dim: int = 1, max_dim: int = 5):
+def _bounds_strategy(
+    min_dim: int = 1, max_dim: int = 5
+) -> st.SearchStrategy[list[tuple[float, float]]]:
     """Generate well-formed scipy-style bounds with strictly positive width."""
 
     def _build(pairs: list[tuple[float, float]]) -> list[tuple[float, float]]:
@@ -48,7 +50,9 @@ def _bounds_strategy(min_dim: int = 1, max_dim: int = 5):
 
 @_FAST
 @given(bounds=_bounds_strategy())
-def test_sphere_returns_solution_within_bounds(bounds: list[tuple[float, float]]):
+def test_sphere_returns_solution_within_bounds(
+    bounds: list[tuple[float, float]],
+) -> None:
     """For any valid bounds, the result vector lies inside them."""
 
     def sphere(x: np.ndarray) -> float:
@@ -68,7 +72,7 @@ def test_sphere_returns_solution_within_bounds(bounds: list[tuple[float, float]]
 
 @_FAST
 @given(bounds=_bounds_strategy(min_dim=2, max_dim=4))
-def test_direction_flip_preserves_magnitude(bounds: list[tuple[float, float]]):
+def test_direction_flip_preserves_magnitude(bounds: list[tuple[float, float]]) -> None:
     """Optimizing ``f`` and ``-f`` should yield results of compatible sign."""
 
     def f(x: np.ndarray) -> float:
@@ -94,7 +98,7 @@ def test_direction_flip_preserves_magnitude(bounds: list[tuple[float, float]]):
 )
 def test_initial_guess_outside_bounds_raises(
     bounds: list[tuple[float, float]], extra: float
-):
+) -> None:
     """``initial_guess`` strictly outside the bounds must raise."""
 
     def f(x: np.ndarray) -> float:
@@ -110,7 +114,7 @@ def test_initial_guess_outside_bounds_raises(
     n=st.integers(min_value=1, max_value=4),
     delta=st.floats(min_value=1e-6, max_value=1.0, allow_nan=False),
 )
-def test_invalid_bounds_inverted_raises(n: int, delta: float):
+def test_invalid_bounds_inverted_raises(n: int, delta: float) -> None:
     """Bounds where ``lower > upper`` must be rejected."""
 
     bounds = [(1.0, 1.0 - delta)] * n
@@ -125,7 +129,7 @@ def test_invalid_bounds_inverted_raises(n: int, delta: float):
 
 @_FAST
 @given(bounds=_bounds_strategy(min_dim=1, max_dim=3))
-def test_nfev_matches_or_exceeds_iterations(bounds: list[tuple[float, float]]):
+def test_nfev_matches_or_exceeds_iterations(bounds: list[tuple[float, float]]) -> None:
     """Each outer iteration must produce at least one evaluation."""
 
     def f(x: np.ndarray) -> float:

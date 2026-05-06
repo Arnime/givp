@@ -47,7 +47,7 @@ def _run(
 # ---------------------------------------------------------------------------
 
 
-def test_run_outputs_json_to_stdout():
+def test_run_outputs_json_to_stdout() -> None:
     proc = _run(
         "run",
         "--func-file",
@@ -64,7 +64,7 @@ def test_run_outputs_json_to_stdout():
     assert isinstance(data, dict)
 
 
-def test_run_json_schema_fields():
+def test_run_json_schema_fields() -> None:
     proc = _run(
         "run",
         "--func-file",
@@ -96,7 +96,7 @@ def test_run_json_schema_fields():
     assert isinstance(data["direction"], str)
 
 
-def test_run_termination_is_closed_enum():
+def test_run_termination_is_closed_enum() -> None:
     from givp.result import TerminationReason
 
     valid_values = {r.value for r in TerminationReason}
@@ -116,7 +116,7 @@ def test_run_termination_is_closed_enum():
     assert data["termination"] in valid_values
 
 
-def test_run_direction_minimize():
+def test_run_direction_minimize() -> None:
     proc = _run(
         "run",
         "--func-file",
@@ -135,7 +135,7 @@ def test_run_direction_minimize():
     assert data["direction"] == "minimize"
 
 
-def test_run_direction_maximize():
+def test_run_direction_maximize() -> None:
     proc = _run(
         "run",
         "--func-file",
@@ -154,7 +154,7 @@ def test_run_direction_maximize():
     assert data["direction"] == "maximize"
 
 
-def test_run_4d_bounds_produces_correct_x_shape():
+def test_run_4d_bounds_produces_correct_x_shape() -> None:
     proc = _run(
         "run",
         "--func-file",
@@ -171,7 +171,7 @@ def test_run_4d_bounds_produces_correct_x_shape():
     assert len(data["x"]) == 4
 
 
-def test_run_seed_produces_output():
+def test_run_seed_produces_output() -> None:
     proc = _run(
         "run",
         "--func-file",
@@ -190,7 +190,7 @@ def test_run_seed_produces_output():
     assert "x" in data
 
 
-def test_run_via_json_flag():
+def test_run_via_json_flag() -> None:
     payload = json.dumps(
         {
             "func_file": SPHERE_FILE,
@@ -205,7 +205,7 @@ def test_run_via_json_flag():
     assert "x" in data
 
 
-def test_run_via_json_stdin():
+def test_run_via_json_stdin() -> None:
     payload = json.dumps(
         {
             "func_file": SPHERE_FILE,
@@ -220,7 +220,7 @@ def test_run_via_json_stdin():
     assert "x" in data
 
 
-def test_run_explicit_flags_override_json():
+def test_run_explicit_flags_override_json() -> None:
     """--bounds on the command line should take precedence over --json contents."""
     payload = json.dumps(
         {
@@ -236,7 +236,7 @@ def test_run_explicit_flags_override_json():
     assert len(data["x"]) == 1  # CLI flag wins
 
 
-def test_errors_go_to_stderr():
+def test_errors_go_to_stderr() -> None:
     proc = _run(
         "run",
         "--func-file",
@@ -251,7 +251,7 @@ def test_errors_go_to_stderr():
     assert proc.stdout == ""
 
 
-def test_missing_func_name_error():
+def test_missing_func_name_error() -> None:
     proc = _run(
         "run",
         "--func-file",
@@ -267,13 +267,13 @@ def test_missing_func_name_error():
     assert proc.stdout == ""
 
 
-def test_missing_required_args_gives_exit_2():
+def test_missing_required_args_gives_exit_2() -> None:
     # No func-file/func-name/bounds and no --json
     proc = _run("run")
     assert proc.returncode == 2
 
 
-def test_invalid_bounds_json_gives_exit_2():
+def test_invalid_bounds_json_gives_exit_2() -> None:
     proc = _run(
         "run",
         "--func-file",
@@ -293,7 +293,7 @@ def test_invalid_bounds_json_gives_exit_2():
 # ---------------------------------------------------------------------------
 
 
-def test_termination_reason_from_message_converged():
+def test_termination_reason_from_message_converged() -> None:
     from givp.result import TerminationReason
 
     assert (
@@ -302,7 +302,7 @@ def test_termination_reason_from_message_converged():
     )
 
 
-def test_termination_reason_from_message_max_iterations():
+def test_termination_reason_from_message_max_iterations() -> None:
     from givp.result import TerminationReason
 
     assert (
@@ -311,7 +311,7 @@ def test_termination_reason_from_message_max_iterations():
     )
 
 
-def test_termination_reason_from_message_time_limit():
+def test_termination_reason_from_message_time_limit() -> None:
     from givp.result import TerminationReason
 
     assert (
@@ -320,7 +320,7 @@ def test_termination_reason_from_message_time_limit():
     )
 
 
-def test_termination_reason_from_message_early_stop():
+def test_termination_reason_from_message_early_stop() -> None:
     from givp.result import TerminationReason
 
     assert (
@@ -329,7 +329,7 @@ def test_termination_reason_from_message_early_stop():
     )
 
 
-def test_termination_reason_from_message_unknown():
+def test_termination_reason_from_message_unknown() -> None:
     from givp.result import TerminationReason
 
     assert (
@@ -338,7 +338,7 @@ def test_termination_reason_from_message_unknown():
     )
 
 
-def test_optimize_result_to_dict_types():
+def test_optimize_result_to_dict_types() -> None:
     import numpy as np
     from givp.result import OptimizeResult
 
@@ -363,7 +363,7 @@ def test_optimize_result_to_dict_types():
     json.dumps(d)
 
 
-def test_optimize_result_to_dict_no_meta():
+def test_optimize_result_to_dict_no_meta() -> None:
     """to_dict() must not leak the meta dict (internal details)."""
     import numpy as np
     from givp.result import OptimizeResult
@@ -381,7 +381,7 @@ def test_optimize_result_to_dict_no_meta():
     assert "meta" not in d
 
 
-def test_termination_reason_from_message_no_feasible():
+def test_termination_reason_from_message_no_feasible() -> None:
     from givp.result import TerminationReason
 
     assert (
@@ -399,35 +399,35 @@ def test_termination_reason_from_message_no_feasible():
 # ---------------------------------------------------------------------------
 
 
-def test_parse_bounds_valid():
+def test_parse_bounds_valid() -> None:
     from givp.cli import _parse_bounds
 
     bounds = _parse_bounds("[[-5,5],[0,10]]")
     assert bounds == [(-5.0, 5.0), (0.0, 10.0)]
 
 
-def test_parse_bounds_invalid_json_raises():
+def test_parse_bounds_invalid_json_raises() -> None:
     from givp.cli import _parse_bounds
 
     with pytest.raises(ValueError, match="valid JSON"):
         _parse_bounds("not-json")
 
 
-def test_parse_bounds_not_list_raises():
+def test_parse_bounds_not_list_raises() -> None:
     from givp.cli import _parse_bounds
 
     with pytest.raises(ValueError, match="JSON array"):
         _parse_bounds('{"a":1}')
 
 
-def test_parse_bounds_bad_pair_raises():
+def test_parse_bounds_bad_pair_raises() -> None:
     from givp.cli import _parse_bounds
 
     with pytest.raises(ValueError, match="\\[low, high\\]"):
         _parse_bounds("[[1,2,3]]")
 
 
-def test_parse_config_none_returns_default():
+def test_parse_config_none_returns_default() -> None:
     from givp.cli import _parse_config
     from givp.config import GIVPConfig
 
@@ -435,28 +435,28 @@ def test_parse_config_none_returns_default():
     assert isinstance(cfg, GIVPConfig)
 
 
-def test_parse_config_valid_json():
+def test_parse_config_valid_json() -> None:
     from givp.cli import _parse_config
 
     cfg = _parse_config('{"max_iterations": 10}')
     assert cfg.max_iterations == 10
 
 
-def test_parse_config_invalid_json_raises():
+def test_parse_config_invalid_json_raises() -> None:
     from givp.cli import _parse_config
 
     with pytest.raises(ValueError, match="valid JSON"):
         _parse_config("bad")
 
 
-def test_parse_config_not_dict_raises():
+def test_parse_config_not_dict_raises() -> None:
     from givp.cli import _parse_config
 
     with pytest.raises(ValueError, match="JSON object"):
         _parse_config("[1,2,3]")
 
 
-def test_load_func_valid():
+def test_load_func_valid() -> None:
     from givp.cli import _load_func
 
     func = _load_func(SPHERE_FILE, "sphere")
@@ -465,21 +465,21 @@ def test_load_func_valid():
     assert func(np.array([3.0, 4.0])) == pytest.approx(25.0)
 
 
-def test_load_func_file_not_found():
+def test_load_func_file_not_found() -> None:
     from givp.cli import _load_func
 
     with pytest.raises(FileNotFoundError):
         _load_func("nonexistent.py", "sphere")
 
 
-def test_load_func_attr_missing():
+def test_load_func_attr_missing() -> None:
     from givp.cli import _load_func
 
     with pytest.raises(AttributeError, match="no_such_func"):
         _load_func(SPHERE_FILE, "no_such_func")
 
 
-def test_resolve_args_json_merged():
+def test_resolve_args_json_merged() -> None:
     from givp.cli import _build_parser, _resolve_args
 
     parser = _build_parser()
@@ -497,7 +497,7 @@ def test_resolve_args_json_merged():
     assert args["func_name"] == "sphere"
 
 
-def test_resolve_args_explicit_overrides_json():
+def test_resolve_args_explicit_overrides_json() -> None:
     from givp.cli import _build_parser, _resolve_args
 
     parser = _build_parser()
@@ -516,7 +516,7 @@ def test_resolve_args_explicit_overrides_json():
     assert args["func_file"] == SPHERE_FILE
 
 
-def test_resolve_args_invalid_json_raises():
+def test_resolve_args_invalid_json_raises() -> None:
     from givp.cli import _build_parser, _resolve_args
 
     parser = _build_parser()
@@ -525,7 +525,7 @@ def test_resolve_args_invalid_json_raises():
         _resolve_args(ns)
 
 
-def test_cmd_run_missing_args_returns_2():
+def test_cmd_run_missing_args_returns_2() -> None:
     from givp.cli import _build_parser, _cmd_run
 
     parser = _build_parser()
@@ -534,7 +534,7 @@ def test_cmd_run_missing_args_returns_2():
     assert code == 2
 
 
-def test_cmd_run_invalid_json_in_json_flag_returns_2():
+def test_cmd_run_invalid_json_in_json_flag_returns_2() -> None:
     from givp.cli import _build_parser, _cmd_run
 
     parser = _build_parser()
@@ -543,7 +543,7 @@ def test_cmd_run_invalid_json_in_json_flag_returns_2():
     assert code == 2
 
 
-def test_cmd_run_success_returns_0(capsys):
+def test_cmd_run_success_returns_0(capsys: pytest.CaptureFixture[str]) -> None:
     from givp.cli import _build_parser, _cmd_run
 
     parser = _build_parser()
@@ -567,7 +567,7 @@ def test_cmd_run_success_returns_0(capsys):
     assert "x" in data
 
 
-def test_cmd_run_file_not_found_returns_1():
+def test_cmd_run_file_not_found_returns_1() -> None:
     from givp.cli import _build_parser, _cmd_run
 
     parser = _build_parser()
@@ -586,7 +586,7 @@ def test_cmd_run_file_not_found_returns_1():
     assert code == 1
 
 
-def test_cmd_run_bad_bounds_returns_nonzero():
+def test_cmd_run_bad_bounds_returns_nonzero() -> None:
     from givp.cli import _build_parser, _cmd_run
 
     parser = _build_parser()
@@ -607,7 +607,9 @@ def test_cmd_run_bad_bounds_returns_nonzero():
     assert code != 0
 
 
-def test_cmd_run_dict_config_from_json_flag(capsys):
+def test_cmd_run_dict_config_from_json_flag(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
     """When --json carries a dict 'config', it should be used as GIVPConfig kwargs."""
     from givp.cli import _build_parser, _cmd_run
 
@@ -627,7 +629,7 @@ def test_cmd_run_dict_config_from_json_flag(capsys):
     assert "x" in json.loads(captured.out)
 
 
-def test_load_func_spec_none_raises():
+def test_load_func_spec_none_raises() -> None:
     """Cover the ImportError branch when spec_from_file_location returns None."""
     from givp.cli import _load_func
 
@@ -638,7 +640,7 @@ def test_load_func_spec_none_raises():
         _load_func(SPHERE_FILE, "sphere")
 
 
-def test_load_func_spec_loader_none_raises():
+def test_load_func_spec_loader_none_raises() -> None:
     """Cover the ImportError branch when spec.loader is None."""
     from givp.cli import _load_func
 
@@ -651,7 +653,7 @@ def test_load_func_spec_loader_none_raises():
         _load_func(SPHERE_FILE, "sphere")
 
 
-def test_resolve_args_stdin_dash(monkeypatch):
+def test_resolve_args_stdin_dash(monkeypatch: pytest.MonkeyPatch) -> None:
     """Cover the sys.stdin.read() branch when json_input == '-'."""
     from givp.cli import _build_parser, _resolve_args
 
@@ -666,7 +668,7 @@ def test_resolve_args_stdin_dash(monkeypatch):
     assert args["func_file"] == SPHERE_FILE
 
 
-def test_resolve_args_bounds_and_direction_flags():
+def test_resolve_args_bounds_and_direction_flags() -> None:
     """Cover the bounds, direction, config and seed namespace branches in _resolve_args."""
     from givp.cli import _build_parser, _resolve_args
 
@@ -695,7 +697,7 @@ def test_resolve_args_bounds_and_direction_flags():
     assert args["seed"] == 7
 
 
-def test_cmd_run_generic_exception_returns_1():
+def test_cmd_run_generic_exception_returns_1() -> None:
     """Cover the bare `except Exception` handler in _cmd_run."""
     from givp.cli import _build_parser, _cmd_run
 
@@ -718,7 +720,7 @@ def test_cmd_run_generic_exception_returns_1():
     assert code == 1
 
 
-def test_main_calls_sys_exit(monkeypatch):
+def test_main_calls_sys_exit(monkeypatch: pytest.MonkeyPatch) -> None:
     """Cover the main() function body."""
     from givp.cli import main
 
