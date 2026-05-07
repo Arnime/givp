@@ -179,6 +179,12 @@
         @test hi == [1.0, 2.0]
         @test n == 2
 
+        # Vector{Vector} bounds, wrong num_vars
+        @test_throws ArgumentError GIVPOptimizer._normalize_bounds(
+            [[-1.0, -2.0], [1.0, 2.0]],
+            3,
+        )
+
         # Vector{Vector} bounds, wrong element count
         @test_throws ArgumentError GIVPOptimizer._normalize_bounds(
             [[-1.0], [1.0], [0.0]],

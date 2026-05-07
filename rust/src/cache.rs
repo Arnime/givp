@@ -57,10 +57,9 @@ impl EvaluationCache {
             return;
         }
         if self.cache.len() >= self.maxsize {
-            if let Some(oldest) = self.insertion_order.first().copied() {
-                self.cache.remove(&oldest);
-                self.insertion_order.remove(0);
-            }
+            // insertion_order is always in sync with cache (invariant maintained by put/clear)
+            let oldest = self.insertion_order.remove(0);
+            self.cache.remove(&oldest);
         }
         self.cache.insert(key, cost);
         self.insertion_order.push(key);
@@ -129,5 +128,19 @@ mod tests {
         assert_eq!(cache.get(&[1.0], 1), None);
         assert_eq!(cache.get(&[2.0], 1), Some(2.0));
         assert_eq!(cache.get(&[3.0], 1), Some(3.0));
+    }
+
+    #[test]
+    fn test_cache_clear_removes_entries() {
+        let mut cache = EvaluationCache::new(4);
+        cache.put(&[1.0, 2.0], 2, 3.0);
+        cache.put(&[2.0, 3.0], 2, 5.0);
+        assert_eq!(cache.stats().3, 2);
+
+        cache.clear();
+
+        assert_eq!(cache.get(&[1.0, 2.0], 2), None);
+        assert_eq!(cache.get(&[2.0, 3.0], 2), None);
+        assert_eq!(cache.stats().3, 0);
     }
 }

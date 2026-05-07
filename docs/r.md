@@ -8,6 +8,17 @@ object-oriented API (`GIVPOptimizer`) based on R6.
 
 ## Installation
 
+From r-universe (recommended):
+
+```r
+install.packages(
+  "givp",
+  repos = c("https://arnime.r-universe.dev", "https://cloud.r-project.org")
+)
+```
+
+Package page: <https://arnime.r-universe.dev/givp>
+
 From a local clone:
 
 ```bash

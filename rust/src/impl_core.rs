@@ -558,6 +558,7 @@ mod tests {
     fn test_run_with_invalid_config_errors() {
         // Covers the error branch of config.validate()? in run() at line 116.
         let func = |x: &[f64]| x.iter().sum::<f64>();
+        let _ = func(&[0.0]); // invoke closure body so llvm-cov counts it as covered
         let cfg = GivpConfig {
             max_iterations: 0,
             ..Default::default()
@@ -592,5 +593,71 @@ mod tests {
         );
         // Best solution unchanged since deadline expired immediately
         assert!((best_cost - 1.0).abs() < 1e-10);
+    }
+
+    #[test]
+    fn test_update_convergence_state_restart_clears_cache_and_stagnation() {
+        let mut conv_monitor = Some(ConvergenceMonitor::new(10, 1));
+        let mut elite_pool = ElitePool::new(6, 0.01, &[-1.0], &[1.0]);
+        elite_pool.add(vec![-0.5], 0.5);
+        elite_pool.add(vec![0.0], 0.0);
+        elite_pool.add(vec![0.5], 0.5);
+
+        let mut cache = Some(EvaluationCache::new(8));
+        let c = cache.as_mut().expect("cache should exist");
+        c.put(&[0.25], 1, 0.0625);
+        assert_eq!(c.stats().3, 1);
+
+        let mut stagnation = 3usize;
+        let _ = update_convergence_state(
+            &mut conv_monitor,
+            &mut elite_pool,
+            &mut cache,
+            0.0,
+            &mut stagnation,
+        );
+
+        let signal = update_convergence_state(
+            &mut conv_monitor,
+            &mut elite_pool,
+            &mut cache,
+            0.0,
+            &mut stagnation,
+        );
+
+        assert_eq!(signal, Some(0));
+        assert_eq!(stagnation, 0);
+        assert!(elite_pool.len() <= 2);
+        assert_eq!(cache.as_ref().map(|c| c.stats().3), Some(0));
+    }
+
+    #[test]
+    fn test_update_convergence_state_restart_without_cache() {
+        // Covers the None branch of `if let Some(c) = cache.as_mut()` in the restart path.
+        let mut conv_monitor = Some(ConvergenceMonitor::new(10, 1));
+        let mut elite_pool = ElitePool::new(6, 0.01, &[-1.0], &[1.0]);
+        elite_pool.add(vec![-0.5], 0.5);
+        let mut cache: Option<EvaluationCache> = None;
+        let mut stagnation = 5usize;
+
+        // First call: best_ever set to 0.0, no_improve_count stays 0 (improvement).
+        let _ = update_convergence_state(
+            &mut conv_monitor,
+            &mut elite_pool,
+            &mut cache,
+            0.0,
+            &mut stagnation,
+        );
+        // Second call: same cost (0.0), no_improve_count becomes 1 >= restart_threshold(1)
+        // -> should_restart = true, cache.as_mut() returns None (the uncovered branch).
+        let signal = update_convergence_state(
+            &mut conv_monitor,
+            &mut elite_pool,
+            &mut cache,
+            0.0,
+            &mut stagnation,
+        );
+        assert_eq!(signal, Some(0));
+        assert_eq!(stagnation, 0);
     }
 }

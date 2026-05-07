@@ -400,4 +400,18 @@ mod tests {
         assert!((cost - 3.0).abs() < 1e-10);
         assert!(!improved);
     }
+
+    #[test]
+    fn test_local_search_vnd_can_improve() {
+        let mut rng = ChaCha8Rng::seed_from_u64(123);
+        let mut sol = vec![4.0, 4.0];
+        let func = |x: &[f64]| x.iter().map(|&xi| xi * xi).sum::<f64>();
+        let lower = [-5.0, -5.0];
+        let upper = [5.0, 5.0];
+        let initial = func(&sol);
+        let cost = local_search_vnd(
+            &func, &mut sol, initial, 2, &lower, &upper, 30, &mut None, &mut rng, None,
+        );
+        assert!(cost <= initial);
+    }
 }

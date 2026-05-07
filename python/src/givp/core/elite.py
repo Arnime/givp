@@ -31,7 +31,7 @@ class ElitePool:
         min_distance: float = 0.05,
         lower: np.ndarray | None = None,
         upper: np.ndarray | None = None,
-    ):
+    ) -> None:
         """Initialize the elite pool."""
         self.max_size = max_size
         self.min_distance = min_distance

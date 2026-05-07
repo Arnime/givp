@@ -46,6 +46,7 @@ import json
 import logging
 import sys
 import time
+from collections.abc import Callable
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -69,6 +70,7 @@ if TYPE_CHECKING:
 try:
     import givp as _givp_mod
     import givp.benchmarks as bm
+
     GIVPConfig = _givp_mod.GIVPConfig
     givp = _givp_mod.givp
 except ImportError as exc:  # pragma: no cover
@@ -141,6 +143,7 @@ ALGO_DESCRIPTIONS: dict[str, str] = {
     "SA": "Dual Annealing -- scipy.optimize (Xiang et al. 1997)",
 }
 
+
 def _config_givp_full(max_iter: int, time_limit: float) -> GIVPConfig:
     """Full GIVP pipeline: adaptive alpha, ILS, VND, elite pool, path relinking."""
     return GIVPConfig(
@@ -202,7 +205,7 @@ def _config_givp_tuned(
 
 
 def _scipy_de(
-    func,
+    func: Callable,
     bounds: list[tuple[float, float]],
     seed: int,
     max_iter: int,
@@ -210,15 +213,20 @@ def _scipy_de(
     """Run scipy.optimize.differential_evolution. Returns (fun, nit, nfev)."""
     if not _SCIPY_OPTIMIZE_OK or _scipy_optimize is None:  # pragma: no cover
         raise RuntimeError("scipy is not installed.  Run:  pip install scipy")
+    np.random.seed(seed)
     res = _scipy_optimize.differential_evolution(
-        func, bounds, seed=seed, maxiter=max_iter, tol=1e-12, workers=1  # type: ignore[call-arg]
+        func,
+        bounds,
+        maxiter=max_iter,
+        tol=1e-12,
+        workers=1,  # type: ignore[call-arg]
         # scipy stubs unavailable
     )
     return float(res.fun), int(res.nit), int(res.nfev)
 
 
 def _scipy_sa(
-    func,
+    func: Callable,
     bounds: list[tuple[float, float]],
     seed: int,
     max_iter: int,
@@ -227,9 +235,13 @@ def _scipy_sa(
     if not _SCIPY_OPTIMIZE_OK or _scipy_optimize is None:  # pragma: no cover
         raise RuntimeError("scipy is not installed.  Run:  pip install scipy")
     rng = np.random.default_rng(seed)
+    np.random.seed(seed)
     x0 = np.array([lo + rng.random() * (hi - lo) for lo, hi in bounds])
     res = _scipy_optimize.dual_annealing(
-        func, bounds, seed=seed, maxiter=max_iter * 100, x0=x0  # type: ignore[call-arg]  # scipy stubs unavailable
+        func,
+        bounds,
+        maxiter=max_iter * 100,
+        x0=x0,  # type: ignore[call-arg]  # scipy stubs unavailable
     )
     return float(res.fun), int(res.nit), int(res.nfev)
 
@@ -238,8 +250,8 @@ def _scipy_sa(
 
 
 def _run_givp(
-    cfg,
-    func,
+    cfg: GIVPConfig,
+    func: Callable,
     bounds: list[tuple[float, float]],
     seed: int,
     capture_trace: bool,
@@ -264,7 +276,7 @@ def _run_givp(
 
 def _run_single(
     algo: str,
-    func,
+    func: Callable,
     bounds: list[tuple[float, float]],
     seed: int,
     max_iter: int,
@@ -439,7 +451,13 @@ def _run_function_seeds(
     for algo in algorithms:
         for seed in seeds:
             rec = _run_single(
-                algo, func, bounds, seed, max_iter, time_limit, capture_traces,
+                algo,
+                func,
+                bounds,
+                seed,
+                max_iter,
+                time_limit,
+                capture_traces,
                 givp_tuned_config=givp_tuned_config,
             )
             records.append(rec)
@@ -447,8 +465,15 @@ def _run_function_seeds(
             trace_flag = " [+trace]" if rec["trace"] else ""
             _log.debug(
                 "  [%4d/%d] %-12s %-12s seed=%3d  fun=%12.4e  nfev=%7d  t=%.2fs%s",
-                done, total, fn_name, algo, seed,
-                rec["fun"], rec["nfev"], rec["time_s"], trace_flag,
+                done,
+                total,
+                fn_name,
+                algo,
+                seed,
+                rec["fun"],
+                rec["nfev"],
+                rec["time_s"],
+                trace_flag,
             )
     return records, done
 
@@ -518,17 +543,34 @@ def run_experiment(
             continue
 
         fn_records, done = _run_function_seeds(
-            fn_name, algorithms, seeds, dims, max_iter, time_limit,
-            capture_traces, givp_tuned_config, done, total,
+            fn_name,
+            algorithms,
+            seeds,
+            dims,
+            max_iter,
+            time_limit,
+            capture_traces,
+            givp_tuned_config,
+            done,
+            total,
         )
         raw[fn_name] = fn_records
 
         # --- checkpoint: persist after each function ---
         if checkpoint_path is not None:
             _save_checkpoint(
-                checkpoint_path, raw, completed_functions, fn_name,
-                algorithms, functions, dims, n_runs, seed_start, seeds,
-                max_iter, time_limit,
+                checkpoint_path,
+                raw,
+                completed_functions,
+                fn_name,
+                algorithms,
+                functions,
+                dims,
+                n_runs,
+                seed_start,
+                seeds,
+                max_iter,
+                time_limit,
             )
 
     # Summary statistics (per function x algorithm)
@@ -705,7 +747,9 @@ def main(argv: list[str] | None = None) -> int:
     _log.info("  dims          : %s", args.dims)
     _log.info(
         "  n_runs        : %d  (seeds %d-%d)",
-        args.n_runs, args.seed_start, args.seed_start + args.n_runs - 1,
+        args.n_runs,
+        args.seed_start,
+        args.seed_start + args.n_runs - 1,
     )
     _log.info("  max_iter      : %s", args.max_iter)
     _log.info("  time_limit    : %ss per run", args.time_limit)
@@ -749,8 +793,12 @@ def main(argv: list[str] | None = None) -> int:
     for row in payload["summary"]:
         _log.info(
             "%s %s %12.4e %12.4e %12.4e %12.4e",
-            f"{row['function']:<{col_w}}", f"{row['algorithm']:<{col_w}}",
-            row["mean"], row["std"], row["best"], row["median"],
+            f"{row['function']:<{col_w}}",
+            f"{row['algorithm']:<{col_w}}",
+            row["mean"],
+            row["std"],
+            row["best"],
+            row["median"],
         )
 
     return 0

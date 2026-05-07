@@ -2,7 +2,7 @@
 
 **GRASP-ILS-VND with Path Relinking** — a direction-agnostic metaheuristic
 optimizer for continuous, integer, and mixed-variable problems, available in
-**Python** and **Julia**.
+**Python**, **Julia**, and **R**.
 
 ## Highlights
 
@@ -34,6 +34,17 @@ pip install givp
 cd julia
 julia --project=. -e 'using Pkg; Pkg.instantiate()'
 ```
+
+### R installation
+
+```r
+install.packages(
+  "givp",
+  repos = c("https://arnime.r-universe.dev", "https://cloud.r-project.org")
+)
+```
+
+R package page: <https://arnime.r-universe.dev/givp>
 
 ## Minimal example
 

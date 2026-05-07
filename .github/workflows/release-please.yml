@@ -104,14 +104,9 @@ jobs:
                   git push origin "${{ steps.version.outputs.tag }}"
                   echo "Tag ${{ steps.version.outputs.tag }} created and pushed."
 
-            - name: Trigger release workflow
+            - name: Note release trigger
               if: steps.tag_check.outputs.exists == 'false'
-              env:
-                  GH_TOKEN: ${{ github.token }}
               run: |
-                  gh workflow run release.yml \
-                    --repo "${{ github.repository }}" \
-                    --field tag="${{ steps.version.outputs.tag }}"
-                  echo "Release workflow dispatched for ${{ steps.version.outputs.tag }}."
+                  echo "Tag ${{ steps.version.outputs.tag }} pushed — release.yml triggered automatically via push:tags event."
 
 

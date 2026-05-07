@@ -26,7 +26,7 @@ import pytest
 # ---------------------------------------------------------------------------
 
 
-def _import_script(script_name: str):
+def _import_script(script_name: str) -> Any:
     """Import a benchmark script from python/benchmarks/ by module name."""
     benchmarks_dir = Path(__file__).parent.parent / "benchmarks"
     if str(benchmarks_dir) not in sys.path:
@@ -101,7 +101,7 @@ def _rlc_smoke_args(
 
 
 @pytest.mark.slow
-def test_tune_hyperparams_smoke(tmp_path):
+def test_tune_hyperparams_smoke(tmp_path: Path) -> None:
     """tune_hyperparams.main() produces a valid JSON config with best_params."""
     output = tmp_path / "best_config.json"
 
@@ -131,7 +131,7 @@ def test_tune_hyperparams_smoke(tmp_path):
 
 
 @pytest.mark.slow
-def test_run_literature_comparison_smoke(tmp_path):
+def test_run_literature_comparison_smoke(tmp_path: Path) -> None:
     """run_literature_comparison.main() produces valid results JSON."""
     output = tmp_path / "results.json"
 
@@ -160,7 +160,7 @@ def test_run_literature_comparison_smoke(tmp_path):
 
 
 @pytest.mark.slow
-def test_run_literature_comparison_with_tuned_config(tmp_path):
+def test_run_literature_comparison_with_tuned_config(tmp_path: Path) -> None:
     """GIVP-tuned algorithm works when --tune-config is supplied."""
     tune_output = tmp_path / "best_config.json"
     _run_script_main(
@@ -186,7 +186,7 @@ def test_run_literature_comparison_with_tuned_config(tmp_path):
 
 
 @pytest.mark.slow
-def test_run_literature_comparison_resume(tmp_path):
+def test_run_literature_comparison_resume(tmp_path: Path) -> None:
     """--resume skips already-completed functions."""
     output = tmp_path / "results_resume.json"
 
@@ -225,7 +225,7 @@ def test_run_literature_comparison_resume(tmp_path):
 
 
 @pytest.mark.slow
-def test_generate_report_smoke(tmp_path):
+def test_generate_report_smoke(tmp_path: Path) -> None:
     """generate_report.main() consumes results JSON and produces output files."""
     # Create minimal results JSON (no scipy needed)
     results = {
@@ -341,7 +341,7 @@ def test_generate_report_smoke(tmp_path):
 
 
 @pytest.mark.slow
-def test_run_literature_comparison_missing_tune_config(tmp_path):
+def test_run_literature_comparison_missing_tune_config(tmp_path: Path) -> None:
     """--algorithms GIVP-tuned without --tune-config returns exit code 1."""
     rlc = _import_script("run_literature_comparison")
     exit_code = rlc.main(
@@ -358,7 +358,7 @@ def test_run_literature_comparison_missing_tune_config(tmp_path):
 
 
 @pytest.mark.slow
-def test_run_literature_comparison_verbose(tmp_path):
+def test_run_literature_comparison_verbose(tmp_path: Path) -> None:
     """--verbose flag produces the same valid output (exercises DEBUG logging path)."""
     rlc = _import_script("run_literature_comparison")
     output = tmp_path / "results_verbose.json"
@@ -386,7 +386,7 @@ def test_run_literature_comparison_verbose(tmp_path):
 
 
 @pytest.mark.slow
-def test_run_literature_comparison_with_traces(tmp_path):
+def test_run_literature_comparison_with_traces(tmp_path: Path) -> None:
     """--traces flag stores per-iteration trace lists in the output JSON."""
     rlc = _import_script("run_literature_comparison")
     output = tmp_path / "results_traces.json"
@@ -417,7 +417,7 @@ def test_run_literature_comparison_with_traces(tmp_path):
 
 
 @pytest.mark.slow
-def test_generate_report_missing_input(tmp_path):
+def test_generate_report_missing_input(tmp_path: Path) -> None:
     """generate_report.main() returns 1 when --input file does not exist."""
     gr = _import_script("generate_report")
     exit_code = gr.main(
@@ -430,7 +430,7 @@ def test_generate_report_missing_input(tmp_path):
 
 
 @pytest.mark.slow
-def test_generate_report_bad_reference(tmp_path):
+def test_generate_report_bad_reference(tmp_path: Path) -> None:
     """generate_report.main() returns 1 when --reference algorithm is not in records."""
     results = {
         "metadata": {
@@ -499,7 +499,7 @@ def test_generate_report_bad_reference(tmp_path):
 
 
 @pytest.mark.slow
-def test_generate_report_verbose_and_markdown_only(tmp_path):
+def test_generate_report_verbose_and_markdown_only(tmp_path: Path) -> None:
     """--verbose + --format markdown exercises DEBUG path and skips LaTeX."""
     results = {
         "metadata": {
@@ -605,7 +605,7 @@ def test_generate_report_verbose_and_markdown_only(tmp_path):
 
 
 @pytest.mark.slow
-def test_tune_hyperparams_verbose(tmp_path):
+def test_tune_hyperparams_verbose(tmp_path: Path) -> None:
     """--verbose flag in tune_hyperparams exercises the DEBUG logging path."""
     tune = _import_script("tune_hyperparams")
     output = tmp_path / "best_config_verbose.json"

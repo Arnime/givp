@@ -9,38 +9,44 @@ helper with a small instance.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 import numpy as np
 import pytest
 from givp import benchmarks
 
 
-def test_sphere_zero():
+def test_sphere_zero() -> None:
     assert benchmarks.sphere(np.zeros(3)) == pytest.approx(0.0)
 
 
-def test_rosenbrock_ones():
+def test_rosenbrock_ones() -> None:
     assert benchmarks.rosenbrock(np.ones(5)) == pytest.approx(0.0)
 
 
-def test_rastrigin_zero():
+def test_rastrigin_zero() -> None:
     assert benchmarks.rastrigin(np.zeros(4)) == pytest.approx(0.0)
 
 
-def test_ackley_zero():
+def test_ackley_zero() -> None:
     assert benchmarks.ackley(np.zeros(6)) == pytest.approx(0.0)
 
 
-def test_griewank_zero():
+def test_griewank_zero() -> None:
     assert benchmarks.griewank(np.zeros(5)) == pytest.approx(0.0)
 
 
-def test_schwefel_known_optimum():
+def test_schwefel_known_optimum() -> None:
     # Schwefel has known minimum near 420.9687 per-coordinate (value ~ 0)
     x = np.full(3, 420.9687)
     assert benchmarks.schwefel(x) == pytest.approx(0.0, abs=1e-3)
 
 
-def test_knapsack_dp_small(knapsack_values, knapsack_weights, knapsack_capacity):
+def test_knapsack_dp_small(
+    knapsack_values: Sequence[int],
+    knapsack_weights: Sequence[int],
+    knapsack_capacity: int,
+) -> None:
     val, sel = benchmarks.knapsack_dp(
         knapsack_values, knapsack_weights, knapsack_capacity
     )
@@ -49,8 +55,10 @@ def test_knapsack_dp_small(knapsack_values, knapsack_weights, knapsack_capacity)
 
 
 def test_knapsack_penalty_selection(
-    knapsack_values, knapsack_weights, knapsack_capacity
-):
+    knapsack_values: Sequence[int],
+    knapsack_weights: Sequence[int],
+    knapsack_capacity: int,
+) -> None:
     x = np.array([0.0, 1.0, 1.0])
     val = benchmarks.knapsack_penalty(
         x, knapsack_values, knapsack_weights, knapsack_capacity, overflow_penalty=1000.0
@@ -58,28 +66,28 @@ def test_knapsack_penalty_selection(
     assert val == pytest.approx(-220.0)
 
 
-def test_qap_cost_matches_manual(qap_flow, qap_dist):
+def test_qap_cost_matches_manual(qap_flow: np.ndarray, qap_dist: np.ndarray) -> None:
     x = np.array([0.2, 0.1])  # permutation [1, 0]
     cost = benchmarks.qap_cost(x, qap_flow, qap_dist)
     assert cost == pytest.approx(10.0)
 
 
-def test_rosenbrock_short_vector():
+def test_rosenbrock_short_vector() -> None:
     # exercise the x.size < 2 branch
     assert benchmarks.rosenbrock(np.array([1.0])) == pytest.approx(0.0)
 
 
-def test_ackley_empty_vector():
+def test_ackley_empty_vector() -> None:
     # exercise the n == 0 branch
     assert benchmarks.ackley(np.array([])) == pytest.approx(0.0)
 
 
-def test_griewank_empty_vector():
+def test_griewank_empty_vector() -> None:
     # exercise the x.size == 0 branch
     assert benchmarks.griewank(np.array([])) == pytest.approx(1.0)
 
 
-def test_g06_is_finite():
+def test_g06_is_finite() -> None:
     # ensure g06 executes and returns a finite float for a sample input
     val = benchmarks.g06(np.array([10.0, 20.0]))
     assert isinstance(val, float)

@@ -155,3 +155,42 @@ jobs:
         run: cargo publish --locked
 
 
+  publish-r:
+    needs: [ build-and-publish ]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && format('refs/tags/{0}', inputs.tag) || github.ref }}
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake libcurl4-openssl-dev libssl-dev libxml2-dev pandoc
+
+      - uses: r-lib/actions/setup-r@a51a8012b0aab7c32ef9d19bf54da93f3254335e # v2
+        with:
+          r-version: release
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@a51a8012b0aab7c32ef9d19bf54da93f3254335e # v2
+        with:
+          working-directory: r
+          extra-packages: any::lazyeval
+          cache: true
+
+      - name: Build R package tarball
+        id: r_build
+        run: |
+          R CMD build r
+          echo "tarball=$(ls givp_*.tar.gz | head -1)" >> "$GITHUB_OUTPUT"
+
+      - name: Attach R tarball to release
+        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
+        with:
+          tag_name: ${{ inputs.tag || github.ref_name }}
+          files: ${{ steps.r_build.outputs.tarball }}
+
+

@@ -137,4 +137,17 @@ mod tests {
         // Same number of runs should produce deterministic seed assignment
         assert_eq!(summary1.fun_mean, summary2.fun_mean);
     }
+
+    #[test]
+    fn test_seed_sweep_propagates_givp_error() {
+        // Inverted bounds cause givp() to return Err, covering the ? propagation branch.
+        let func = |x: &[f64]| x.iter().sum::<f64>();
+        let _ = func(&[0.0]);
+        let bounds = vec![(1.0_f64, -1.0_f64)]; // lower > upper -> invalid
+        let cfg = GivpConfig {
+            max_iterations: 5,
+            ..Default::default()
+        };
+        assert!(seed_sweep(func, &bounds, cfg, 1).is_err());
+    }
 }

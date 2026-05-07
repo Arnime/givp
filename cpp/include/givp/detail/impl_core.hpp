@@ -2,11 +2,14 @@
 // SPDX-License-Identifier: MIT
 #pragma once
 
+#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <cmath>
+#include <cstddef>
 #include <future>
 #include <limits>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -431,16 +434,17 @@ OptimizeResult run(F &&func, const std::vector<std::pair<double, double>> &bound
     std::string message;
 
     // ── Main loop ─────────────────────────────────────────────────────────────
-    for (std::size_t iteration = 0; iteration < config.max_iterations; ++iteration) {
+    bool done = false;
+    for (std::size_t iteration = 0; iteration < config.max_iterations && !done; ++iteration) {
         if (expired(deadline)) {
             message = "time limit reached";
-            break;
+            done = true;
+        } else {
+            iterations_executed = iteration + 1;
+            LoopState loop_state{best_solution, best_cost, stagnation, message};
+            done = run_main_iteration(core_ctx, cache, rng, elite_pool, conv_monitor, iteration,
+                                      loop_state);
         }
-        iterations_executed = iteration + 1;
-        LoopState loop_state{best_solution, best_cost, stagnation, message};
-        if (run_main_iteration(core_ctx, cache, rng, elite_pool, conv_monitor, iteration,
-                               loop_state))
-            break;
     }
 
     // ── Build result ─────────────────────────────────────────────────────────

@@ -12,9 +12,11 @@ These benchmarks are excluded from the default test discovery (see
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 import numpy as np
 import pytest
-from givp import GIVPConfig, givp
+from givp import GIVPConfig, OptimizeResult, givp
 
 
 def sphere(x: np.ndarray) -> float:
@@ -53,20 +55,24 @@ _FUNCS = {
 
 @pytest.mark.parametrize("name", list(_FUNCS))
 @pytest.mark.parametrize("dim", [5, 10])
-def test_benchmark_classics(benchmark, name, dim):
+def test_benchmark_classics(
+    benchmark: Callable[[Callable[[], OptimizeResult]], OptimizeResult],
+    name: str,
+    dim: int,
+) -> None:
     """Benchmark classic test functions at two dimensionalities."""
     func, (lo, hi) = _FUNCS[name]
     bounds = [(lo, hi)] * dim
     cfg = GIVPConfig(max_iterations=5, vnd_iterations=10)
 
-    def run():
+    def run() -> OptimizeResult:
         return givp(func, bounds, config=cfg)
 
     result = benchmark(run)
     assert np.isfinite(result.fun)
 
 
-def test_sphere_quality_gate():
+def test_sphere_quality_gate() -> None:
     """Sphere (dim=10) should converge below 1.0 with 100 iterations."""
     bounds = [(-5.0, 5.0)] * 10
     cfg = GIVPConfig(max_iterations=100)

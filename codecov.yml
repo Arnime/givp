@@ -13,7 +13,7 @@ flags:
   python:
     paths:
       - python/src/
-    carryforward: false
+    carryforward: true
   julia:
     paths:
       - julia/src/

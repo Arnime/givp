@@ -35,6 +35,8 @@ julia/benchmarks/Manifest.toml
 
 # Rust
 rust/target/
+rust/coverage*
+rust/cov*
 Notebooks/_rust_*/
 Notebooks/_cpp_*/
 
@@ -42,6 +44,7 @@ Notebooks/Resultados_Dissertacao/
 Notebooks/*/*.png
 
 # R build artifacts
+givp.Rcheck/
 *.tar.gz
 r/*.Rcheck/
 r/man/*.Rd
