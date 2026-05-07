@@ -226,9 +226,10 @@ julia-format-check:
 
 julia-lint:
 	@echo "[Julia] Running Aqua.jl and JET.jl checks..."
-	julia --project=$(JULIA_PROJECT) -e '\
+	julia --project=$(JULIA_PROJECT)/test -e '\
 		using Pkg; \
-		Pkg.add(["Aqua", "JET"]); \
+		Pkg.develop(path="julia"); \
+		Pkg.instantiate(); \
 		using GIVPOptimizer, Aqua, JET; \
 		Aqua.test_all(GIVPOptimizer; ambiguities=(broken=false,), stale_deps=(ignore=[:JSON, :Aqua, :JET],), piracies=(broken=false,)); \
 		report_package("GIVPOptimizer")'
@@ -236,7 +237,7 @@ julia-lint:
 
 julia-coverage:
 	@echo "[Julia] Running coverage gate (>=95%)..."
-	JULIA_NUM_THREADS=2 julia --project=$(JULIA_PROJECT) -e 'using Pkg; Pkg.test(; coverage=true)'
+	julia --threads=2 --project=$(JULIA_PROJECT) -e 'using Pkg; Pkg.test(; coverage=true)'
 	julia -e '\
 		using Pkg; \
 		Pkg.add("CoverageTools"); \
@@ -259,8 +260,8 @@ julia-coverage:
 				end; \
 			end; \
 			pct = total > 0 ? hit / total * 100.0 : 0.0; \
-			println("[Julia] Coverage: $(round(pct; digits=1))%  ($hit / $total lines)"); \
-			pct >= 95.0 || (println("[Julia] Coverage below 95% threshold (got $(round(pct; digits=1))%)"); exit(1)); \
+			println("[Julia] Coverage: $$(round(pct; digits=1))%  ($$hit / $$total lines)"); \
+			pct >= 95.0 || (println("[Julia] Coverage below 95% threshold (got $$(round(pct; digits=1))%)"); exit(1)); \
 		end'
 	@echo "[Julia] ✓ Coverage gate passed"
 

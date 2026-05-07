@@ -7,6 +7,26 @@ use rand::Rng;
 use rand_chacha::ChaCha8Rng;
 use std::time::Instant;
 
+use std::sync::atomic::{AtomicBool, Ordering};
+
+static FORCE_POOL_BUILD_FAIL: AtomicBool = AtomicBool::new(false);
+
+fn build_local_pool(n_workers: usize) -> Option<rayon::ThreadPool> {
+    if FORCE_POOL_BUILD_FAIL.load(Ordering::Relaxed) {
+        return None;
+    }
+
+    rayon::ThreadPoolBuilder::new()
+        .num_threads(n_workers)
+        .build()
+        .ok()
+}
+
+#[cfg(test)]
+fn set_force_pool_build_fail(value: bool) {
+    FORCE_POOL_BUILD_FAIL.store(value, Ordering::Relaxed);
+}
+
 /// Compute adaptive alpha via linear interpolation.
 pub(crate) fn get_current_alpha(
     iter_idx: usize,
@@ -169,17 +189,14 @@ where
     // ── Evaluate candidates ──────────────────────────────────────────────────
     let costs: Vec<f64> = if n_workers > 1 && candidates.len() > 1 && cache.is_none() {
         use rayon::prelude::*;
-        match rayon::ThreadPoolBuilder::new()
-            .num_threads(n_workers)
-            .build()
-        {
-            Ok(pool) => pool.install(|| {
+        match build_local_pool(n_workers) {
+            Some(pool) => pool.install(|| {
                 candidates
                     .par_iter()
                     .map(|s| safe_evaluate(func, s))
                     .collect()
             }),
-            Err(_) => candidates.iter().map(|s| safe_evaluate(func, s)).collect(),
+            None => candidates.iter().map(|s| safe_evaluate(func, s)).collect(),
         }
     } else {
         candidates
@@ -218,6 +235,50 @@ mod tests {
         let deadline = Some(Instant::now() - Duration::from_secs(1));
         let (sol, cost) = construct_grasp(
             2, &lower, &upper, &func, None, 0.5, 2, 100, &mut cache, &mut rng, deadline, 1,
+        );
+        assert_eq!(sol.len(), 2);
+        assert!(cost.is_finite());
+    }
+    #[test]
+    fn test_construct_grasp_parallel_fallback_when_pool_build_fails() {
+        let mut rng = ChaCha8Rng::seed_from_u64(7);
+        let mut cache = None;
+        let lower = [-5.0f64, -5.0];
+        let upper = [5.0f64, 5.0];
+        let func = |x: &[f64]| x.iter().map(|&xi| xi * xi).sum::<f64>();
+
+        set_force_pool_build_fail(true);
+        let (sol, cost) = construct_grasp(
+            2, &lower, &upper, &func, None, 0.3, 2, 8, &mut cache, &mut rng, None, 4,
+        );
+        set_force_pool_build_fail(false);
+        assert_eq!(sol.len(), 2);
+        assert!(cost.is_finite());
+    }
+
+    #[test]
+    fn test_construct_grasp_initial_guess_fills_single_candidate_slot() {
+        // When initial_guess is provided and num_candidates==1, the heuristic
+        // block (if candidates.len() < num_candidates) is skipped, covering its false branch.
+        let mut rng = ChaCha8Rng::seed_from_u64(0);
+        let mut cache = None;
+        let lower = [-5.0f64, -5.0];
+        let upper = [5.0f64, 5.0];
+        let func = |x: &[f64]| x.iter().map(|&xi| xi * xi).sum::<f64>();
+        let ig = vec![1.0f64, 2.0f64];
+        let (sol, cost) = construct_grasp(
+            2,
+            &lower,
+            &upper,
+            &func,
+            Some(&ig),
+            0.5,
+            2,
+            1,
+            &mut cache,
+            &mut rng,
+            None,
+            1,
         );
         assert_eq!(sol.len(), 2);
         assert!(cost.is_finite());

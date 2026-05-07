@@ -35,7 +35,7 @@
 [![clang-tidy](https://img.shields.io/badge/Linter-clang--tidy-blue?logo=llvm&logoColor=white)](https://clang.llvm.org/extra/clang-tidy/)
 
 **R** &nbsp;
-[![R package: givp v1.0.0](https://img.shields.io/badge/R%20Package-givp%20v1.0.0-276DC3?logo=r&logoColor=white)](r/)
+[![R package: givp v1.0.0](https://img.shields.io/badge/R%20Package-givp%20v1.0.0-276DC3?logo=r&logoColor=white)](https://arnime.r-universe.dev/givp)
 [![R](https://img.shields.io/badge/R-4.1%2B-276DC3?logo=r&logoColor=white)](https://www.r-project.org/)
 [![CI R](https://github.com/Arnime/grasp_ils_vnd_pr/actions/workflows/ci-r.yml/badge.svg)](https://github.com/Arnime/grasp_ils_vnd_pr/actions/workflows/ci-r.yml)
 [![Codecov (r)](https://codecov.io/gh/Arnime/grasp_ils_vnd_pr/graph/badge.svg?flag=r)](https://codecov.io/gh/Arnime/grasp_ils_vnd_pr/flags/r)
@@ -58,7 +58,7 @@ mixed** black-box problems, available in five languages:
 | **Julia** | [JuliaHub `GIVPOptimizer`](https://juliahub.com/ui/Packages/General/GIVPOptimizer) | Julia 1.9+ |
 | **Rust** | [crates.io `givp`](https://crates.io/crates/givp) | Rust 1.85+ |
 | **C++17** | Header-only (vcpkg / FetchContent / copy) | C++17 compiler, CMake 3.21+ |
-| **R** | r-universe / GitHub / local source (`r/`) | R 4.1+ |
+| **R** | [r-universe `givp`](https://arnime.r-universe.dev/givp) / GitHub / local source (`r/`) | R 4.1+ |
 
 The library bundles:
 

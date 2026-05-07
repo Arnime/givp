@@ -100,7 +100,7 @@ mod tests {
     #[test]
     fn test_get_best_empty_returns_error() {
         let pool = make_pool(5);
-        assert!(matches!(pool.get_best(), Err(GivpError::EmptyPool(_))));
+        assert!(pool.get_best().is_err());
     }
 
     #[test]

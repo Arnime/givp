@@ -125,4 +125,20 @@ mod tests {
         let s = monitor.update(0.5, Some(&pool));
         assert!((s.diversity - 1.0).abs() < 1e-10);
     }
+
+    #[test]
+    fn test_reset_no_improve_resets_counter() {
+        let mut monitor = ConvergenceMonitor::new(10, 2);
+        let mut pool = ElitePool::new(5, 0.01, &[-1.0], &[1.0]);
+        pool.add(vec![0.0], 0.0);
+
+        let _ = monitor.update(0.0, Some(&pool));
+        let s = monitor.update(0.0, Some(&pool));
+        assert_eq!(s.no_improve_count, 1);
+
+        monitor.reset_no_improve();
+
+        let s2 = monitor.update(0.0, Some(&pool));
+        assert_eq!(s2.no_improve_count, 1);
+    }
 }
