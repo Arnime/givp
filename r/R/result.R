@@ -23,11 +23,21 @@ make_result <- function(x, fun, nit, nfev, success, message, direction) {
 #' @keywords internal
 infer_termination_reason <- function(message) {
   m <- tolower(message)
-  if (grepl("converg", m)) return("converged")
-  if (grepl("time", m)) return("time_limit_reached")
-  if (grepl("early|stagn", m)) return("early_stop")
-  if (grepl("feasible", m)) return("no_feasible")
-  if (grepl("iter|max", m)) return("max_iterations_reached")
+  if (grepl("converg", m)) {
+    return("converged")
+  }
+  if (grepl("time", m)) {
+    return("time_limit_reached")
+  }
+  if (grepl("early|stagn", m)) {
+    return("early_stop")
+  }
+  if (grepl("feasible", m)) {
+    return("no_feasible")
+  }
+  if (grepl("iter|max", m)) {
+    return("max_iterations_reached")
+  }
   "unknown"
 }
 

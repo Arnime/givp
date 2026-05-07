@@ -3,6 +3,6 @@
 # Cloudflare build command: bash scripts/build-docs.sh
 set -euo pipefail
 
-pip install -r python/requirements/docs.txt
-pip install -e .
+pip install --require-hashes -r python/requirements/docs.txt
+bash .github/scripts/install-package.sh
 mkdocs build --strict

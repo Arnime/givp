@@ -7,7 +7,6 @@ set -euo pipefail
 cd /workspace
 
 echo "[python] Installing dependencies"
-python -m pip install --upgrade "pip==25.1.1"
 pip install --require-hashes -r python/requirements/ci.txt
 pip install --require-hashes -r python/requirements/benchmarks.txt
 bash .github/scripts/install-package.sh

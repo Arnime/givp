@@ -54,8 +54,10 @@ fuzz = ["atheris>=2.3.0; sys_platform == 'linux'"]
 docs = ["mkdocs>=1.6", "mkdocs-material>=9.5", "mkdocstrings[python]>=0.26"]
 notebooks = [
     "jupyter>=1.1",
+    "jupyter-server>=2.18.0",
     "ipykernel>=6.29",
     "matplotlib>=3.8",
+    "mistune>=3.2.1",
     "pandas>=2.2",
     "scipy>=1.13",
 ]
@@ -188,6 +190,8 @@ packages = [{ include = "givp", from = "python/src" }]
 
 [tool.poetry.group.dev.dependencies]
 nox = "^2026.4.10"
+jupyter-server = ">=2.18.0"
+mistune = ">=3.2.1"
 notebook = "^7.5.6"
 
 [tool.poetry.group.docs.dependencies]

@@ -88,8 +88,12 @@ specialized subclasses such as:
 ## Testing
 
 ```bash
-Rscript -e "testthat::test_dir('r/tests/testthat')"
+GIVP_R_TEST_PROFILE=quick Rscript -e "testthat::test_dir('r/tests/testthat')"
+GIVP_R_TEST_PROFILE=full Rscript -e "testthat::test_dir('r/tests/testthat')"
 ```
+
+- `quick`: skips long statistical quality-gate checks.
+- `full`: runs the complete suite, including quality-gate checks.
 
 ## Parallel evaluation (`n_workers`)
 

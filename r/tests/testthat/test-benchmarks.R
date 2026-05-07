@@ -15,7 +15,12 @@ test_that("sphere benchmark is non-negative", {
 })
 
 test_that("givp on sphere produces finite objective", {
-  res <- givp(sphere, bounds = list(c(-5, 5), c(-5, 5), c(-5, 5)), seed = 10)
+  res <- givp(
+    sphere,
+    bounds = list(c(-5, 5), c(-5, 5), c(-5, 5)),
+    seed = 10,
+    config = smoke_config()
+  )
   expect_true(res$success)
   expect_true(is.finite(res$fun))
   expect_lte(res$fun, 25)

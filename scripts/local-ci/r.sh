@@ -14,7 +14,7 @@ echo "[r] Install package"
 R CMD INSTALL r
 
 echo "[r] Tests"
-Rscript -e "testthat::test_dir('r/tests/testthat')"
+GIVP_R_TEST_PROFILE=quick Rscript -e "testthat::test_dir('r/tests/testthat')"
 
 echo "[r] Build package"
 R CMD build r

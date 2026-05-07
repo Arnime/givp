@@ -102,6 +102,27 @@ jobs:
           path: dist/
           retention-days: 1
 
+      - name: Remove existing provenance assets from release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_NAME: ${{ inputs.tag_name }}
+        run: |
+          set -euo pipefail
+          mapfile -t assets < <(
+            gh release view "$TAG_NAME" --json assets \
+              --jq '.assets[].name' | grep -E '\.intoto\.jsonl$' || true
+          )
+
+          if [ "${#assets[@]}" -eq 0 ]; then
+            echo "No existing provenance assets to remove for $TAG_NAME"
+            exit 0
+          fi
+
+          for asset in "${assets[@]}"; do
+            echo "Deleting existing provenance asset: $asset"
+            gh release delete-asset "$TAG_NAME" "$asset" --yes
+          done
+
   provenance:
     needs: [ build ]
     permissions:

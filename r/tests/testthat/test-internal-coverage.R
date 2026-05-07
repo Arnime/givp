@@ -75,8 +75,12 @@ test_that("vnd_search and ils_search keep candidates inside bounds", {
   x0 <- c(1.5, -1.5)
   v0 <- evaluate_candidate(function(z) sum(z^2), x0, cache, state)
 
-  vnd <- vnd_search(function(z) sum(z^2), x0, v0, b, cfg, "minimize", cache, state)
-  ils <- ils_search(function(z) sum(z^2), x0, v0, b, cfg, "minimize", cache, state)
+  vnd <- vnd_search(
+    function(z) sum(z^2), x0, v0, b, cfg, "minimize", cache, state
+  )
+  ils <- ils_search(
+    function(z) sum(z^2), x0, v0, b, cfg, "minimize", cache, state
+  )
 
   expect_true(all(vnd$x >= b[, 1] & vnd$x <= b[, 2]))
   expect_true(all(ils$x >= b[, 1] & ils$x <= b[, 2]))
@@ -84,7 +88,7 @@ test_that("vnd_search and ils_search keep candidates inside bounds", {
   expect_equal(ils$x[2], round(ils$x[2]))
 })
 
-test_that("path relinking variants return finite objective on simple quadratic", {
+test_that("path relinking returns finite objective on simple quadratic", {
   cfg <- givp_config(path_relink_frequency = 4L)
   cache <- make_eval_cache(max_size = 64L)
   state <- new.env(parent = emptyenv())
@@ -116,7 +120,10 @@ test_that("termination reason inference covers all message branches", {
     infer_termination_reason("Early stop due to stagnation"),
     "early_stop"
   )
-  expect_equal(infer_termination_reason("No feasible solution found"), "no_feasible")
+  expect_equal(
+    infer_termination_reason("No feasible solution found"),
+    "no_feasible"
+  )
   expect_equal(
     infer_termination_reason("Max iterations reached"),
     "max_iterations_reached"

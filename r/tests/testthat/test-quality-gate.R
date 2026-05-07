@@ -12,6 +12,8 @@ random_baseline_min <- function(fn, bounds, n_samples = 80L, seed = 1L) {
   min(vals)
 }
 
+skip_if_not_full_profile()
+
 test_that("givp on sphere beats random baseline in median across seeds", {
   bounds <- list(c(-5, 5), c(-5, 5), c(-5, 5), c(-5, 5))
   seeds <- 1:7
