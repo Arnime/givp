@@ -21,6 +21,7 @@ Import them directly from their defining submodule when needed, e.g.::
 from __future__ import annotations
 
 import importlib
+import sys
 from typing import TYPE_CHECKING
 
 from givp.config import GIVPConfig
@@ -50,6 +51,9 @@ if TYPE_CHECKING:
     # Declare for static analyzers; runtime access remains lazy via __getattr__.
     import givp.core.legacy_sog2 as legacy_sog2
 
+# Backward-compatible package self-alias used by legacy tests/importers.
+core = sys.modules[__name__]
+
 __all__ = [
     # Public classes
     "ConvergenceMonitor",
@@ -59,6 +63,7 @@ __all__ = [
     # Public functions
     "bidirectional_path_relinking",
     "construct_grasp",
+    "core",
     "evaluate_candidates",
     "get_current_alpha",
     # Sub-module references (for ``import givp.core.grasp`` style access)
@@ -79,6 +84,8 @@ __all__ = [
 
 def __getattr__(name: str) -> object:
     """Provide lazy compatibility import for the deprecated legacy module."""
+    if name == "core":
+        return sys.modules[__name__]
     if name == "legacy_sog2":
         return importlib.import_module("givp.core.legacy_sog2")
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

@@ -23,7 +23,6 @@ from givp.core import (
     EvaluationCache,
     bidirectional_path_relinking,
     construct_grasp,
-    core as core_module,
     evaluate_candidates,
     get_current_alpha,
     ils_search,
@@ -35,6 +34,9 @@ from givp.core import (
 )
 from givp.core import (
     GIVPConfig as CoreConfig,
+)
+from givp.core import (
+    core as core_module,
 )
 from givp.core import impl as core_impl
 from givp.core import vnd as core_vnd
@@ -120,6 +122,10 @@ def test_core_module_getattr_loads_legacy_sog2_lazily(
 
     monkeypatch.setattr(core_module.importlib, "import_module", _fake_import_module)
     assert core_module.__getattr__("legacy_sog2") is sentinel
+
+
+def test_core_module_getattr_returns_core_module_alias() -> None:
+    assert core_module.__getattr__("core") is core_module
 
 
 def test_core_module_getattr_raises_for_unknown_name() -> None:
