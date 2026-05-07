@@ -57,3 +57,32 @@ pub(crate) fn normalize_integer_tail(solution: &mut [f64], half: usize) {
 pub(crate) fn clamp(v: f64, lo: f64, hi: f64) -> f64 {
     v.max(lo).min(hi)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::time::{Duration, Instant};
+
+    #[test]
+    fn test_expired_none_and_past_deadline() {
+        assert!(!expired(None));
+        let past = Some(Instant::now() - Duration::from_millis(1));
+        assert!(expired(past));
+    }
+
+    #[test]
+    fn test_safe_evaluate_nan_and_panic_return_infinity() {
+        let nan_fn = |_x: &[f64]| f64::NAN;
+        let panic_fn = |_x: &[f64]| -> f64 { panic!("boom") };
+
+        assert!(safe_evaluate(&nan_fn, &[1.0]).is_infinite());
+        assert!(safe_evaluate(&panic_fn, &[1.0]).is_infinite());
+    }
+
+    #[test]
+    fn test_safe_evaluate_finite_value() {
+        let sphere = |x: &[f64]| x.iter().map(|v| v * v).sum::<f64>();
+        let v = safe_evaluate(&sphere, &[2.0, 1.0]);
+        assert!((v - 5.0).abs() < 1e-10);
+    }
+}

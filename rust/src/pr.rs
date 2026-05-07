@@ -177,12 +177,21 @@ mod tests {
         let (result, cost) =
             bidirectional_path_relinking(&func, &sol1, &sol2, 3, &mut None, &mut rng, None);
         // Backward path: [1,1,1]→ set x[0]=0 → [0,1,1]=2.0 (best) → backward wins
-        assert!(
-            (cost - 2.0).abs() < 1e-10,
-            "expected backward best 2.0, got {cost}"
-        );
+        assert!((cost - 2.0).abs() < 1e-10);
         assert!((result[0]).abs() < 1e-10);
         assert!((result[1] - 1.0).abs() < 1e-10);
         assert!((result[2] - 1.0).abs() < 1e-10);
+    }
+
+    #[test]
+    fn test_truncates_when_many_differences() {
+        let mut rng = ChaCha8Rng::seed_from_u64(1);
+        let sol1 = vec![0.0; 40];
+        let sol2 = vec![1.0; 40];
+        let func = |x: &[f64]| x.iter().sum::<f64>();
+        let (result, cost) =
+            bidirectional_path_relinking(&func, &sol1, &sol2, 40, &mut None, &mut rng, None);
+        assert_eq!(result.len(), 40);
+        assert!(cost.is_finite());
     }
 }

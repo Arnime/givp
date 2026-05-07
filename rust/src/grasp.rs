@@ -283,4 +283,20 @@ mod tests {
         assert_eq!(sol.len(), 2);
         assert!(cost.is_finite());
     }
+
+    #[test]
+    fn test_construct_grasp_parallel_pool_success_path() {
+        let mut rng = ChaCha8Rng::seed_from_u64(11);
+        let mut cache = None;
+        let lower = [-5.0f64, -5.0];
+        let upper = [5.0f64, 5.0];
+        let func = |x: &[f64]| x.iter().map(|&xi| xi * xi).sum::<f64>();
+
+        set_force_pool_build_fail(false);
+        let (sol, cost) = construct_grasp(
+            2, &lower, &upper, &func, None, 0.4, 2, 16, &mut cache, &mut rng, None, 2,
+        );
+        assert_eq!(sol.len(), 2);
+        assert!(cost.is_finite());
+    }
 }

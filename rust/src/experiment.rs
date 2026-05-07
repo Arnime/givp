@@ -142,6 +142,7 @@ mod tests {
     fn test_seed_sweep_propagates_givp_error() {
         // Inverted bounds cause givp() to return Err, covering the ? propagation branch.
         let func = |x: &[f64]| x.iter().sum::<f64>();
+        let _ = func(&[0.0]);
         let bounds = vec![(1.0_f64, -1.0_f64)]; // lower > upper -> invalid
         let cfg = GivpConfig {
             max_iterations: 5,

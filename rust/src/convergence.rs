@@ -141,4 +141,16 @@ mod tests {
         let s2 = monitor.update(0.0, Some(&pool));
         assert_eq!(s2.no_improve_count, 1);
     }
+
+    #[test]
+    fn test_should_intensify_when_no_improve_and_low_diversity() {
+        let mut monitor = ConvergenceMonitor::new(10, 2);
+        let mut pool = ElitePool::new(5, 0.01, &[-1.0], &[1.0]);
+        pool.add(vec![0.0], 0.0);
+        pool.add(vec![0.1], 0.1); // low pairwise diversity
+
+        let _ = monitor.update(0.0, Some(&pool));
+        let s = monitor.update(0.0, Some(&pool));
+        assert!(s.should_intensify);
+    }
 }
