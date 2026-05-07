@@ -47,7 +47,6 @@ Notebooks/*/*.png
 givp.Rcheck/
 *.tar.gz
 r/*.Rcheck/
-r/man/*.Rd
 
 # Local downloads
 mutmut_download/
