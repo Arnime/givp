@@ -23,6 +23,7 @@ from givp.core import (
     EvaluationCache,
     bidirectional_path_relinking,
     construct_grasp,
+    core as core_module,
     evaluate_candidates,
     get_current_alpha,
     ils_search,
@@ -111,8 +112,6 @@ def _patch_try_neighborhood_noops(
 def test_core_module_getattr_loads_legacy_sog2_lazily(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    import givp.core as core_module
-
     sentinel = ModuleType("givp.core.legacy_sog2")
 
     def _fake_import_module(name: str) -> object:
@@ -124,8 +123,6 @@ def test_core_module_getattr_loads_legacy_sog2_lazily(
 
 
 def test_core_module_getattr_raises_for_unknown_name() -> None:
-    import givp.core as core_module
-
     with pytest.raises(AttributeError, match="no attribute"):
         core_module.__getattr__("does_not_exist")
 
