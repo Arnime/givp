@@ -44,6 +44,7 @@
 
 **Project** &nbsp;
 [![OpenSSF Scorecard](https://img.shields.io/ossf-scorecard/github.com/Arnime/grasp_ils_vnd_pr?cacheSeconds=300&logo=openssf&logoColor=white)](https://securityscorecards.dev/viewer/?uri=github.com/Arnime/grasp_ils_vnd_pr)
+[![SonarCloud](https://sonarcloud.io/api/project_badges/measure?project=Arnime_grasp_ils_vnd_pr&metric=alert_status)](https://sonarcloud.io/project/overview?id=Arnime_grasp_ils_vnd_pr)
 [![CI SonarQube](https://github.com/Arnime/grasp_ils_vnd_pr/actions/workflows/ci-sonarqube.yml/badge.svg)](https://github.com/Arnime/grasp_ils_vnd_pr/actions/workflows/ci-sonarqube.yml)
 [![OpenSSF Gold](https://img.shields.io/badge/OpenSSF-best%20practices-gold?logo=openssf&logoColor=white)](https://www.bestpractices.dev/projects/12627)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?logo=open-source-initiative&logoColor=white)](https://opensource.org/licenses/MIT)
