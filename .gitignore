@@ -66,4 +66,3 @@ reports/sonar/
 
 # Local VS Code workspace files
 .vscode/*.json
-!.vscode/*.json.example
