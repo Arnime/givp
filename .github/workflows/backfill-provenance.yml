@@ -45,21 +45,37 @@ jobs:
         env:
           TAG_NAME: ${{ inputs.tag_name }}
         run: |
-          git fetch --tags --no-recurse-submodules origin "$TAG_NAME"
+          set -euo pipefail
+
+          RAW_TAG="$(echo "$TAG_NAME" | tr -d '[:space:]')"
+          EFFECTIVE_TAG="$RAW_TAG"
+
+          # Accept common typo "v.X.Y.Z" by normalizing to "vX.Y.Z".
+          if [[ "$RAW_TAG" =~ ^v\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            EFFECTIVE_TAG="v${RAW_TAG#v.}"
+            echo "Normalizing tag input '$RAW_TAG' -> '$EFFECTIVE_TAG'"
+          fi
+
+          if ! git ls-remote --exit-code --tags origin "refs/tags/$EFFECTIVE_TAG" >/dev/null; then
+            echo "::error::Tag '$EFFECTIVE_TAG' was not found on origin. Please use an existing tag like v0.5.4"
+            exit 1
+          fi
+
+          git fetch --tags --no-recurse-submodules origin "$EFFECTIVE_TAG"
 
           # Support historical layout changes across tags:
           # - v0.5.1 and earlier: src/givp
           # - v0.5.4 and later:   python/src/givp
           rm -rf python/src src/givp
 
-          if git cat-file -e "$TAG_NAME:python/src" 2>/dev/null; then
+          if git cat-file -e "$EFFECTIVE_TAG:python/src" 2>/dev/null; then
             echo "Using source layout from tag: python/src"
-            git checkout "$TAG_NAME" -- python/src pyproject.toml
-          elif git cat-file -e "$TAG_NAME:src/givp" 2>/dev/null; then
+            git checkout "$EFFECTIVE_TAG" -- python/src pyproject.toml
+          elif git cat-file -e "$EFFECTIVE_TAG:src/givp" 2>/dev/null; then
             echo "Using source layout from tag: src/givp"
-            git checkout "$TAG_NAME" -- src/givp pyproject.toml
+            git checkout "$EFFECTIVE_TAG" -- src/givp pyproject.toml
           else
-            echo "::error::Unsupported source layout in tag $TAG_NAME (expected python/src or src/givp)"
+            echo "::error::Unsupported source layout in tag $EFFECTIVE_TAG (expected python/src or src/givp)"
             exit 1
           fi
 
