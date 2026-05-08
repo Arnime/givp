@@ -1,0 +1,84 @@
+{
+    "editor.formatOnSave": true,
+    "editor.rulers": [
+        88,
+        100
+    ],
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true,
+    "editor.renderWhitespace": "boundary",
+    "editor.bracketPairColorization.enabled": true,
+    "editor.guides.bracketPairs": true,
+    "python.analysis.typeCheckingMode": "basic",
+    "python.analysis.autoImportCompletions": true,
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}/python/src"
+    ],
+    "[python]": {
+        "editor.defaultFormatter": "charliermarsh.ruff",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.fixAll.ruff": "explicit",
+            "source.organizeImports.ruff": "explicit"
+        }
+    },
+    "black-formatter.args": [
+        "--line-length=88"
+    ],
+    "ruff.enable": true,
+    "ruff.lint.enable": true,
+    "ruff.format.enable": false,
+    "ruff.organizeImports": true,
+    "ruff.importStrategy": "fromEnvironment",
+    "rust-analyzer.linkedProjects": [
+        "${workspaceFolder}/rust/Cargo.toml"
+    ],
+    "rust-analyzer.checkOnSave": true,
+    "rust-analyzer.check.command": "clippy",
+    "rust-analyzer.check.extraArgs": [
+        "--",
+        "-D",
+        "warnings"
+    ],
+    "[rust]": {
+        "editor.defaultFormatter": "rust-lang.rust-analyzer",
+        "editor.formatOnSave": true
+    },
+    "julia.environmentPath": "${workspaceFolder}/julia",
+    "julia.enableTelemetry": false,
+    "[julia]": {
+        "editor.defaultFormatter": "julialang.language-julia",
+        "editor.formatOnSave": true,
+        "editor.tabSize": 4
+    },
+    "notebook.output.scrolling": true,
+    "notebook.lineNumbers": "on",
+    "notebook.formatOnSave.enabled": true,
+    "jupyter.notebookFileRoot": "${workspaceFolder}/Notebooks",
+    "yaml.customTags": [
+        "!python/name scalar"
+    ],
+    "files.exclude": {
+        "**/__pycache__": true,
+        "**/*.pyc": true,
+        "**/.pytest_cache": true,
+        "**/.ruff_cache": true,
+        "**/*.egg-info": true,
+        "**/.mypy_cache": true,
+        "**/target": true
+    },
+    "files.watcherExclude": {
+        "**/__pycache__/**": true,
+        "**/.venv/**": true,
+        "**/dist/**": true,
+        "**/rust/target/**": true
+    },
+    "search.exclude": {
+        "**/rust/target": true,
+        "**/.venv": true,
+        "**/site": true
+    },
+    "cmake.sourceDirectory": "${workspaceFolder}/cpp",
+    "python-envs.defaultEnvManager": "ms-python.python:poetry",
+    "python-envs.defaultPackageManager": "ms-python.python:poetry"
+}

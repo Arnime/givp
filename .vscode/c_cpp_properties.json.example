@@ -1,0 +1,18 @@
+{
+  "version": 4,
+  "configurations": [
+    {
+      "name": "Workspace Example",
+      "cppStandard": "c++17",
+      "intelliSenseMode": "${default}",
+      "includePath": [
+        "${workspaceFolder}/cpp/include"
+      ],
+      "browse": {
+        "path": [
+          "${workspaceFolder}/cpp/include"
+        ]
+      }
+    }
+  ]
+}

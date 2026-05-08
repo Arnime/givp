@@ -1,0 +1,26 @@
+{
+    "recommendations": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-python.black-formatter",
+        "charliermarsh.ruff",
+        "ms-python.mypy-type-checker",
+        "ms-python.pytest-adapter",
+        "rust-lang.rust-analyzer",
+        "vadimcn.vscode-lldb",
+        "tamasfe.even-better-toml",
+        "julialang.language-julia",
+        "reditorsupport.r",
+        "rdebugger.r-debugger",
+        "ms-vscode.cpptools",
+        "llvm-vs-code-extensions.vscode-clangd",
+        "alesiong.clang-tidy-linter",
+        "cppchecksolutionsab.cppcheck-official",
+        "ms-toolsai.jupyter",
+        "ms-toolsai.jupyter-renderers",
+        "ms-toolsai.vscode-jupyter-cell-tags",
+        "yzhang.markdown-all-in-one",
+        "redhat.vscode-yaml",
+        "sonarsource.sonarlint-vscode"
+    ]
+}

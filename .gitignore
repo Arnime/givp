@@ -63,3 +63,7 @@ build/compile_commands.json
 
 # SonarQube Reports
 reports/sonar/
+
+# Local VS Code workspace files
+.vscode/*.json
+!.vscode/*.json.example
