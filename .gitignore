@@ -11,10 +11,7 @@ dist/
 .env
 .pytest_cache/
 .coverage
-coverage.xml
-coverage-python.xml
-coverage.info
-coverage_raw.info
+coverage*
 julia-lcov.info
 rust/lcov.info
 htmlcov/
@@ -26,6 +23,7 @@ htmlcov/
 .benchmarks/
 python/benchmarks/.results/
 site/
+results_quick.json
 
 # Julia coverage files
 *.cov
@@ -47,7 +45,7 @@ Notebooks/*/*.png
 givp.Rcheck/
 *.tar.gz
 r/*.Rcheck/
-r/man/*.Rd
+r/.lintr
 
 # Local downloads
 mutmut_download/

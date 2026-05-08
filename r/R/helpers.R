@@ -84,6 +84,7 @@ set_seed_if_needed <- function(seed = NULL, config_seed = NULL) {
   if (!is.null(seed)) {
     set.seed(seed) # NOSONAR: reproducibility seed, not a security use case
   } else if (!is.null(config_seed)) {
-    set.seed(config_seed) # NOSONAR: reproducibility seed, not a security use case
+    # NOSONAR: reproducibility seed, not a security use case
+    set.seed(config_seed)
   }
 }

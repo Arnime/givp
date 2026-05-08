@@ -59,79 +59,93 @@ help:
 CPP_SRC_DIR := cpp/include
 CPP_TESTS_DIR := cpp/tests
 CPP_BENCH_DIR := cpp/benchmarks
+
+ifeq ($(OS),Windows_NT)
+CPP_WSL_CWD := $(subst \,/,$(CURDIR))
+BUILD_DIR := build_wsl
+BUILD_TIDY_DIR := build_wsl_tidy
+BUILD_COV_DIR := build_wsl_cov
+define cpp_exec
+C:/Windows/System32/wsl.exe bash -lc 'cd "$$(wslpath -a "$(CPP_WSL_CWD)")" && $(1)'
+endef
+else
 BUILD_DIR := build
 BUILD_TIDY_DIR := build_tidy
 BUILD_COV_DIR := build_cov
+define cpp_exec
+$(1)
+endef
+endif
 
 .PHONY: cpp-format-check cpp-lint cpp-build cpp-test cpp-coverage cpp-all cpp-clean
 
 cpp-format-check:
 	@echo "[C++] Checking clang-format (dry-run)..."
-	@{ \
-		find $(CPP_SRC_DIR) -type f \( -name '*.hpp' -o -name '*.h' \) -print0; \
-		find $(CPP_TESTS_DIR) -type f \( -name '*.cpp' -o -name '*.hpp' -o -name '*.h' \) -print0; \
-		find $(CPP_BENCH_DIR) -type f \( -name '*.cpp' -o -name '*.hpp' -o -name '*.h' \) -print0; \
-	} | xargs -0 -r clang-format --dry-run --Werror
+	@$(call cpp_exec,{ \
+		find $(CPP_SRC_DIR) -type f \( -name "*.hpp" -o -name "*.h" \) -print0; \
+		find $(CPP_TESTS_DIR) -type f \( -name "*.cpp" -o -name "*.hpp" -o -name "*.h" \) -print0; \
+		find $(CPP_BENCH_DIR) -type f \( -name "*.cpp" -o -name "*.hpp" -o -name "*.h" \) -print0; \
+	} | xargs -0 -r clang-format --dry-run --Werror)
 	@echo "[C++] ✓ clang-format check passed"
 
 cpp-lint:
 	@echo "[C++] Running clang-tidy static analysis..."
-	@cmake -S cpp -B $(BUILD_TIDY_DIR) \
+	@$(call cpp_exec,cmake -S cpp -B $(BUILD_TIDY_DIR) \
 		-DCMAKE_C_COMPILER=clang \
 		-DCMAKE_CXX_COMPILER=clang++ \
 		-DGIVP_BUILD_TESTS=ON \
 		-DGIVP_BUILD_BENCHMARKS=ON \
-		-DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-	@find cpp/tests cpp/benchmarks -type f -name '*.cpp' -print0 \
+		-DCMAKE_EXPORT_COMPILE_COMMANDS=ON)
+	@$(call cpp_exec,find cpp/tests cpp/benchmarks -type f -name "*.cpp" -print0 \
 		| xargs -0 -r -n 1 clang-tidy -p $(BUILD_TIDY_DIR) \
-			--header-filter='cpp/include/.*' \
-			--warnings-as-errors='*'
+			--header-filter="cpp/include/.*" \
+			--warnings-as-errors="*")
 	@echo "[C++] ✓ clang-tidy analysis passed"
 
 cpp-build:
 	@echo "[C++] Building with CMake (Release)..."
-	@cmake -S cpp -B $(BUILD_DIR) -DCMAKE_BUILD_TYPE=Release \
-		-DGIVP_BUILD_TESTS=ON -DGIVP_BUILD_BENCHMARKS=OFF
-	@cmake --build $(BUILD_DIR) --parallel
+	@$(call cpp_exec,cmake -S cpp -B $(BUILD_DIR) -DCMAKE_BUILD_TYPE=Release \
+		-DGIVP_BUILD_TESTS=ON -DGIVP_BUILD_BENCHMARKS=OFF)
+	@$(call cpp_exec,cmake --build $(BUILD_DIR) --parallel)
 	@echo "[C++] ✓ Build succeeded"
 
 cpp-test: cpp-build
 	@echo "[C++] Running unit tests..."
-	@ctest --test-dir $(BUILD_DIR) --output-on-failure
+	@$(call cpp_exec,ctest --test-dir $(BUILD_DIR) --output-on-failure)
 	@echo "[C++] ✓ All tests passed"
 
 cpp-coverage:
 	@echo "[C++] Running coverage gate (>=90%)..."
-	@cmake -S cpp -B $(BUILD_COV_DIR) -DCMAKE_BUILD_TYPE=Debug \
+	@$(call cpp_exec,cmake -S cpp -B $(BUILD_COV_DIR) -DCMAKE_BUILD_TYPE=Debug \
 		-DCMAKE_CXX_FLAGS="--coverage" -DCMAKE_EXE_LINKER_FLAGS="--coverage" \
-		-DGIVP_BUILD_TESTS=ON -DGIVP_BUILD_BENCHMARKS=OFF
-	@cmake --build $(BUILD_COV_DIR) --parallel
-	@ctest --test-dir $(BUILD_COV_DIR) --output-on-failure
-	@lcov --capture \
+		-DGIVP_BUILD_TESTS=ON -DGIVP_BUILD_BENCHMARKS=OFF)
+	@$(call cpp_exec,cmake --build $(BUILD_COV_DIR) --parallel)
+	@$(call cpp_exec,ctest --test-dir $(BUILD_COV_DIR) --output-on-failure)
+	@$(call cpp_exec,lcov --capture \
 		--directory $(BUILD_COV_DIR) \
 		--output-file coverage_raw.info \
 		--gcov-tool gcov \
 		--ignore-errors source,gcov,negative \
-		--rc geninfo_unexecuted_blocks=1
-	@lcov --remove coverage_raw.info \
+		--rc geninfo_unexecuted_blocks=1)
+	@$(call cpp_exec,lcov --remove coverage_raw.info \
 		"*/$(BUILD_COV_DIR)/_deps/*" \
-		'/usr/*' \
+		"/usr/*" \
 		--output-file coverage.info \
-		--ignore-errors source,negative
-	@lcov --list coverage.info
-	@hit=$$(grep '^LH:' coverage.info | awk -F: '{s+=$$2} END {print s+0}'); \
-	 total=$$(grep '^LF:' coverage.info | awk -F: '{s+=$$2} END {print s+0}'); \
+		--ignore-errors source,negative)
+	@$(call cpp_exec,lcov --list coverage.info)
+	@$(call cpp_exec,hit=$$(grep "^LH:" coverage.info | awk -F: "{s+=\\$$2} END {print s+0}"); \
+	 total=$$(grep "^LF:" coverage.info | awk -F: "{s+=\\$$2} END {print s+0}"); \
 	 if [ "$$total" -eq 0 ]; then \
 	 	echo "[C++] No coverage data found in coverage.info"; \
 	 	exit 1; \
 	 fi; \
 	 pct=$$(awk "BEGIN {printf \"%.1f\", $$hit / $$total * 100}"); \
 	 echo "[C++] Coverage: $${pct}% ($$hit / $$total lines)"; \
-	 awk "BEGIN { if ($$hit / $$total * 100 < 90.0) { print \"[C++] Coverage below 90% threshold (got $${pct}%)\"; exit 1 } }"
+	 awk "BEGIN { if ($$hit / $$total * 100 < 90.0) { print \"[C++] Coverage below 90% threshold (got $${pct}%)\"; exit 1 } }")
 	@echo "[C++] ✓ Coverage gate passed"
 
 cpp-clean:
-	@rm -rf $(BUILD_DIR) $(BUILD_TIDY_DIR) $(BUILD_COV_DIR)
+	@$(call cpp_exec,rm -rf $(BUILD_DIR) $(BUILD_TIDY_DIR) $(BUILD_COV_DIR))
 	@echo "[C++] ✓ Cleaned build directories"
 
 cpp-all: cpp-format-check cpp-lint cpp-build cpp-test cpp-coverage
@@ -314,7 +328,17 @@ rust-all: rust-format-check rust-lint rust-test rust-coverage
 
 R_DIR := r
 
-.PHONY: r-lint r-format-check r-coverage r-all
+.PHONY: r-test-quick r-test-full r-lint r-format-check r-coverage r-all
+
+r-test-quick:
+	@echo "[R] Running quick tests..."
+	GIVP_R_TEST_PROFILE=quick Rscript -e "library(testthat); testthat::test_dir('$(R_DIR)/tests/testthat')"
+	@echo "[R] ✓ Quick tests passed"
+
+r-test-full:
+	@echo "[R] Running full tests..."
+	GIVP_R_TEST_PROFILE=full Rscript -e "library(testthat); testthat::test_dir('$(R_DIR)/tests/testthat')"
+	@echo "[R] ✓ Full tests passed"
 
 r-lint:
 	@echo "[R] Running lintr..."
@@ -324,18 +348,28 @@ r-lint:
 r-format-check:
 	@echo "[R] Checking R code formatting (dry-run)..."
 	Rscript -e "\
-		if (!requireNamespace('formatR', quietly = TRUE)) quit(status = 1); \
-		files <- list.files('$(R_DIR)/R', pattern='\\\\.[Rr]$$', full.names=TRUE); \
-		bad <- vapply(files, function(f) !identical(readLines(f, warn=FALSE), formatR::tidy_source(f, output=FALSE)$$text.tidy), logical(1)); \
-		if (any(bad)) { \
-			cat('Unformatted files:\n', paste(files[bad], collapse='\n'), '\n'); \
+		if (!requireNamespace('styler', quietly = TRUE)) quit(status = 1); \
+		res <- styler::style_dir('$(R_DIR)/R', dry = 'on'); \
+		if (any(res[['changed']])) { \
+			cat('Unformatted files:\n', paste(res[['file']][res[['changed']]], collapse='\n'), '\n'); \
 			quit(status=1); \
 		}"
 	@echo "[R] ✓ R format check passed"
 
 r-coverage:
 	@echo "[R] Running coverage gate (>=90%)..."
-	Rscript -e "\
+	GIVP_R_TEST_PROFILE=quick Rscript -e "\
+		cov <- covr::package_coverage(path = '$(R_DIR)'); \
+		pct <- covr::percent_coverage(cov); \
+		cat(sprintf('[R] Coverage: %.1f%%\n', pct)); \
+		covr::to_cobertura(cov, filename = 'coverage-r.xml'); \
+		if (pct < 90) stop(sprintf('Coverage below 90%% threshold (got %.1f%%)', pct)) \
+	"
+	@echo "[R] ✓ Coverage gate passed"
+
+r-coverage-full:
+	@echo "[R] Running coverage gate (>=90%)..."
+	GIVP_R_TEST_PROFILE=full Rscript -e "\
 		cov <- covr::package_coverage(path = '$(R_DIR)'); \
 		pct <- covr::percent_coverage(cov); \
 		cat(sprintf('[R] Coverage: %.1f%%\n', pct)); \
@@ -345,6 +379,9 @@ r-coverage:
 	@echo "[R] ✓ Coverage gate passed"
 
 r-all: r-lint r-format-check r-coverage
+	@echo "[R] ✓✓✓ All quality gates passed"
+
+r-all-full: r-lint r-format-check r-coverage-full
 	@echo "[R] ✓✓✓ All quality gates passed"
 
 # ──────────────────────────────────────────────────────────────────────────────

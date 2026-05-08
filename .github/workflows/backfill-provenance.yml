@@ -46,7 +46,22 @@ jobs:
           TAG_NAME: ${{ inputs.tag_name }}
         run: |
           git fetch --tags --no-recurse-submodules origin "$TAG_NAME"
-          git checkout "$TAG_NAME" -- python/src pyproject.toml
+
+          # Support historical layout changes across tags:
+          # - v0.5.1 and earlier: src/givp
+          # - v0.5.4 and later:   python/src/givp
+          rm -rf python/src src/givp
+
+          if git cat-file -e "$TAG_NAME:python/src" 2>/dev/null; then
+            echo "Using source layout from tag: python/src"
+            git checkout "$TAG_NAME" -- python/src pyproject.toml
+          elif git cat-file -e "$TAG_NAME:src/givp" 2>/dev/null; then
+            echo "Using source layout from tag: src/givp"
+            git checkout "$TAG_NAME" -- src/givp pyproject.toml
+          else
+            echo "::error::Unsupported source layout in tag $TAG_NAME (expected python/src or src/givp)"
+            exit 1
+          fi
 
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
@@ -86,6 +101,27 @@ jobs:
           name: dist-backfill
           path: dist/
           retention-days: 1
+
+      - name: Remove existing provenance assets from release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_NAME: ${{ inputs.tag_name }}
+        run: |
+          set -euo pipefail
+          mapfile -t assets < <(
+            gh release view "$TAG_NAME" --json assets \
+              --jq '.assets[].name' | grep -E '\.intoto\.jsonl$' || true
+          )
+
+          if [ "${#assets[@]}" -eq 0 ]; then
+            echo "No existing provenance assets to remove for $TAG_NAME"
+            exit 0
+          fi
+
+          for asset in "${assets[@]}"; do
+            echo "Deleting existing provenance asset: $asset"
+            gh release delete-asset "$TAG_NAME" "$asset" --yes
+          done
 
   provenance:
     needs: [ build ]

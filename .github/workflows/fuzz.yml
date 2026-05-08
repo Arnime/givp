@@ -19,7 +19,7 @@ jobs:
             - name: Install package and fuzzers
               run: |
                   pip install --require-hashes -r python/requirements/fuzz.txt
-                  sh .github/scripts/install-package.sh
+                  bash .github/scripts/install-package.sh
             - name: Run fuzz target with atheris (Linux CI run)
               run: |
                   python python/fuzz/fuzz_givp.py -atheris_runs=1000 -atheris_jobs=1

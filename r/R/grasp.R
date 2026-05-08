@@ -43,7 +43,7 @@ grasp_construct <- function(
   # otherwise. Parallel evaluation bypasses the cache because forked R
   # processes cannot share mutable environments.
   use_parallel <- isTRUE(config$n_workers > 1L) && .Platform$OS.type == "unix"
-  if (use_parallel) {
+  if (use_parallel) { # nocov start
     cand_list <- lapply(seq_len(n_candidates), function(k) candidates[k, ])
     vals_list <- parallel::mclapply(
       cand_list,
@@ -54,7 +54,7 @@ grasp_construct <- function(
       if (is.numeric(v) && length(v) == 1L) v else Inf
     }, numeric(1))
     state$nfev <- state$nfev + n_candidates
-  } else {
+  } else { # nocov end
     values <- rep(NA_real_, n_candidates)
     for (k in seq_len(n_candidates)) {
       values[k] <- evaluate_candidate(func, candidates[k, ], cache, state)

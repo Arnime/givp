@@ -69,7 +69,7 @@ jobs:
 
       - name: Run tests
         shell: bash
-        run: Rscript -e "library(testthat); testthat::test_dir('r/tests/testthat')"
+        run: GIVP_R_TEST_PROFILE=quick Rscript -e "library(testthat); testthat::test_dir('r/tests/testthat')"
 
   # ─── 2. Lint gate — ubuntu/release only, single run ──────────────────────
   lint:
@@ -155,7 +155,7 @@ jobs:
       - name: Check coverage gate (>= 90%) and generate report
         shell: bash
         run: |
-          Rscript -e "
+          GIVP_R_TEST_PROFILE=full Rscript -e "
             cov <- covr::package_coverage(path = 'r')
             pct <- covr::percent_coverage(cov)
             cat(sprintf('R coverage: %.1f%%\n', pct))

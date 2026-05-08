@@ -3,7 +3,12 @@
 
 test_that("givp returns structured result", {
   f <- function(x) sum(x * x)
-  res <- givp(f, bounds = list(c(-5, 5), c(-5, 5)), seed = 42)
+  res <- givp(
+    f,
+    bounds = list(c(-5, 5), c(-5, 5)),
+    seed = 42,
+    config = smoke_config()
+  )
 
   expect_s3_class(res, "givp_result")
   expect_equal(length(res$x), 2)
@@ -18,7 +23,8 @@ test_that("givp handles maximize direction", {
     f,
     bounds = list(c(-3, 3), c(-3, 3)),
     direction = "maximize",
-    seed = 1
+    seed = 1,
+    config = smoke_config(direction = "maximize")
   )
   expect_equal(res$direction, "maximize")
   expect_true(is.numeric(res$fun))
@@ -26,7 +32,12 @@ test_that("givp handles maximize direction", {
 
 test_that("givp accepts minimize flag", {
   f <- function(x) sum(x * x)
-  res <- givp(f, bounds = list(c(-3, 3)), minimize = TRUE)
+  res <- givp(
+    f,
+    bounds = list(c(-3, 3)),
+    minimize = TRUE,
+    config = smoke_config()
+  )
   expect_equal(res$direction, "minimize")
 })
 
@@ -44,7 +55,8 @@ test_that("givp executes iteration callback and direction overrides minimize", {
       called <<- TRUE
       got_class <<- inherits(r, "givp_result")
     },
-    seed = 7
+    seed = 7,
+    config = smoke_config(direction = "maximize")
   )
 
   expect_equal(res$direction, "maximize")
@@ -102,6 +114,7 @@ test_that("GIVPOptimizer wrapper runs", {
   opt <- GIVPOptimizer$new(
     func = function(x) sum(x * x),
     bounds = list(c(-2, 2), c(-2, 2)),
+    config = smoke_config(),
     seed = 123
   )
   res <- opt$optimize()

@@ -925,7 +925,8 @@ cfg_quality <- givp_config(
 ### Running R tests and lint
 
 ```bash
-Rscript -e "library(testthat); testthat::test_dir('r/tests/testthat')"
+GIVP_R_TEST_PROFILE=quick Rscript -e "library(testthat); testthat::test_dir('r/tests/testthat')"
+GIVP_R_TEST_PROFILE=full Rscript -e "library(testthat); testthat::test_dir('r/tests/testthat')"
 Rscript -e "lintr::lint_package('r')"
 ```
 
