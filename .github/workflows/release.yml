@@ -107,6 +107,7 @@ jobs:
     with:
       base64-subjects: "${{ needs.build-and-publish.outputs.hashes }}"
       upload-assets: true
+      upload-tag-name: ${{ inputs.tag || github.ref_name }}
 
   publish-rust:
     needs: [ build-and-publish ]

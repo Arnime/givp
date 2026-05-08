@@ -47,6 +47,10 @@ givp.Rcheck/
 r/*.Rcheck/
 r/.lintr
 
+# Local wheel downloads (do not version these binaries)
+hatchling-1.29.0-py3-none-any.whl
+pyproject_hooks-1.2.0-py3-none-any.whl
+
 # Local downloads
 mutmut_download/
 
