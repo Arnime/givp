@@ -72,7 +72,7 @@ jobs:
       - name: Install
         run: |
           pip install --require-hashes -r ${{ matrix.lockfile || 'python/requirements/ci.txt' }}
-          sh .github/scripts/install-package.sh
+          bash .github/scripts/install-package.sh
       - name: Lint
         run: ruff check python/src python/tests
       - name: Type-check
@@ -90,7 +90,7 @@ jobs:
       - name: Install
         run: |
           pip install --require-hashes -r python/requirements/ci.txt
-          sh .github/scripts/install-package.sh
+          bash .github/scripts/install-package.sh
       - name: Test with coverage
         run: pytest --cov=givp --cov-report=xml:coverage-python.xml --cov-fail-under=95
       - name: Upload coverage to Codecov
@@ -116,7 +116,7 @@ jobs:
       - name: Install
         run: |
           pip install --require-hashes -r python/requirements/ci.txt
-          sh .github/scripts/install-package.sh
+          bash .github/scripts/install-package.sh
       - name: Run property tests
         # Run only test_properties.py with a generous timeout; --no-cov keeps it fast.
         # The Hypothesis database is ephemeral in CI; this is intentional.
@@ -140,7 +140,7 @@ jobs:
         run: |
           pip install --require-hashes -r python/requirements/ci.txt
           pip install --require-hashes -r python/requirements/benchmarks.txt
-          sh .github/scripts/install-package.sh
+          bash .github/scripts/install-package.sh
       - name: Benchmark smoke tests
         run: pytest -m slow python/tests/test_benchmark_scripts.py -v
           --override-ini="addopts="
@@ -162,7 +162,7 @@ jobs:
       - name: Install
         run: |
           pip install --require-hashes -r python/requirements/ci.txt
-          sh .github/scripts/install-package.sh
+          bash .github/scripts/install-package.sh
       - name: Run convergence quality gate
         run: |
           pytest -m quality_gate python/tests/test_algorithm_quality.py \
@@ -185,7 +185,7 @@ jobs:
       - name: Install
         run: |
           pip install --require-hashes -r python/requirements/ci.txt
-          sh .github/scripts/install-package.sh
+          bash .github/scripts/install-package.sh
       - name: Run performance benchmarks
         run: |
           mkdir -p python/benchmarks/.results
@@ -217,7 +217,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --require-hashes -r python/requirements/ci.txt
-          sh .github/scripts/install-package.sh
+          bash .github/scripts/install-package.sh
           pip install --require-hashes -r python/requirements/mutation.txt
       - name: Remove broken symlinks (mutmut workaround)
         run: |
@@ -277,7 +277,7 @@ jobs:
       - name: Install
         run: |
           pip install --require-hashes -r python/requirements/ci.txt
-          sh .github/scripts/install-package.sh
+          bash .github/scripts/install-package.sh
       - name: Lint
         run: ruff check python/src python/tests
       - name: Type-check
@@ -295,7 +295,7 @@ jobs:
       - name: Install
         run: |
           pip install --require-hashes -r python/requirements/docs.txt
-          sh .github/scripts/install-package.sh
+          bash .github/scripts/install-package.sh
       - name: Build docs (strict)
         run: mkdocs build --strict
 
