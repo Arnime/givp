@@ -6,10 +6,6 @@ name: CI C++
 on:
   push:
     branches: [ main ]
-    paths:
-      - "cpp/**"
-      - "!cpp/**/*.md"
-      - ".github/workflows/ci-cpp.yml"
   pull_request:
     paths:
       - "cpp/**"
