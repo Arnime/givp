@@ -25,7 +25,7 @@ jobs:
                   python-version: "3.12"
             - name: Install
               run: |
-                  pip install --require-hashes -r python/requirements/audit.txt
+                  pip install --only-binary=:all: --require-hashes -r python/requirements/audit.txt
                   bash .github/scripts/install-package-editable.sh
             - name: Run pip-audit
               run: |
@@ -41,7 +41,8 @@ jobs:
               with:
                   python-version: "3.12"
             - name: Install Bandit
-              run: pip install --require-hashes -r python/requirements/security.txt
+              run: |
+                  pip install --only-binary=:all: --require-hashes -r python/requirements/security.txt
             - name: Run Bandit
               run: bandit -r python/src -lll
 

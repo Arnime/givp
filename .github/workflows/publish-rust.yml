@@ -18,7 +18,7 @@ on:
         default: false
         type: boolean
       expected_version:
-        description: "Optional Cargo.toml version to validate (e.g. 1.0.0)"
+        description: "Optional Cargo.toml version to validate (e.g. 1.0.0 or v1.0.0)"
         required: false
         type: string
 
@@ -83,7 +83,9 @@ jobs:
           CARGO_VERSION: ${{ steps.version.outputs.version }}
           EXPECTED_VERSION: ${{ inputs.expected_version }}
         run: |
-          if [ "$CARGO_VERSION" != "$EXPECTED_VERSION" ]; then
+          EXPECTED_RAW="$(echo "$EXPECTED_VERSION" | tr -d '[:space:]')"
+          EXPECTED_NORMALIZED="${EXPECTED_RAW#v}"
+          if [ "$CARGO_VERSION" != "$EXPECTED_NORMALIZED" ]; then
             echo "ERROR: Cargo.toml version ($CARGO_VERSION) does not match expected_version ($EXPECTED_VERSION)"
             exit 1
           fi
@@ -95,8 +97,10 @@ jobs:
 
       - name: Ensure CARGO_REGISTRY_TOKEN exists
         if: ${{ github.event_name == 'push' || inputs.publish }}
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
         run: |
-          if [ -z "${{ secrets.CARGO_REGISTRY_TOKEN }}" ]; then
+          if [ -z "$CARGO_REGISTRY_TOKEN" ]; then
             echo "ERROR: Repository secret CARGO_REGISTRY_TOKEN is not configured"
             exit 1
           fi
@@ -104,7 +108,9 @@ jobs:
       - name: cargo publish
         if: ${{ github.event_name == 'push' || inputs.publish }}
         working-directory: rust
-        run: cargo publish --locked --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: cargo publish --locked --token "$CARGO_REGISTRY_TOKEN"
 
       - name: Wait for crates.io to sync
         if: ${{ github.event_name == 'push' || inputs.publish }}

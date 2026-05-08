@@ -35,6 +35,7 @@ jobs:
       attestations: write
     outputs:
       hashes: ${{ steps.hash.outputs.hashes }}
+      effective_tag: ${{ steps.overlay.outputs.effective_tag }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -42,6 +43,7 @@ jobs:
           persist-credentials: false
 
       - name: Overlay source from ${{ inputs.tag_name }}
+        id: overlay
         env:
           TAG_NAME: ${{ inputs.tag_name }}
         run: |
@@ -55,6 +57,8 @@ jobs:
             EFFECTIVE_TAG="v${RAW_TAG#v.}"
             echo "Normalizing tag input '$RAW_TAG' -> '$EFFECTIVE_TAG'"
           fi
+
+          echo "effective_tag=$EFFECTIVE_TAG" >> "$GITHUB_OUTPUT"
 
           if ! git ls-remote --exit-code --tags origin "refs/tags/$EFFECTIVE_TAG" >/dev/null; then
             echo "::error::Tag '$EFFECTIVE_TAG' was not found on origin. Please use an existing tag like v0.5.4"
@@ -85,17 +89,17 @@ jobs:
 
       - name: Build
         run: |
-          pip install --require-hashes -r python/requirements/release-tools.txt
+          pip install --only-binary=:all: --require-hashes -r python/requirements/release-tools.txt
           python -m build
 
       - name: Generate artifact hashes
         id: hash
-        run: cd dist && echo "hashes=$(sha256sum * | base64 -w0)" >> "$GITHUB_OUTPUT"
+        run: cd dist && echo "hashes=$(sha256sum -- * | base64 -w0)" >> "$GITHUB_OUTPUT"
 
       - name: Attest build provenance
         uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
         with:
-          subject-path: dist/*
+          subject-path: ./dist/*
 
       - name: Sign artifacts with Sigstore
         uses: sigstore/gh-action-sigstore-python@04cffa1d795717b140764e8b640de88853c92acc # v3.3.0
@@ -108,7 +112,7 @@ jobs:
       - name: Attach sigstore files to release
         uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
         with:
-          tag_name: ${{ inputs.tag_name }}
+          tag_name: ${{ steps.overlay.outputs.effective_tag }}
           files: dist/*.sigstore
 
       - name: Upload dist for SLSA
@@ -121,7 +125,7 @@ jobs:
       - name: Remove existing provenance assets from release
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG_NAME: ${{ inputs.tag_name }}
+          TAG_NAME: ${{ steps.overlay.outputs.effective_tag }}
         run: |
           set -euo pipefail
           mapfile -t assets < <(
@@ -150,6 +154,34 @@ jobs:
     with:
       base64-subjects: "${{ needs.build.outputs.hashes }}"
       upload-assets: true
-      upload-tag-name: ${{ inputs.tag_name }}
+      upload-tag-name: ${{ needs.build.outputs.effective_tag }}
+      continue-on-error: true
+
+  verify-provenance:
+    needs: [ build, provenance ]
+    runs-on: ubuntu-latest
+    if: ${{ always() }}
+    permissions:
+      contents: read
+    steps:
+      - name: Verify provenance asset is attached to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_NAME: ${{ needs.build.outputs.effective_tag }}
+        run: |
+          set -euo pipefail
+
+          mapfile -t assets < <(
+            gh release view "$TAG_NAME" --json assets \
+              --jq '.assets[].name' | grep -E '\.intoto\.jsonl$' || true
+          )
+
+          if [ "${#assets[@]}" -eq 0 ]; then
+            echo "::error::No provenance .intoto.jsonl asset found on release $TAG_NAME"
+            exit 1
+          fi
+
+          echo "Provenance asset(s) found on $TAG_NAME:"
+          printf ' - %s\n' "${assets[@]}"
 
 

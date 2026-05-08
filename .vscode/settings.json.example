@@ -1,5 +1,4 @@
 {
-    // ─── Editor ──────────────────────────────────────────────────────────────
     "editor.formatOnSave": true,
     "editor.rulers": [
         88,
@@ -10,19 +9,11 @@
     "editor.renderWhitespace": "boundary",
     "editor.bracketPairColorization.enabled": true,
     "editor.guides.bracketPairs": true,
-    // ─── Theme & Icons ───────────────────────────────────────────────────────
-    "workbench.colorTheme": "Dark Modern",
-    "workbench.iconTheme": "material-icon-theme",
-    // ─── Python ──────────────────────────────────────────────────────────────
-    // Interpretador: virtualenv gerenciado pelo Poetry na raiz do projeto
-    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
     "python.analysis.typeCheckingMode": "basic",
     "python.analysis.autoImportCompletions": true,
-    // Pacote Python está em python/src/
     "python.analysis.extraPaths": [
         "${workspaceFolder}/python/src"
     ],
-    // ─── Black (formatter) + Ruff (linter) ───────────────────────────────────
     "[python]": {
         "editor.defaultFormatter": "charliermarsh.ruff",
         "editor.formatOnSave": true,
@@ -42,8 +33,6 @@
     "ruff.path": [
         "${workspaceFolder}/.venv/Scripts/ruff.exe"
     ],
-    // ─── Rust ────────────────────────────────────────────────────────────────
-    // Crate Rust está em rust/; aponta o rust-analyzer para o Cargo.toml correto
     "rust-analyzer.linkedProjects": [
         "${workspaceFolder}/rust/Cargo.toml"
     ],
@@ -58,8 +47,6 @@
         "editor.defaultFormatter": "rust-lang.rust-analyzer",
         "editor.formatOnSave": true
     },
-    // ─── Julia ───────────────────────────────────────────────────────────────
-    // Pacote Julia está em julia/
     "julia.environmentPath": "${workspaceFolder}/julia",
     "julia.enableTelemetry": false,
     "[julia]": {
@@ -67,18 +54,13 @@
         "editor.formatOnSave": true,
         "editor.tabSize": 4
     },
-    // ─── Notebooks ───────────────────────────────────────────────────────────
     "notebook.output.scrolling": true,
     "notebook.lineNumbers": "on",
     "notebook.formatOnSave.enabled": true,
     "jupyter.notebookFileRoot": "${workspaceFolder}/Notebooks",
-    // ─── YAML ────────────────────────────────────────────────────────────────
     "yaml.customTags": [
         "!python/name scalar"
     ],
-    // ─── Terminal ────────────────────────────────────────────────────────────
-    "terminal.integrated.defaultProfile.windows": "PowerShell",
-    // ─── Exclusões de ficheiros ───────────────────────────────────────────────
     "files.exclude": {
         "**/__pycache__": true,
         "**/*.pyc": true,
@@ -99,7 +81,6 @@
         "**/.venv": true,
         "**/site": true
     },
-    // ─── Color Customizations ─────────────────────────────────────────────────
     "workbench.colorCustomizations": {
         "activityBar.background": "#1a1a2e",
         "activityBar.foreground": "#a9b1d6",
@@ -119,7 +100,7 @@
         "titleBar.inactiveBackground": "#16213e",
         "titleBar.border": "#0f3460"
     },
-    "cmake.sourceDirectory": "D:/Projetos Pessoais/grasp_ils_vnd_pr/cpp",
+    "cmake.sourceDirectory": "${workspaceFolder}/cpp",
     "python-envs.defaultEnvManager": "ms-python.python:poetry",
     "python-envs.defaultPackageManager": "ms-python.python:poetry"
 }
