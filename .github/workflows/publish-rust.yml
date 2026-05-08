@@ -115,12 +115,41 @@ jobs:
       - name: Wait for crates.io to sync
         if: ${{ github.event_name == 'push' || inputs.publish }}
         run: |
-          echo "Waiting 30 seconds for crates.io registry to sync..."
-          sleep 30
+          echo "Waiting 90 seconds for crates.io registry to sync..."
+          sleep 90
 
       - name: Verify publish on crates.io
         if: ${{ github.event_name == 'push' || inputs.publish }}
         run: |
           PUBLISHED_VERSION=${{ steps.version.outputs.version }}
-          curl -f "https://crates.io/api/v1/crates/givp/${PUBLISHED_VERSION}" > /dev/null
-          echo "✓ Successfully published v${PUBLISHED_VERSION} to crates.io"
+          URL="https://crates.io/api/v1/crates/givp/${PUBLISHED_VERSION}"
+          UA="givp-ci-publish-check (GitHub Actions; repo=Arnime/grasp_ils_vnd_pr)"
+
+          # crates.io may briefly return 403/404 while metadata propagates.
+          for attempt in $(seq 1 36); do
+            HTTP_CODE=$(curl -sS -o /tmp/crates_response.json -w "%{http_code}" \
+              -H "Accept: application/json" \
+              -H "User-Agent: ${UA}" \
+              "$URL")
+
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "✓ Successfully published v${PUBLISHED_VERSION} to crates.io"
+              exit 0
+            fi
+
+            if [ "$HTTP_CODE" = "403" ] || [ "$HTTP_CODE" = "404" ] || [ "$HTTP_CODE" = "429" ] || [ "$HTTP_CODE" -ge 500 ]; then
+              echo "Attempt ${attempt}/36: crates.io returned HTTP ${HTTP_CODE}; waiting 10s before retry..."
+              sleep 10
+              continue
+            fi
+
+            echo "ERROR: unexpected crates.io HTTP status: ${HTTP_CODE}"
+            head -c 500 /tmp/crates_response.json || true
+            echo
+            exit 1
+          done
+
+          echo "ERROR: crates.io did not confirm v${PUBLISHED_VERSION} after retries"
+          head -c 500 /tmp/crates_response.json || true
+          echo
+          exit 1

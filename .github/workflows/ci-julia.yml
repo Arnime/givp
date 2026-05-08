@@ -3,12 +3,6 @@ name: CI Julia
 on:
   push:
     branches: [ main ]
-    paths:
-      - "julia/**"
-      - "!julia/**/*.md"
-      - "!julia/LICENSE"
-      - ".github/workflows/ci-julia.yml"
-      - "codecov.yml"
   pull_request:
     paths:
       - "julia/**"

@@ -3,11 +3,6 @@ name: CI Python
 on:
   push:
     branches: [ main ]
-    paths:
-      - "python/**"
-      - "pyproject.toml"
-      - ".github/workflows/ci-python.yml"
-      - "codecov.yml"
   pull_request:
   schedule:
     - cron: "0 5 * * 1"

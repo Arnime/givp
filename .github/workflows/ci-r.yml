@@ -6,10 +6,6 @@ name: CI R
 on:
   push:
     branches: [ main ]
-    paths:
-      - "r/**"
-      - "docs/r.md"
-      - ".github/workflows/ci-r.yml"
   pull_request:
     paths:
       - "r/**"

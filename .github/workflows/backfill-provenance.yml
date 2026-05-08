@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       tag_name:
-        description: "Release tag to backfill (e.g. v1.2.3)"
+        description: "Release tag to backfill (e.g. v1.2.3 or 1.2.3)"
         required: true
         type: string
 
@@ -51,6 +51,12 @@ jobs:
 
           RAW_TAG="$(echo "$TAG_NAME" | tr -d '[:space:]')"
           EFFECTIVE_TAG="$RAW_TAG"
+
+          # Accept semver without prefix by normalizing "X.Y.Z" -> "vX.Y.Z".
+          if [[ "$RAW_TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            EFFECTIVE_TAG="v${RAW_TAG}"
+            echo "Normalizing tag input '$RAW_TAG' -> '$EFFECTIVE_TAG'"
+          fi
 
           # Accept common typo "v.X.Y.Z" by normalizing to "vX.Y.Z".
           if [[ "$RAW_TAG" =~ ^v\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
@@ -167,21 +173,29 @@ jobs:
       - name: Verify provenance asset is attached to the release
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
           TAG_NAME: ${{ needs.build.outputs.effective_tag }}
         run: |
           set -euo pipefail
 
-          mapfile -t assets < <(
-            gh release view "$TAG_NAME" --json assets \
-              --jq '.assets[].name' | grep -E '\.intoto\.jsonl$' || true
-          )
+          # gh may run outside a git checkout; GH_REPO forces repository context.
+          for attempt in $(seq 1 12); do
+            mapfile -t assets < <(
+              gh release view "$TAG_NAME" --repo "$GH_REPO" --json assets \
+                --jq '.assets[].name' | grep -E '\.intoto\.jsonl$' || true
+            )
 
-          if [ "${#assets[@]}" -eq 0 ]; then
-            echo "::error::No provenance .intoto.jsonl asset found on release $TAG_NAME"
-            exit 1
-          fi
+            if [ "${#assets[@]}" -gt 0 ]; then
+              echo "Provenance asset(s) found on $TAG_NAME:"
+              printf ' - %s\n' "${assets[@]}"
+              exit 0
+            fi
 
-          echo "Provenance asset(s) found on $TAG_NAME:"
-          printf ' - %s\n' "${assets[@]}"
+            echo "Attempt ${attempt}/12: no .intoto.jsonl asset on $TAG_NAME yet; waiting 10s..."
+            sleep 10
+          done
+
+          echo "::error::No provenance .intoto.jsonl asset found on release $TAG_NAME after retries"
+          exit 1
 
 

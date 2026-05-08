@@ -37,6 +37,9 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           ssh: ${{ secrets.DOCUMENTER_KEY }}
           subdir: julia
+          # Monorepo: isolate Julia package tags from global repo tags (v*),
+          # which may point to commits predating the julia/ subtree.
+          tag_prefix: julia-
           lookback: ${{ github.event.inputs.lookback || '3' }}
 
 
