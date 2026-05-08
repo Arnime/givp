@@ -79,9 +79,10 @@ jobs:
 
       - name: Validate version (manual expected_version)
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.expected_version != '' }}
+        env:
+          CARGO_VERSION: ${{ steps.version.outputs.version }}
+          EXPECTED_VERSION: ${{ inputs.expected_version }}
         run: |
-          CARGO_VERSION="${{ steps.version.outputs.version }}"
-          EXPECTED_VERSION="${{ inputs.expected_version }}"
           if [ "$CARGO_VERSION" != "$EXPECTED_VERSION" ]; then
             echo "ERROR: Cargo.toml version ($CARGO_VERSION) does not match expected_version ($EXPECTED_VERSION)"
             exit 1
