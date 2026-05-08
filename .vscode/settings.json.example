@@ -30,6 +30,9 @@
     "ruff.format.enable": false,
     "ruff.organizeImports": true,
     "ruff.importStrategy": "fromEnvironment",
+    "ruff.path": [
+        "${workspaceFolder}/.venv/Scripts/ruff.exe"
+    ],
     "rust-analyzer.linkedProjects": [
         "${workspaceFolder}/rust/Cargo.toml"
     ],
@@ -77,6 +80,25 @@
         "**/rust/target": true,
         "**/.venv": true,
         "**/site": true
+    },
+    "workbench.colorCustomizations": {
+        "activityBar.background": "#1a1a2e",
+        "activityBar.foreground": "#a9b1d6",
+        "activityBar.activeBorder": "#7aa2f7",
+        "activityBar.activeBackground": "#252540",
+        "activityBarBadge.background": "#7aa2f7",
+        "activityBarBadge.foreground": "#1a1a2e",
+        "panel.border": "#0f3460",
+        "statusBar.background": "#0f3460",
+        "statusBar.foreground": "#c0caf5",
+        "statusBar.border": "#7aa2f7",
+        "statusBar.noFolderBackground": "#1a1a2e",
+        "statusBar.debuggingBackground": "#bb9af7",
+        "statusBar.debuggingForeground": "#1a1a2e",
+        "titleBar.activeBackground": "#1a1a2e",
+        "titleBar.activeForeground": "#c0caf5",
+        "titleBar.inactiveBackground": "#16213e",
+        "titleBar.border": "#0f3460"
     },
     "cmake.sourceDirectory": "${workspaceFolder}/cpp",
     "python-envs.defaultEnvManager": "ms-python.python:poetry",

@@ -38,16 +38,16 @@ jobs:
           python-version: "3.12"
       - name: Build
         run: |
-          pip install --require-hashes -r python/requirements/release-tools.txt
+          pip install --only-binary=:all: --require-hashes -r python/requirements/release-tools.txt
           python -m build
       - name: Generate artifact hashes
         id: hash
         run: |
-          cd dist && echo "hashes=$(sha256sum * | base64 -w0)" >> "$GITHUB_OUTPUT"
+          cd dist && echo "hashes=$(sha256sum -- * | base64 -w0)" >> "$GITHUB_OUTPUT"
       - name: Attest build provenance
         uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
         with:
-          subject-path: dist/*
+          subject-path: ./dist/*
       - name: Sign artifacts with Sigstore
         uses: sigstore/gh-action-sigstore-python@04cffa1d795717b140764e8b640de88853c92acc # v3.3.0
         with:
