@@ -9,22 +9,14 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 permissions:
-  contents: read
+  {}
 
 jobs:
   CompatHelper:
     runs-on: ubuntu-latest
     permissions:
-      actions: read
-      checks: read
-      contents: write
-      deployments: read
-      issues: read
-      packages: read
+      contents: read
       pull-requests: write
-      repository-projects: read
-      security-events: read
-      statuses: read
     steps:
       - uses: julia-actions/setup-julia@f6f565d9f7cf12f53dc8045742460d6260ad3b39 # v3.0.1
         with:

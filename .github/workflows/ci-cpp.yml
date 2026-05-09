@@ -280,4 +280,57 @@ jobs:
       - name: Run benchmarks (smoke)
         run: ./cpp/build/benchmarks/benchmarks/givp_benchmarks
 
+  conan-validate:
+    name: Validate Conan Recipe
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+
+      - name: Install Conan
+        run: |
+          pip install --only-binary=:all: --require-hashes -r cpp/requirements/conan.txt
+
+      - name: Detect default profile
+        run: conan profile detect --force
+
+      - name: Create package from local source
+        env:
+          GIVP_VERSION: "0.0.0-ci"
+        run: |
+          conan create cpp/conan \
+            --version 0.0.0-ci \
+            --build=missing \
+            -s build_type=Release
+        # Runs export_sources + cmake install; validates the recipe end-to-end
+        # without requiring a published GitHub release.
+
+  vcpkg-lint:
+    name: Lint vcpkg Port Manifest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Bootstrap vcpkg
+        run: |
+          git clone https://github.com/microsoft/vcpkg.git --depth=1 /tmp/vcpkg
+          /tmp/vcpkg/bootstrap-vcpkg.sh -disableMetrics
+
+      - name: Validate port manifest JSON (format-manifest)
+        run: |
+          /tmp/vcpkg/vcpkg format-manifest cpp/vcpkg_ports/givp/vcpkg.json
+          echo "✅ vcpkg.json is valid and correctly formatted."
+
+      - name: Check METADATA.json is valid JSON
+        run: |
+          python3 -c "
+          import json, sys
+          with open('cpp/vcpkg_ports/givp/METADATA.json') as f:
+              data = json.load(f)
+          assert 'schemaVersion' in data, 'Missing schemaVersion'
+          print('✅ METADATA.json is valid JSON with schemaVersion:', data.get('schemaVersion'))
+          "
 

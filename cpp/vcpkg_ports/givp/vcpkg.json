@@ -8,5 +8,5 @@
   "license": "MIT",
   "dependencies": [],
   "features": {},
-  "supports": "windows & !arm | linux | osx | freebsd"
+  "supports": "(windows & !arm) | linux | osx | freebsd"
 }

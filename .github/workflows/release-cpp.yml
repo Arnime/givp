@@ -17,6 +17,8 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   CMAKE_BUILD_PARALLEL_LEVEL: "4"
 
+permissions: {}
+
 jobs:
   validate:
     name: Validate and Extract Version
@@ -206,7 +208,7 @@ jobs:
           cat "${TARBALL}.sha256"
 
       - name: Upload artifacts for release
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: cpp-release-artifacts
           path: |

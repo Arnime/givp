@@ -5,22 +5,13 @@ on:
         types: [ opened, reopened, synchronize, ready_for_review ]
 
 permissions:
-  contents: read
+    {}
 
 jobs:
     automerge:
         runs-on: ubuntu-latest
         permissions:
-            actions: read
-            checks: read
-            contents: write
-            deployments: read
-            issues: read
-            packages: read
             pull-requests: write
-            repository-projects: read
-            security-events: read
-            statuses: read
         steps:
             - name: Verify PR author is Dependabot
               id: verify

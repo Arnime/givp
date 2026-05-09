@@ -16,7 +16,7 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 permissions:
-  contents: read
+  {}
 
 jobs:
   setup:
@@ -48,16 +48,8 @@ jobs:
     needs: setup
     runs-on: ${{ matrix.os }}
     permissions:
-      actions: write # required by julia-actions/cache delete-old-caches
-      checks: read
+      actions: read
       contents: read
-      deployments: read
-      issues: read
-      packages: read
-      pull-requests: read
-      repository-projects: read
-      security-events: read
-      statuses: read
     strategy:
       fail-fast: false
       matrix:
@@ -71,6 +63,8 @@ jobs:
           version: ${{ matrix.julia-version }}
 
       - uses: julia-actions/cache@a45e8fa8be21c18a06b7177052533149e61e9b38 # v3.1.0
+        with:
+          delete-old-caches: false
 
       - name: Install dependencies
         run: |
@@ -89,16 +83,8 @@ jobs:
   coverage:
     runs-on: ubuntu-latest
     permissions:
-      actions: write # required by julia-actions/cache delete-old-caches
-      checks: read
+      actions: read
       contents: read
-      deployments: read
-      issues: read
-      packages: read
-      pull-requests: read
-      repository-projects: read
-      security-events: read
-      statuses: read
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
@@ -107,6 +93,8 @@ jobs:
           version: "1"
 
       - uses: julia-actions/cache@a45e8fa8be21c18a06b7177052533149e61e9b38 # v3.1.0
+        with:
+          delete-old-caches: false
 
       - name: Install dependencies
         run: |
