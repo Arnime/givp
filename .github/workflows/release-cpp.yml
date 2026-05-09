@@ -34,8 +34,10 @@ jobs:
 
       - name: Extract and validate version
         id: version
+        env:
+          TAG_INPUT: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
         run: |
-          TAG="${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}"
+          TAG="$TAG_INPUT"
           # Strip 'v' prefix and validate semantic versioning
           VERSION="${TAG#v}"
           
