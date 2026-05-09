@@ -53,6 +53,7 @@ class GivpConan(ConanFileBase):
     )
 
     settings: ClassVar[tuple[str, ...]] = ("os", "compiler", "build_type", "arch")
+    generators: ClassVar[tuple[str, ...]] = ("CMakeToolchain",)
     options: ClassVar[dict[str, Any]] = {}
     default_options: ClassVar[dict[str, Any]] = {}
 
@@ -69,10 +70,14 @@ class GivpConan(ConanFileBase):
 
     def set_version(self) -> None:
         """Resolve version from CI/workflow env with a safe fallback."""
-        supplied_version = self._normalized_version(str(getattr(self, "version", "") or ""))
+        supplied_version = self._normalized_version(
+            str(getattr(self, "version", "") or "")
+        )
         env_version = self._normalized_version(os.getenv("GIVP_VERSION", ""))
         tag_version = self._normalized_version(os.getenv("GITHUB_REF_NAME", ""))
-        self.version = supplied_version or env_version or tag_version or self.DEFAULT_VERSION
+        self.version = (
+            supplied_version or env_version or tag_version or self.DEFAULT_VERSION
+        )
 
     def export_sources(self) -> None:
         """Export the C++ sources needed by the package from the parent cpp tree."""
@@ -118,8 +123,8 @@ class GivpConan(ConanFileBase):
         """Configure layout for Conan 2."""
         cmake_layout_helper(self, src_folder=".")
 
-    def package(self) -> None:
-        """Install the header-only library with the same CMake package layout used elsewhere."""
+    def build(self) -> None:
+        """Configure CMake so package() can run install() from the prepared build tree."""
         cmake = CMakeHelper(self)
         cmake.configure(
             variables={
@@ -128,6 +133,10 @@ class GivpConan(ConanFileBase):
                 "GIVP_BUILD_FUZZ": False,
             }
         )
+
+    def package(self) -> None:
+        """Install the header-only library with the same CMake package layout used elsewhere."""
+        cmake = CMakeHelper(self)
         cmake.install()
 
     def package_info(self) -> None:
