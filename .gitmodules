@@ -1,3 +1,6 @@
 [submodule "vcpkg"]
 	path = vcpkg
 	url = https://github.com/Arnime/vcpkg.git
+[submodule "conan-center-index"]
+	path = conan-center-index
+	url = https://github.com/Arnime/conan-center-index.git
