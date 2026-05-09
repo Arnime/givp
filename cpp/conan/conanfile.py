@@ -34,7 +34,7 @@ class GivpConan(ConanFileBase):
     )
 
     name: ClassVar[str] = "givp"
-    version: str = DEFAULT_VERSION
+    version: str
     license: ClassVar[str] = "MIT"
     author: ClassVar[str] = "Arnaldo Mendes Pires Junior"
     url: ClassVar[str] = "https://github.com/Arnime/grasp_ils_vnd_pr"
@@ -69,9 +69,10 @@ class GivpConan(ConanFileBase):
 
     def set_version(self) -> None:
         """Resolve version from CI/workflow env with a safe fallback."""
+        supplied_version = self._normalized_version(str(getattr(self, "version", "") or ""))
         env_version = self._normalized_version(os.getenv("GIVP_VERSION", ""))
         tag_version = self._normalized_version(os.getenv("GITHUB_REF_NAME", ""))
-        self.version = env_version or tag_version or self.DEFAULT_VERSION
+        self.version = supplied_version or env_version or tag_version or self.DEFAULT_VERSION
 
     def export_sources(self) -> None:
         """Export the C++ sources needed by the package from the parent cpp tree."""

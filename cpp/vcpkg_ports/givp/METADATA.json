@@ -1,4 +1,5 @@
 {
+  "schemaVersion": 1,
   "kind": "port",
   "port": {
     "homepage": "https://github.com/Arnime/grasp_ils_vnd_pr",
