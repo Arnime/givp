@@ -12,7 +12,9 @@
         "julialang.language-julia",
         "reditorsupport.r",
         "rdebugger.r-debugger",
-        "ms-vscode.cpptools",
+        "ms-vscode-remote.remote-wsl",
+        // C/C++: clangd is the primary IntelliSense provider
+        // (Microsoft C++ extension is NOT needed and causes conflicts)
         "llvm-vs-code-extensions.vscode-clangd",
         "alesiong.clang-tidy-linter",
         "cppchecksolutionsab.cppcheck-official",

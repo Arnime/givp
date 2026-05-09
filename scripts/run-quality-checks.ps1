@@ -27,16 +27,16 @@
     Default: false
 
 .EXAMPLE
-    .\run-quality-checks.ps1
+    .\scripts\run-quality-checks.ps1
     # Run all languages, full checks
 
-    .\run-quality-checks.ps1 -Language python,rust -Mode full
+    .\scripts\run-quality-checks.ps1 -Language python,rust -Mode full
     # Run only Python and Rust
 
-    .\run-quality-checks.ps1 -Language cpp -UseWSL
+    .\scripts\run-quality-checks.ps1 -Language cpp -UseWSL
     # Run C++ via WSL make
 
-    .\run-quality-checks.ps1 -UseDocker
+    .\scripts\run-quality-checks.ps1 -UseDocker
     # Run all via docker-compose
 
 #>
@@ -47,6 +47,7 @@ param(
     [string]$Mode = "full",
     [switch]$UseWSL,
     [switch]$UseDocker,
+    [switch]$CleanupBuilds,
     [switch]$Help
 )
 
@@ -76,25 +77,27 @@ function Show-Help {
     Write-Host @"
 GIVP Quality Gate Checker (Windows)
 
-Usage: .\run-quality-checks.ps1 [options]
+Usage: .\scripts\run-quality-checks.ps1 [options]
 
 Options:
   -Language     Comma-separated: python, julia, rust, cpp, r (default: all)
   -Mode         Check mode: full (lint+format+typecheck), lint, format, typecheck
   -UseWSL       Force C++ checks via WSL (wsl make cpp-all)
   -UseDocker    Run all via docker-compose (scripts/local-ci/)
+    -CleanupBuilds Remove local C++ build artifacts after docker local CI finishes
   -Help         Show this help
 
 Examples:
-  .\run-quality-checks.ps1
-  .\run-quality-checks.ps1 -Language python,rust
-  .\run-quality-checks.ps1 -Language cpp -UseWSL
-  .\run-quality-checks.ps1 -UseDocker
+    .\scripts\run-quality-checks.ps1
+    .\scripts\run-quality-checks.ps1 -Language python,rust
+    .\scripts\run-quality-checks.ps1 -Language cpp -UseWSL
+    .\scripts\run-quality-checks.ps1 -UseDocker
+    .\scripts\run-quality-checks.ps1 -UseDocker -CleanupBuilds
 
 Recommended workflow:
-  1. .\run-quality-checks.ps1              # Check what works locally
-  2. .\run-quality-checks.ps1 -UseWSL      # Check C++ via WSL
-  3. .\run-quality-checks.ps1 -UseDocker   # Full CI simulation
+    1. .\scripts\run-quality-checks.ps1              # Check what works locally
+    2. .\scripts\run-quality-checks.ps1 -UseWSL      # Check C++ via WSL
+    3. .\scripts\run-quality-checks.ps1 -UseDocker   # Full CI simulation
 "@
 }
 
@@ -134,7 +137,11 @@ Write-Info "Environment: WSL=$hasWSL Docker=$hasDocker Make=$(if ($makePath) { '
 # Route based on user selection
 if ($UseDocker -and $hasDocker) {
     Write-Info "Routing via docker-compose (scripts/local-ci/)..."
-    & bash scripts/local-ci/run.sh python rust julia cpp r
+    $dockerArgs = @("python", "rust", "julia", "cpp", "r")
+    if ($CleanupBuilds) {
+        $dockerArgs += "--cleanup-builds"
+    }
+    & bash scripts/local-ci/run.sh @dockerArgs
     if ($LASTEXITCODE -eq 0) {
         Write-Header "Docker Local CI Passed"
     }
@@ -262,7 +269,7 @@ foreach ($lang in $langs) {
                 }
                 else {
                     Write-Info "Skipping C++ (clang-format not found and WSL not available)"
-                    Write-Info "  ℹ To run C++ checks, install WSL or use: .\run-quality-checks.ps1 -UseDocker"
+                    Write-Info "  ℹ To run C++ checks, install WSL or use: .\scripts\run-quality-checks.ps1 -UseDocker"
                     $results.skipped += "cpp"
                 }
             }

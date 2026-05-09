@@ -6,9 +6,10 @@ set -euo pipefail
 
 cd /workspace
 
-BUILD_DIR=build_local_ci_cpp
-COV_DIR=build_local_ci_cpp_cov
-BENCH_DIR=build_local_ci_cpp_bench
+BUILD_ROOT=cpp/build
+BUILD_DIR="$BUILD_ROOT/local-ci"
+COV_DIR="$BUILD_ROOT/local-ci-cov"
+BENCH_DIR="$BUILD_ROOT/local-ci-bench"
 
 echo "[cpp] Configure + build + test"
 cmake -S cpp -B "$BUILD_DIR" -DCMAKE_BUILD_TYPE=Release -DGIVP_BUILD_TESTS=ON -DGIVP_BUILD_BENCHMARKS=OFF

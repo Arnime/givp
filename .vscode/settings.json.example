@@ -101,6 +101,15 @@
         "titleBar.border": "#0f3460"
     },
     "cmake.sourceDirectory": "${workspaceFolder}/cpp",
+    "cmake.buildDirectory": "${workspaceFolder}/cpp/build/default",
+    "cmake.configureOnOpen": false,
+    "cmake.configureArgs": [
+        "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+        "-DGIVP_BUILD_TESTS=ON",
+        "-DGIVP_BUILD_BENCHMARKS=OFF"
+    ],
+    "C_Cpp.default.cppStandard": "c++17",
+    "C_Cpp.intelliSenseEngine": "Tag Parser",
     "python-envs.defaultEnvManager": "ms-python.python:poetry",
     "python-envs.defaultPackageManager": "ms-python.python:poetry"
 }

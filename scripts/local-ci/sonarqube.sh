@@ -20,18 +20,18 @@ fi
 EXTRA_ARGS=()
 if command -v cmake >/dev/null 2>&1; then
   echo "[sonarqube] Preparing C++ compile database"
-  cmake -S cpp -B build-sonar \
+  cmake -S cpp -B cpp/build/sonar \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
     -DGIVP_BUILD_TESTS=ON \
     -DGIVP_BUILD_BENCHMARKS=OFF
-  if [ ! -f build-sonar/compile_commands.json ]; then
+  if [ ! -f cpp/build/sonar/compile_commands.json ]; then
     echo "[sonarqube] compile_commands.json not generated; skipping C++ sources in this scan"
     EXTRA_ARGS+=("-Dsonar.sources=python/src,julia/src,rust/src,r/R")
     EXTRA_ARGS+=("-Dsonar.tests=python/tests,julia/test,rust/tests,r/tests/testthat")
   fi
-elif [ -f build-sonar/compile_commands.json ]; then
-  echo "[sonarqube] Using pre-generated C++ compile database at build-sonar/compile_commands.json"
+elif [ -f cpp/build/sonar/compile_commands.json ]; then
+  echo "[sonarqube] Using pre-generated C++ compile database at cpp/build/sonar/compile_commands.json"
 else
   echo "[sonarqube] cmake not found in scanner image; skipping C++ compile database preparation"
   # Skip C++ in this environment because compile_commands.json cannot be generated.
