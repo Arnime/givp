@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.14)
+project(consumer_check)
+find_package(givp CONFIG REQUIRED)
+add_executable(consumer_check main.cpp)
+target_link_libraries(consumer_check PRIVATE givp::givp)

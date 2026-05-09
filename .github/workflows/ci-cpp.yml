@@ -64,7 +64,7 @@ jobs:
 
       - name: Configure compile database
         run: |
-          cmake -S cpp -B build_tidy \
+          cmake -S cpp -B cpp/build/tidy \
             -DCMAKE_C_COMPILER=clang \
             -DCMAKE_CXX_COMPILER=clang++ \
             -DGIVP_BUILD_TESTS=ON \
@@ -74,7 +74,7 @@ jobs:
       - name: Run clang-tidy
         run: |
           find cpp/tests cpp/benchmarks -type f -name '*.cpp' -print0 \
-            | xargs -0 -r -n 1 clang-tidy-18 -p build_tidy \
+            | xargs -0 -r -n 1 clang-tidy-18 -p cpp/build/tidy \
                 --header-filter='cpp/include/.*' \
                 --warnings-as-errors='*'
 
@@ -99,18 +99,113 @@ jobs:
       # --config at build/test time.
       - name: Configure
         run: >
-          cmake -S cpp -B build ${{ matrix.compiler == 'msvc' && '' ||
+          cmake -S cpp -B cpp/build/default ${{ matrix.compiler == 'msvc' && '' ||
           '-DCMAKE_BUILD_TYPE=Release' }} -DGIVP_BUILD_TESTS=ON
           -DGIVP_BUILD_BENCHMARKS=OFF
 
       - name: Build
-        run: cmake --build build ${{ matrix.compiler == 'msvc' && '--config Release' ||
+        run: cmake --build cpp/build/default ${{ matrix.compiler == 'msvc' && '--config Release' ||
           '' }}
 
       - name: Test
         run: >
-          ctest --test-dir build --output-on-failure ${{ matrix.compiler ==
+          ctest --test-dir cpp/build/default --output-on-failure ${{ matrix.compiler ==
           'msvc' && '-C Release' || '' }}
+
+  consumer:
+    needs: setup
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJson(needs.setup.outputs.toolchains) }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set compiler (non-Windows)
+        if: matrix.compiler != 'msvc'
+        run: |
+          echo "CC=${{ matrix.cc }}"   >> "$GITHUB_ENV"
+          echo "CXX=${{ matrix.cxx }}" >> "$GITHUB_ENV"
+
+      - name: Configure package build
+        run: >
+          cmake -S cpp -B cpp/build/package ${{ matrix.compiler == 'msvc' && '' ||
+          '-DCMAKE_BUILD_TYPE=Release' }} -DGIVP_BUILD_TESTS=OFF
+          -DGIVP_BUILD_BENCHMARKS=OFF -DGIVP_BUILD_FUZZ=OFF
+
+      - name: Build package
+        run: cmake --build cpp/build/package ${{ matrix.compiler == 'msvc' && '--config Release' ||
+          '' }}
+
+      - name: Install package
+        run: >
+          cmake --install cpp/build/package --prefix cpp/build/install ${{ matrix.compiler ==
+          'msvc' && '--config Release' || '' }}
+
+      - name: Create consumer project
+        shell: bash
+        run: |
+          mkdir -p consumer
+          cat > consumer/CMakeLists.txt <<'EOF'
+          cmake_minimum_required(VERSION 3.21)
+          project(givp_consumer LANGUAGES CXX)
+
+          set(CMAKE_CXX_STANDARD 17)
+          set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+          find_package(givp CONFIG REQUIRED)
+
+          add_executable(givp_consumer main.cpp)
+          target_link_libraries(givp_consumer PRIVATE givp::givp)
+          EOF
+
+          cat > consumer/main.cpp <<'EOF'
+          #include <cmath>
+          #include <vector>
+
+          #include <givp/givp.hpp>
+
+          int main() {
+              auto sphere = [](const std::vector<double> &x) {
+                  double s = 0.0;
+                  for (double v : x) {
+                      s += v * v;
+                  }
+                  return s;
+              };
+
+              std::vector<std::pair<double, double>> bounds(3, {-5.0, 5.0});
+              givp::GivpConfig cfg;
+              cfg.max_iterations = 10;
+              cfg.seed = 7;
+
+              auto result = givp::givp(sphere, bounds, cfg);
+              return (result.success && std::isfinite(result.fun)) ? 0 : 1;
+          }
+          EOF
+
+      - name: Configure consumer
+        run: >
+          cmake -S consumer -B cpp/build/consumer ${{ matrix.compiler == 'msvc' && '' ||
+          '-DCMAKE_BUILD_TYPE=Release' }} -DCMAKE_PREFIX_PATH=${{ github.workspace }}/cpp/build/install
+
+      - name: Build consumer
+        run: cmake --build cpp/build/consumer ${{ matrix.compiler == 'msvc' && '--config Release' ||
+          '' }}
+
+      - name: Run consumer
+        shell: bash
+        run: |
+          if [ -x cpp/build/consumer/givp_consumer ]; then
+            ./cpp/build/consumer/givp_consumer
+          elif [ -x cpp/build/consumer/Release/givp_consumer.exe ]; then
+            ./cpp/build/consumer/Release/givp_consumer.exe
+          else
+            echo "::error::Consumer binary not found"
+            find cpp/build/consumer -maxdepth 3 -type f
+            exit 1
+          fi
 
   coverage:
     runs-on: ubuntu-latest
@@ -122,26 +217,26 @@ jobs:
 
       - name: Configure (coverage build)
         run: >
-          cmake -S cpp -B build_cov -DCMAKE_BUILD_TYPE=Debug
+          cmake -S cpp -B cpp/build/coverage -DCMAKE_BUILD_TYPE=Debug
           -DCMAKE_CXX_FLAGS="--coverage" -DCMAKE_EXE_LINKER_FLAGS="--coverage"
           -DGIVP_BUILD_TESTS=ON -DGIVP_BUILD_BENCHMARKS=OFF
 
       - name: Build
-        run: cmake --build build_cov -- -j4
+        run: cmake --build cpp/build/coverage -- -j4
 
       - name: Run tests
-        run: ctest --test-dir build_cov --output-on-failure
+        run: ctest --test-dir cpp/build/coverage --output-on-failure
 
       - name: Collect coverage
         run: |
           lcov --capture \
-               --directory build_cov \
+            --directory cpp/build/coverage \
                --output-file coverage_raw.info \
                --gcov-tool gcov \
             --ignore-errors source,gcov,negative \
                --rc geninfo_unexecuted_blocks=1
           lcov --remove coverage_raw.info \
-               '*/build_cov/_deps/*' \
+            '*/cpp/build/coverage/_deps/*' \
                '/usr/*' \
                --output-file coverage.info \
             --ignore-errors source,negative
@@ -176,13 +271,13 @@ jobs:
 
       - name: Configure
         run: >
-          cmake -S cpp -B build_bench -DCMAKE_BUILD_TYPE=Release
+          cmake -S cpp -B cpp/build/benchmarks -DCMAKE_BUILD_TYPE=Release
           -DGIVP_BUILD_TESTS=OFF -DGIVP_BUILD_BENCHMARKS=ON
 
       - name: Build
-        run: cmake --build build_bench -- -j4
+        run: cmake --build cpp/build/benchmarks -- -j4
 
       - name: Run benchmarks (smoke)
-        run: ./build_bench/benchmarks/givp_benchmarks
+        run: ./cpp/build/benchmarks/benchmarks/givp_benchmarks
 
 

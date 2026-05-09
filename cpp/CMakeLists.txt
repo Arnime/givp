@@ -56,10 +56,32 @@ endif()
 
 # ── Install rules ────────────────────────────────────────────────────────────
 include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
+
+set(GIVP_INSTALL_CMAKEDIR "${CMAKE_INSTALL_LIBDIR}/cmake/givp")
+
+configure_package_config_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/givpConfig.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/givpConfig.cmake"
+    INSTALL_DESTINATION "${GIVP_INSTALL_CMAKEDIR}"
+)
+
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/givpConfigVersion.cmake"
+    VERSION "${PROJECT_VERSION}"
+    COMPATIBILITY SameMajorVersion
+)
+
 install(TARGETS givp EXPORT givpTargets)
 install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(EXPORT givpTargets
     FILE givpTargets.cmake
     NAMESPACE givp::
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/givp
+    DESTINATION ${GIVP_INSTALL_CMAKEDIR}
+)
+
+install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/givpConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/givpConfigVersion.cmake"
+    DESTINATION ${GIVP_INSTALL_CMAKEDIR}
 )

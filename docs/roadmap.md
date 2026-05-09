@@ -23,8 +23,10 @@ Available in **Python**, **Julia**, **Rust**, and **C++** (header-only).
   30-seed protocol used in Python and Julia.
 - **C++ literature comparison pipeline**: equivalent script with
   `nlohmann/json` output for reproducible SBPO/BRACIS comparisons.
-- **C++ vcpkg/conan manifest**: add `vcpkg.json` so C++ users can
-  `vcpkg install givp` without manual CMake FetchContent.
+- **C++ vcpkg/conan packaging**: keep the staging port in
+  `cpp/vcpkg_ports/givp/` and the Conan recipe in `cpp/conan/` so C++ users
+  can install via overlay ports or package managers without manual
+  CMake FetchContent.
 - **Expanded examples**: add worked examples for combinatorial
   problems (e.g., TSP-style discretised objective) and multi-objective
   scalarisation.

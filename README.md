@@ -29,6 +29,8 @@
 **C++** &nbsp;
 [![header-only](https://img.shields.io/badge/header--only-yes-brightgreen?logo=cplusplus&logoColor=white)](cpp/include/givp/)
 [![C++17](https://img.shields.io/badge/C%2B%2B-17-blue?logo=cplusplus&logoColor=white)](https://en.cppreference.com/w/cpp/17)
+[![vcpkg port](https://img.shields.io/badge/vcpkg-port%20staging-0078D7?logo=vcpkg&logoColor=white)](cpp/vcpkg_ports/givp/)
+[![Conan recipe](https://img.shields.io/badge/Conan-recipe%20staging-6699CC?logo=conan&logoColor=white)](cpp/conan/)
 [![CI C++](https://github.com/Arnime/grasp_ils_vnd_pr/actions/workflows/ci-cpp.yml/badge.svg)](https://github.com/Arnime/grasp_ils_vnd_pr/actions/workflows/ci-cpp.yml)
 [![Codecov (cpp)](https://codecov.io/gh/Arnime/grasp_ils_vnd_pr/graph/badge.svg?flag=cpp)](https://codecov.io/gh/Arnime/grasp_ils_vnd_pr/flags/cpp)
 [![clang-format](https://img.shields.io/badge/Formatter-clang--format-blue?logo=llvm&logoColor=white)](https://clang.llvm.org/docs/ClangFormat.html)
@@ -58,7 +60,7 @@ mixed** black-box problems, available in five languages:
 | **Python** (NumPy-native) | [PyPI `givp`](https://pypi.org/project/givp/) | Python 3.10+, NumPy |
 | **Julia** | [JuliaHub `GIVPOptimizer`](https://juliahub.com/ui/Packages/General/GIVPOptimizer) | Julia 1.9+ |
 | **Rust** | [crates.io `givp`](https://crates.io/crates/givp) | Rust 1.85+ |
-| **C++17** | Header-only (vcpkg / FetchContent / copy) | C++17 compiler, CMake 3.21+ |
+| **C++17** | Header-only (vcpkg / Conan / FetchContent / copy) | C++17 compiler, CMake 3.21+ |
 | **R** | [r-universe `givp`](https://arnime.r-universe.dev/givp) / GitHub / local source (`r/`) | R 4.1+ |
 
 The library bundles:
@@ -209,11 +211,35 @@ Requires Rust 1.85+ (edition 2021).
 
 The C++ port is **header-only**.
 
-Install with vcpkg:
+Install with vcpkg (after official port publication):
 
 ```bash
 vcpkg install givp
 ```
+
+For local staging/validation before registry publication, use overlay ports:
+
+```bash
+vcpkg install givp:x64-windows --overlay-ports=./cpp/vcpkg_ports
+```
+
+Install with Conan (after ConanCenter publication):
+
+```bash
+conan install --requires=givp/1.0.0 --build=missing
+```
+
+For local staging/validation before ConanCenter publication:
+
+```bash
+cd cpp/conan
+conan create . --version=1.0.0 --build=missing
+```
+
+Maintainer submission guides:
+
+- `cpp/docs/VCPKG_NOTES.md`
+- `cpp/docs/CONAN_NOTES.md`
 
 Then use in CMake:
 
@@ -239,6 +265,22 @@ target_link_libraries(my_app PRIVATE givp::givp)
 
 Or copy the `cpp/include/givp/` directory into your project and add it to your
 include path. No external dependencies are required at runtime.
+
+If you want a local installable CMake package (for downstream
+`find_package(givp CONFIG REQUIRED)` without FetchContent), run:
+
+```bash
+cmake -S cpp -B cpp/build/package-install -DGIVP_BUILD_TESTS=OFF -DGIVP_BUILD_BENCHMARKS=OFF
+cmake --build cpp/build/package-install
+cmake --install cpp/build/package-install --prefix ./cpp/build/package-install/install
+```
+
+Then configure your consumer with:
+
+```bash
+cmake -S my_app -B my_app/build -DCMAKE_PREFIX_PATH="/path/to/cpp/build/package-install/install"
+cmake --build my_app/build
+```
 
 Requires a C++17 compiler (GCC 9+, Clang 10+, MSVC 2019+) and CMake 3.21+
 (for the `FetchContent` approach).
@@ -844,16 +886,16 @@ givp::OptimizeResult r = givp::givp(sphere, bounds, cfg);
 
 ```bash
 # Configure and build
-cmake -S cpp -B build -DCMAKE_BUILD_TYPE=Release -DGIVP_BUILD_TESTS=ON
-cmake --build build
+cmake -S cpp -B cpp/build/default -DCMAKE_BUILD_TYPE=Release -DGIVP_BUILD_TESTS=ON
+cmake --build cpp/build/default
 
 # Run the 41 Catch2 test cases
-ctest --test-dir build --output-on-failure
+ctest --test-dir cpp/build/default --output-on-failure
 
 # Build and run nanobench benchmarks
-cmake -S cpp -B build_bench -DCMAKE_BUILD_TYPE=Release -DGIVP_BUILD_BENCHMARKS=ON
-cmake --build build_bench
-./build_bench/benchmarks/givp_benchmarks
+cmake -S cpp -B cpp/build/benchmarks -DCMAKE_BUILD_TYPE=Release -DGIVP_BUILD_BENCHMARKS=ON
+cmake --build cpp/build/benchmarks
+./cpp/build/benchmarks/benchmarks/givp_benchmarks
 ```
 
 ---

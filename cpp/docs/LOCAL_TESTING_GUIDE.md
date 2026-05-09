@@ -1,0 +1,109 @@
+# Local Package Testing Guide
+
+This page is for package maintenance only. For library usage, installation, and
+consumer examples, see `docs/cpp.md`.
+
+## Recommended flow
+
+Run the combined test first:
+
+```powershell
+powershell -File scripts/test-both-local.ps1
+```
+
+Run the individual scripts only when you need to isolate a failure:
+
+```powershell
+powershell -File scripts/test-vcpkg-local.ps1
+powershell -File scripts/test-conan-local.ps1
+```
+
+## Prerequisites
+
+### vcpkg
+
+```powershell
+git clone https://github.com/microsoft/vcpkg.git
+cd vcpkg
+.\bootstrap-vcpkg.bat
+$env:PATH = "C:\path\to\vcpkg;$env:PATH"
+vcpkg --version
+```
+
+### Conan
+
+```powershell
+pip install "conan>=2.0"
+conan --version
+```
+
+## What each script validates
+
+### `scripts/test-both-local.ps1`
+
+- Runs vcpkg overlay validation and Conan recipe validation in sequence
+- Produces a single pass/fail summary for registry readiness
+
+### `scripts/test-vcpkg-local.ps1`
+
+- Validates `vcpkg.json`
+- Validates `portfile.cmake`
+- Installs the port through an overlay
+- Optionally builds a `find_package(givp)` consumer
+
+### `scripts/test-conan-local.ps1`
+
+- Validates `conanfile.py`
+- Runs `conan create . --build=missing`
+- Verifies `test_package/`
+- Optionally validates a consumer using the local cache
+
+## Manual spot checks
+
+Use these only when a script fails and you need a narrower repro.
+
+### vcpkg overlay
+
+```powershell
+mkdir vcpkg_overlay/ports/givp -Force
+Copy-Item cpp/vcpkg_ports/givp/portfile.cmake vcpkg_overlay/ports/givp/ -Force
+Copy-Item cpp/vcpkg_ports/givp/vcpkg.json vcpkg_overlay/ports/givp/ -Force
+vcpkg install givp:x64-windows --overlay-ports=./vcpkg_overlay/ports
+```
+
+### Conan recipe
+
+```powershell
+cd d:\Projetos Pessoais\grasp_ils_vnd_pr\cpp\conan
+conan create . --build=missing -vv
+```
+
+## Common failures
+
+### `SHA512 mismatch`
+
+- Recompute the release tarball hash
+- Update `cpp/vcpkg_ports/givp/portfile.cmake`
+- Re-run `scripts/test-vcpkg-local.ps1`
+
+### `Port not found`
+
+- Confirm `--overlay-ports=./vcpkg_overlay/ports`
+- Confirm the port files were copied into `vcpkg_overlay/ports/givp/`
+
+### `conanfile.py not found`
+
+- Run from `cpp/conan/`
+- Verify `cpp/conan/test_package/` still exists
+
+### `test_package` compilation failure
+
+- Check headers under `cpp/include/givp/`
+- Check `cpp/conan/test_package/example.cpp`
+- Re-run `conan create . --build=missing -vv`
+
+## After local validation
+
+- For vcpkg submission, use `VCPKG_NOTES.md`
+- For Conan Center submission, use `CONAN_NOTES.md`
+- For release tagging and artifacts, use `RELEASE_AUTOMATION.md`
