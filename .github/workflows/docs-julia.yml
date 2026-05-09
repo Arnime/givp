@@ -18,13 +18,14 @@ env:
     FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 permissions:
-  contents: read
+    {}
 
 jobs:
-    build:
+    build-pr:
+        if: github.event_name == 'pull_request'
         runs-on: ubuntu-latest
         permissions:
-            contents: write # required for deploydocs push to gh-pages
+            contents: read
         steps:
             - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
@@ -49,11 +50,38 @@ jobs:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
             - name: Upload docs artifact (PR preview)
-              if: github.event_name == 'pull_request'
               uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
               with:
                   name: julia-docs-preview
                   path: julia/docs/build/
                   retention-days: 14
+
+    deploy:
+        if: github.event_name != 'pull_request'
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write # required for deploydocs push to gh-pages
+        steps:
+            - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+            - uses: julia-actions/setup-julia@f6f565d9f7cf12f53dc8045742460d6260ad3b39 # v3.0.1
+              with:
+                  version: "1"
+
+            - uses: julia-actions/cache@a45e8fa8be21c18a06b7177052533149e61e9b38 # v3.1.0
+
+            - name: Install docs dependencies
+              run: |
+                  julia --project=julia/docs -e '
+                    using Pkg
+                    Pkg.Registry.update()
+                    Pkg.instantiate()
+                  '
+
+            - name: Build and deploy documentation
+              run: julia --project=julia/docs julia/docs/make.jl
+              env:
+                  DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 
