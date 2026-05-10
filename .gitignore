@@ -67,3 +67,8 @@ reports/sonar/
 
 # Local VS Code workspace files
 .vscode/*.json
+
+# Local-only embedded clones (do not track as submodules)
+.gitmodules
+vcpkg/
+conan-center-index/
