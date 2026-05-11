@@ -304,14 +304,13 @@ jobs:
           Version: ${{ env.VERSION }}
           
           ### Files Ready for Submission:
-          - Port files: cpp/vcpkg_ports/givp/
+          - Port files: cpp/vcpkg_ports/arnime-givp/
           - Staging location: https://github.com/${{ github.repository }}/tree/main/cpp/vcpkg_ports
           
           ### Manual Steps:
-          1. Extract staging port: cpp/vcpkg_ports/givp/
-          2. Update METADATA.json version to ${{ env.VERSION }}
-          3. Verify portfile.cmake references
-          4. Submit to vcpkg via PR to microsoft/vcpkg
+          1. Extract staging port: cpp/vcpkg_ports/arnime-givp/
+          2. Verify vcpkg.json and portfile.cmake references
+          3. Submit to vcpkg via PR to microsoft/vcpkg
           
           ### Reference:
           - vcpkg documentation: https://vcpkg.io
@@ -398,9 +397,9 @@ jobs:
           ### 🔄 Registry Submission (Manual)
           
           **vcpkg Official Registry**
-          - Port location: `cpp/vcpkg_ports/givp/`
+          - Port location: `cpp/vcpkg_ports/arnime-givp/`
           - Submit to: [microsoft/vcpkg](https://github.com/microsoft/vcpkg)
-          - Update METADATA.json with version ${{ env.SEMVER }}
+          - Confirm `vcpkg.json` version is `${{ env.SEMVER }}`
           
           **Conan Center**
           - Recipe: `cpp/conan/conanfile.py`

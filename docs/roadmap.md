@@ -24,7 +24,7 @@ Available in **Python**, **Julia**, **Rust**, and **C++** (header-only).
 - **C++ literature comparison pipeline**: equivalent script with
   `nlohmann/json` output for reproducible SBPO/BRACIS comparisons.
 - **C++ vcpkg/conan packaging**: keep the staging port in
-  `cpp/vcpkg_ports/givp/` and the Conan recipe in `cpp/conan/` so C++ users
+  `cpp/vcpkg_ports/arnime-givp/` and the Conan recipe in `cpp/conan/` so C++ users
   can install via overlay ports or package managers without manual
   CMake FetchContent.
 - **Expanded examples**: add worked examples for combinatorial

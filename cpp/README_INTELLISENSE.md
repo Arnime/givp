@@ -180,7 +180,7 @@ ctest --test-dir cpp/build/coverage --output-on-failure
 - [.clangd](../.clangd) — clangd IntelliSense configuration (root)
 - [.vscode/settings.json](../.vscode/settings.json) — VS Code CMake config (root)
 - [cpp/conan/conanfile.py](conan/conanfile.py) — Conan recipe
-- [cpp/vcpkg_ports/givp/](vcpkg_ports/givp/) — vcpkg port
+- [cpp/vcpkg_ports/arnime-givp/](vcpkg_ports/arnime-givp/) — vcpkg port
 - [docs/RELEASE_AUTOMATION.md](docs/RELEASE_AUTOMATION.md) —
   Release workflow
 
