@@ -321,16 +321,5 @@ jobs:
 
       - name: Validate port manifest JSON (format-manifest)
         run: |
-          /tmp/vcpkg/vcpkg format-manifest cpp/vcpkg_ports/givp/vcpkg.json
+          /tmp/vcpkg/vcpkg format-manifest cpp/vcpkg_ports/arnime-givp/vcpkg.json
           echo "✅ vcpkg.json is valid and correctly formatted."
-
-      - name: Check METADATA.json is valid JSON
-        run: |
-          python3 -c "
-          import json, sys
-          with open('cpp/vcpkg_ports/givp/METADATA.json') as f:
-              data = json.load(f)
-          assert 'schemaVersion' in data, 'Missing schemaVersion'
-          print('✅ METADATA.json is valid JSON with schemaVersion:', data.get('schemaVersion'))
-          "
-

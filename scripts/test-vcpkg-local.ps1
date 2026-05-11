@@ -69,22 +69,21 @@ if (-not (Test-Path $vcpkgOverlayDir)) {
     New-Item -ItemType Directory -Path $vcpkgOverlayDir | Out-Null
 }
 
-$overlayGivpDir = Join-Path $vcpkgOverlayDir "ports" "givp"
-if (-not (Test-Path $overlayGivpDir)) {
-    New-Item -ItemType Directory -Path $overlayGivpDir -Force | Out-Null
+$overlayPortDir = Join-Path $vcpkgOverlayDir "ports" "arnime-givp"
+if (-not (Test-Path $overlayPortDir)) {
+    New-Item -ItemType Directory -Path $overlayPortDir -Force | Out-Null
 }
 
 # Copy port files
-Copy-Item (Join-Path $vcpkgPortsDir "givp" "portfile.cmake") $overlayGivpDir -Force
-Copy-Item (Join-Path $vcpkgPortsDir "givp" "vcpkg.json") $overlayGivpDir -Force
-Copy-Item (Join-Path $vcpkgPortsDir "givp" "METADATA.json") $overlayGivpDir -Force
+Copy-Item (Join-Path $vcpkgPortsDir "arnime-givp" "portfile.cmake") $overlayPortDir -Force
+Copy-Item (Join-Path $vcpkgPortsDir "arnime-givp" "vcpkg.json") $overlayPortDir -Force
 
-Write-Host "  ✓ Overlay created at: $overlayGivpDir" -ForegroundColor Green
+Write-Host "  ✓ Overlay created at: $overlayPortDir" -ForegroundColor Green
 
 # 3. Install with overlay
-Write-Host "`n[3] Installing givp with overlay (this may take a few minutes)..." -ForegroundColor Yellow
+Write-Host "`n[3] Installing arnime-givp with overlay (this may take a few minutes)..." -ForegroundColor Yellow
 try {
-    & $vcpkgExe install givp:"$Triplet" `
+    & $vcpkgExe install arnime-givp:"$Triplet" `
         --overlay-ports="$vcpkgOverlayDir/ports" `
         --verbose
     Write-Host "  ✓ Installation successful" -ForegroundColor Green

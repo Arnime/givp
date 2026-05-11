@@ -1,5 +1,4 @@
-# SPDX-FileCopyrightText: 2026 Arnaldo Mendes Pires Junior
-# SPDX-License-Identifier: MIT
+set(VCPKG_BUILD_TYPE release) # header-only library
 
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
