@@ -65,10 +65,10 @@ Use these only when a script fails and you need a narrower repro.
 ### vcpkg overlay
 
 ```powershell
-mkdir vcpkg_overlay/ports/givp -Force
-Copy-Item cpp/vcpkg_ports/givp/portfile.cmake vcpkg_overlay/ports/givp/ -Force
-Copy-Item cpp/vcpkg_ports/givp/vcpkg.json vcpkg_overlay/ports/givp/ -Force
-vcpkg install givp:x64-windows --overlay-ports=./vcpkg_overlay/ports
+mkdir vcpkg_overlay/ports/arnime-givp -Force
+Copy-Item cpp/vcpkg_ports/arnime-givp/portfile.cmake vcpkg_overlay/ports/arnime-givp/ -Force
+Copy-Item cpp/vcpkg_ports/arnime-givp/vcpkg.json vcpkg_overlay/ports/arnime-givp/ -Force
+vcpkg install arnime-givp:x64-windows --overlay-ports=./vcpkg_overlay/ports
 ```
 
 ### Conan recipe
@@ -83,13 +83,13 @@ conan create . --build=missing -vv
 ### `SHA512 mismatch`
 
 - Recompute the release tarball hash
-- Update `cpp/vcpkg_ports/givp/portfile.cmake`
+- Update `cpp/vcpkg_ports/arnime-givp/portfile.cmake`
 - Re-run `scripts/test-vcpkg-local.ps1`
 
 ### `Port not found`
 
 - Confirm `--overlay-ports=./vcpkg_overlay/ports`
-- Confirm the port files were copied into `vcpkg_overlay/ports/givp/`
+- Confirm the port files were copied into `vcpkg_overlay/ports/arnime-givp/`
 
 ### `conanfile.py not found`
 

@@ -38,10 +38,10 @@ powershell -File scripts/test-conan-local.ps1 -Verbose
 ### vcpkg overlay
 
 ```powershell
-mkdir vcpkg_overlay/ports/givp -Force
-Copy-Item cpp/vcpkg_ports/givp/portfile.cmake vcpkg_overlay/ports/givp/ -Force
-Copy-Item cpp/vcpkg_ports/givp/vcpkg.json vcpkg_overlay/ports/givp/ -Force
-vcpkg install givp:x64-windows --overlay-ports=./vcpkg_overlay/ports
+mkdir vcpkg_overlay/ports/arnime-givp -Force
+Copy-Item cpp/vcpkg_ports/arnime-givp/portfile.cmake vcpkg_overlay/ports/arnime-givp/ -Force
+Copy-Item cpp/vcpkg_ports/arnime-givp/vcpkg.json vcpkg_overlay/ports/arnime-givp/ -Force
+vcpkg install arnime-givp:x64-windows --overlay-ports=./vcpkg_overlay/ports
 ```
 
 ### Conan recipe

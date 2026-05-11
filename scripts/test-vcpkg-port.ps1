@@ -7,7 +7,7 @@
     Test vcpkg port locally using overlay ports.
 
 .DESCRIPTION
-    Validates that the givp vcpkg port can be installed and used.
+    Validates that the arnime-givp vcpkg port can be installed and used.
     Requires vcpkg to be installed and in PATH.
 
 .EXAMPLE
@@ -28,7 +28,7 @@ if (-not $VcpkgPath) {
 $RepoRoot = Split-Path -Parent (Split-Path -Parent $PSCommandPath)
 $OverlayPorts = Join-Path $RepoRoot "cpp\vcpkg_ports"
 
-Write-Host "Testing vcpkg port for givp..." -ForegroundColor Green
+Write-Host "Testing vcpkg port for arnime-givp..." -ForegroundColor Green
 Write-Host "Repo root: $RepoRoot"
 Write-Host "Overlay ports: $OverlayPorts"
 Write-Host "Triplet: $Triplet"
@@ -36,8 +36,8 @@ Write-Host ""
 
 # Test 1: Validate port structure
 Write-Host "Test 1: Validating port structure..." -ForegroundColor Cyan
-$PortFiles = @("portfile.cmake", "vcpkg.json", "METADATA.json")
-$PortDir = Join-Path $OverlayPorts "givp"
+$PortFiles = @("portfile.cmake", "vcpkg.json")
+$PortDir = Join-Path $OverlayPorts "arnime-givp"
 $MissingFiles = @()
 
 foreach ($file in $PortFiles) {
@@ -84,7 +84,7 @@ Write-Host "Test 3: Validating vcpkg.json..." -ForegroundColor Cyan
 $JsonPath = Join-Path $PortDir "vcpkg.json"
 $Json = Get-Content $JsonPath | ConvertFrom-Json
 
-if ($Json.name -eq "givp") {
+if ($Json.name -eq "arnime-givp") {
     Write-Host "  ✓ Package name correct: $($Json.name)"
 } else {
     Write-Host "  ✗ Package name incorrect" -ForegroundColor Red
@@ -114,19 +114,19 @@ Write-Host "Test 4: Attempting installation with vcpkg..." -ForegroundColor Cyan
 if (-not (Get-Command vcpkg -ErrorAction SilentlyContinue)) {
     Write-Host "  ⓘ vcpkg not in PATH. Skipping installation test." -ForegroundColor Yellow
     Write-Host "     To test installation manually, run:"
-    Write-Host "     vcpkg install --overlay-ports=$OverlayPorts givp:$Triplet"
+    Write-Host "     vcpkg install --overlay-ports=$OverlayPorts arnime-givp:$Triplet"
 } else {
-    Write-Host "  Testing: vcpkg install --overlay-ports=$OverlayPorts givp:$Triplet"
+    Write-Host "  Testing: vcpkg install --overlay-ports=$OverlayPorts arnime-givp:$Triplet"
     try {
-        & vcpkg install --overlay-ports="$OverlayPorts" "givp:$Triplet" 2>&1 | Tee-Object -Variable vcpkgOutput | Out-Host
+        & vcpkg install --overlay-ports="$OverlayPorts" "arnime-givp:$Triplet" 2>&1 | Tee-Object -Variable vcpkgOutput | Out-Host
         
         if ($LASTEXITCODE -eq 0) {
             Write-Host "  ✓ Installation succeeded" -ForegroundColor Green
             
             # Verify installed files
-            $installed = & vcpkg list givp 2>&1
+            $installed = & vcpkg list arnime-givp 2>&1
             if ($installed) {
-                Write-Host "  ✓ givp listed in vcpkg: $installed"
+                Write-Host "  ✓ arnime-givp listed in vcpkg: $installed"
             }
         } else {
             Write-Host "  ✗ Installation failed (exit code $LASTEXITCODE)" -ForegroundColor Red
