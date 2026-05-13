@@ -370,8 +370,11 @@ function save_results(
             "algorithms" => algorithms,
             "functions" => functions,
             "generated_at" => string(now()),
-            "problem_references" => Dict(fname => PROBLEM_REGISTRY[fname].reference for fname in functions),
-            "algo_descriptions" => Dict(algo => ALGO_DESCRIPTIONS[algo] for algo in algorithms),
+            "problem_references" => Dict(
+                fname => PROBLEM_REGISTRY[fname].reference for fname in functions
+            ),
+            "algo_descriptions" =>
+                Dict(algo => ALGO_DESCRIPTIONS[algo] for algo in algorithms),
         ),
         "runs" => records,
         "summary" => build_summary(records),
