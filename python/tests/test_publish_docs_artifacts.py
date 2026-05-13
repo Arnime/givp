@@ -8,11 +8,13 @@ import importlib
 import json
 import sys
 from pathlib import Path
+from types import ModuleType
 
 import pytest
 
 
-def _import_script(script_name: str):
+def _import_script(script_name: str) -> ModuleType:
+    """Import a benchmark helper module from python/benchmarks/."""
     benchmarks_dir = Path(__file__).parent.parent / "benchmarks"
     if str(benchmarks_dir) not in sys.path:
         sys.path.insert(0, str(benchmarks_dir))

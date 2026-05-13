@@ -49,6 +49,8 @@ CHART_COLORS = (
 
 @dataclass(frozen=True)
 class SummaryRow:
+    """Normalized summary statistics for one function/algorithm pair."""
+
     function: str
     algorithm: str
     n_runs: int | None
@@ -63,6 +65,8 @@ class SummaryRow:
 
 @dataclass(frozen=True)
 class ArtifactReport:
+    """Normalized documentation payload for one committed benchmark artifact."""
+
     label: str
     slug: str
     source_path: Path
@@ -76,6 +80,8 @@ class ArtifactReport:
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    """Parse CLI arguments for benchmark artifact publication."""
+
     parser = argparse.ArgumentParser(
         prog="publish_docs_artifacts",
         description="Publish benchmark artifact pages under docs/examples/.",
@@ -102,6 +108,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 
 def parse_artifact_specs(values: list[str]) -> list[tuple[str, Path]]:
+    """Resolve CLI artifact overrides or fall back to the committed defaults."""
+
     if not values:
         return [(label, REPO_ROOT / rel_path) for label, rel_path in DEFAULT_ARTIFACTS]
 
@@ -119,6 +127,8 @@ def parse_artifact_specs(values: list[str]) -> list[tuple[str, Path]]:
 
 
 def slugify(label: str) -> str:
+    """Convert a report label into a stable documentation slug."""
+
     chars: list[str] = []
     for char in label.lower():
         if char.isalnum():
@@ -136,6 +146,8 @@ def slugify(label: str) -> str:
 
 
 def _as_float(value: Any) -> float | None:
+    """Convert a loosely typed JSON field to float when possible."""
+
     if value is None:
         return None
     try:
@@ -145,6 +157,8 @@ def _as_float(value: Any) -> float | None:
 
 
 def _as_int(value: Any) -> int | None:
+    """Convert a loosely typed JSON field to int when possible."""
+
     if value is None:
         return None
     try:
@@ -154,6 +168,8 @@ def _as_int(value: Any) -> int | None:
 
 
 def _pick(row: dict[str, Any], *keys: str) -> Any:
+    """Return the first present key from a heterogeneous JSON row."""
+
     for key in keys:
         if key in row:
             return row[key]
@@ -161,6 +177,8 @@ def _pick(row: dict[str, Any], *keys: str) -> Any:
 
 
 def normalize_summary_rows(raw_summary: list[dict[str, Any]]) -> list[SummaryRow]:
+    """Normalize per-language summary rows into a shared Python structure."""
+
     rows: list[SummaryRow] = []
     for row in raw_summary:
         function = _pick(row, "function", "function_name")
@@ -186,6 +204,8 @@ def normalize_summary_rows(raw_summary: list[dict[str, Any]]) -> list[SummaryRow
 
 
 def load_artifact(label: str, source_path: Path) -> ArtifactReport:
+    """Load and normalize one committed literature-comparison artifact."""
+
     raw = json.loads(source_path.read_text(encoding="utf-8"))
     metadata = dict(raw.get("metadata", {}))
     summary_rows = normalize_summary_rows(raw.get("summary", []))
@@ -233,6 +253,8 @@ def load_artifact(label: str, source_path: Path) -> ArtifactReport:
 
 
 def _fmt_number(value: float | None) -> str:
+    """Format numeric values consistently for generated Markdown tables."""
+
     if value is None:
         return "-"
     if value == 0:
@@ -248,18 +270,24 @@ def _fmt_number(value: float | None) -> str:
 
 
 def _fmt_mean_std(row: SummaryRow) -> str:
+    """Render a mean/std pair in the generated docs table style."""
+
     if row.std is None:
         return _fmt_number(row.mean)
     return f"{_fmt_number(row.mean)} +- {_fmt_number(row.std)}"
 
 
 def _fmt_ratio(numerator: float | None, denominator: float | None) -> str:
+    """Render a runtime ratio when both operands are available."""
+
     if numerator is None or denominator is None or denominator == 0:
         return "-"
     return f"{numerator / denominator:.2f}x"
 
 
 def _group_by_function(report: ArtifactReport) -> dict[str, dict[str, SummaryRow]]:
+    """Index normalized rows by function and algorithm."""
+
     grouped: dict[str, dict[str, SummaryRow]] = defaultdict(dict)
     for row in report.summary_rows:
         grouped[row.function][row.algorithm] = row
@@ -267,6 +295,8 @@ def _group_by_function(report: ArtifactReport) -> dict[str, dict[str, SummaryRow
 
 
 def build_pairwise_table(report: ArtifactReport) -> str:
+    """Build the high-level per-function Markdown summary table."""
+
     grouped = _group_by_function(report)
     baseline = "GIVP-full" if "GIVP-full" in report.algorithms else report.algorithms[0]
     comparator = (
@@ -278,7 +308,10 @@ def build_pairwise_table(report: ArtifactReport) -> str:
     lines = [
         "## Function-level summary",
         "",
-        f"| Function | {baseline} mean +- std | {comparator} mean +- std | Runtime ratio ({baseline}/{comparator}) |",
+        (
+            f"| Function | {baseline} mean +- std | {comparator} mean +- std "
+            f"| Runtime ratio ({baseline}/{comparator}) |"
+        ),
         "|---|---|---|---|",
     ]
     for function in report.functions:
@@ -303,6 +336,8 @@ def build_pairwise_table(report: ArtifactReport) -> str:
 
 
 def build_detailed_table(report: ArtifactReport) -> str:
+    """Build the detailed Markdown table emitted on each artifact page."""
+
     lines = [
         "## Detailed summary rows",
         "",
@@ -328,6 +363,8 @@ def build_detailed_table(report: ArtifactReport) -> str:
 
 
 def _metric_value(row: SummaryRow, metric: str) -> float | None:
+    """Return a numeric metric from a normalized row by symbolic name."""
+
     if metric == "mean_fun":
         return row.mean
     if metric == "time_mean_s":
@@ -336,7 +373,14 @@ def _metric_value(row: SummaryRow, metric: str) -> float | None:
     raise ValueError(msg)
 
 
-def _scaled_width(value: float, min_positive: float, max_value: float, width: int) -> float:
+def _scaled_width(
+    value: float,
+    min_positive: float,
+    max_value: float,
+    width: int,
+) -> float:
+    """Map a positive metric value to a log-scaled SVG bar width."""
+
     if math.isclose(max_value, min_positive):
         return width * 0.75
     numerator = math.log10(value) - math.log10(min_positive)
@@ -345,6 +389,8 @@ def _scaled_width(value: float, min_positive: float, max_value: float, width: in
 
 
 def write_metric_chart(report: ArtifactReport, metric: str, output_path: Path) -> None:
+    """Render one grouped SVG bar chart for a normalized benchmark metric."""
+
     grouped = _group_by_function(report)
     values = [
         value
@@ -368,27 +414,48 @@ def write_metric_chart(report: ArtifactReport, metric: str, output_path: Path) -
     max_value = max(values)
 
     lines = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" width="760" height="{height}" viewBox="0 0 760 {height}" role="img" aria-labelledby="title desc">',
+        (
+            f'<svg xmlns="http://www.w3.org/2000/svg" width="760" '
+            f'height="{height}" viewBox="0 0 760 {height}" role="img" '
+            'aria-labelledby="title desc">'
+        ),
         f"<title>{escape(report.label)} {escape(title)}</title>",
-        f"<desc>{escape(title)} for the generated {report.label} benchmark artifact page.</desc>",
+        (
+            f"<desc>{escape(title)} for the generated {report.label} benchmark "
+            "artifact page.</desc>"
+        ),
         '<rect x="0" y="0" width="760" height="100%" fill="#fffdf8" />',
-        f'<text x="24" y="32" font-size="24" font-family="Arial, sans-serif" fill="#1f2937">{escape(report.label)} {escape(title)}</text>',
-        f'<text x="24" y="54" font-size="13" font-family="Arial, sans-serif" fill="#6b7280">{escape(subtitle)}</text>',
+        (
+            f'<text x="24" y="32" font-size="24" '
+            f'font-family="Arial, sans-serif" fill="#1f2937">'
+            f"{escape(report.label)} {escape(title)}</text>"
+        ),
+        (
+            f'<text x="24" y="54" font-size="13" '
+            f'font-family="Arial, sans-serif" fill="#6b7280">'
+            f"{escape(subtitle)}</text>"
+        ),
     ]
 
     legend_x = 24
     for index, algorithm in enumerate(report.algorithms):
         color = CHART_COLORS[index % len(CHART_COLORS)]
         x = legend_x + index * legend_gap
-        lines.append(f'<rect x="{x}" y="64" width="14" height="14" fill="{color}" rx="3" />')
         lines.append(
-            f'<text x="{x + 20}" y="76" font-size="12" font-family="Arial, sans-serif" fill="#374151">{escape(algorithm)}</text>'
+            f'<rect x="{x}" y="64" width="14" height="14" fill="{color}" rx="3" />'
+        )
+        lines.append(
+            f'<text x="{x + 20}" y="76" font-size="12" '
+            f'font-family="Arial, sans-serif" fill="#374151">'
+            f"{escape(algorithm)}</text>"
         )
 
     current_y = top_pad
     for function in report.functions:
         lines.append(
-            f'<text x="24" y="{current_y + 14}" font-size="13" font-family="Arial, sans-serif" fill="#111827">{escape(function)}</text>'
+            f'<text x="24" y="{current_y + 14}" font-size="13" '
+            f'font-family="Arial, sans-serif" fill="#111827">'
+            f"{escape(function)}</text>"
         )
         for index, algorithm in enumerate(report.algorithms):
             row = grouped.get(function, {}).get(algorithm)
@@ -404,9 +471,19 @@ def write_metric_chart(report: ArtifactReport, metric: str, output_path: Path) -
             bar_y = current_y - 10
             lines.extend(
                 [
-                    f'<rect x="{left_pad}" y="{bar_y}" width="{chart_width}" height="12" fill="#e5e7eb" rx="6" />',
-                    f'<rect x="{left_pad}" y="{bar_y}" width="{bar_width:.2f}" height="12" fill="{color}" rx="6" />',
-                    f'<text x="{left_pad + chart_width + 12}" y="{current_y}" font-size="11" font-family="Arial, sans-serif" fill="#374151">{escape(algorithm)}: {_fmt_number(value)}</text>',
+                    (
+                        f'<rect x="{left_pad}" y="{bar_y}" width="{chart_width}" '
+                        'height="12" fill="#e5e7eb" rx="6" />'
+                    ),
+                    (
+                        f'<rect x="{left_pad}" y="{bar_y}" width="{bar_width:.2f}" '
+                        f'height="12" fill="{color}" rx="6" />'
+                    ),
+                    (
+                        f'<text x="{left_pad + chart_width + 12}" y="{current_y}" '
+                        'font-size="11" font-family="Arial, sans-serif" '
+                        f'fill="#374151">{escape(algorithm)}: {_fmt_number(value)}</text>'
+                    ),
                 ]
             )
             current_y += row_gap
@@ -417,6 +494,8 @@ def write_metric_chart(report: ArtifactReport, metric: str, output_path: Path) -
 
 
 def has_metric(report: ArtifactReport, metric: str) -> bool:
+    """Return whether the artifact exposes a positive value for the given metric."""
+
     return any(
         (value := _metric_value(row, metric)) is not None and value > 0
         for row in report.summary_rows
@@ -424,6 +503,8 @@ def has_metric(report: ArtifactReport, metric: str) -> bool:
 
 
 def build_page(report: ArtifactReport, repo_url_base: str) -> str:
+    """Build one generated Markdown page for a normalized artifact."""
+
     source_url = f"{repo_url_base.rstrip('/')}/{report.source_repo_path}"
     dims = report.dims if report.dims is not None else "?"
     n_runs = report.n_runs if report.n_runs is not None else "?"
@@ -478,6 +559,8 @@ def build_page(report: ArtifactReport, repo_url_base: str) -> str:
 
 
 def build_index(reports: list[ArtifactReport], repo_url_base: str) -> str:
+    """Build the generated benchmark report index page."""
+
     lines = [
         f"<!-- Generated by {REGEN_COMMAND}; do not edit manually. -->",
         "# Benchmark reports",
@@ -518,7 +601,11 @@ def build_index(reports: list[ArtifactReport], repo_url_base: str) -> str:
     return "\n".join(lines)
 
 
-def write_report_page(report: ArtifactReport, output_dir: Path, repo_url_base: str) -> None:
+def write_report_page(
+    report: ArtifactReport, output_dir: Path, repo_url_base: str
+) -> None:
+    """Write one generated page plus its SVG assets to the docs tree."""
+
     page_path = output_dir / f"{report.slug}.md"
     page_path.write_text(build_page(report, repo_url_base), encoding="utf-8")
     assets_dir = output_dir / "assets"
@@ -531,11 +618,13 @@ def write_report_page(report: ArtifactReport, output_dir: Path, repo_url_base: s
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Generate all benchmark report pages and return a process exit code."""
+
     args = parse_args(argv)
     try:
         specs = parse_artifact_specs(args.artifact)
         reports = [load_artifact(label, path) for label, path in specs]
-    except (OSError, ValueError, json.JSONDecodeError) as exc:
+    except (OSError, ValueError) as exc:
         print(f"[error] {exc}")
         return 1
 
