@@ -208,8 +208,7 @@ for alpha in weights:
 
 print("alpha | obj_return | obj_risk | scalarized | weights")
 for alpha, f1, f2, f, w in rows:
-    print(f"{alpha:>4.2f} | {f1:>10.6f} | {f2:>8.6f} | {f:>10.6f} |
-    {np.round(w, 3)}")
+    print(f"{alpha:>4.2f} | {f1:>10.6f} | {f2:>8.6f} | {f:>10.6f} | {np.round(w, 3)}")
 ```
 
 Interpretation tips:
@@ -283,6 +282,48 @@ Interpretation tips:
 - Using continuous search (`integer_split=n`) plus explicit rounding in the
   objective is a robust way to model permutation-style objectives.
 - The route is deterministic for a fixed seed and config.
+
+## 7. Warm start: multiple elite seeds
+
+When you already know several promising solutions, pass them as
+`initial_guesses`. They are validated against the bounds, deduplicated, and
+inserted into the elite pool before the first iteration.
+
+```python
+import numpy as np
+
+from givp import GIVPConfig, givp
+
+
+def sphere(x: np.ndarray) -> float:
+    return float(np.sum(x**2))
+
+
+bounds = [(-3.0, 3.0)] * 4
+warm_starts = [
+    [0.1, 0.1, 0.1, 0.1],
+    [1.0, 0.5, 0.2, 0.0],
+    [-0.5, 0.8, -0.2, 0.3],
+]
+
+result = givp(
+    sphere,
+    bounds,
+    seed=99,
+    config=GIVPConfig(max_iterations=20, elite_size=5),
+    initial_guesses=warm_starts,
+)
+
+print(f"best={result.fun:.4f}")
+print("x=", np.round(result.x, 3))
+```
+
+Edge cases:
+
+- Duplicate candidates are rejected before the run starts.
+- Each seed must match the problem dimension.
+- Each coordinate must lie strictly inside the bounds, just like
+  `initial_guess`.
 
 ## See also
 

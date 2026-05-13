@@ -19,11 +19,58 @@ from numpy.typing import NDArray
 from givp import core
 from givp.config import GIVPConfig
 from givp.core.helpers import _set_seed
+from givp.core.grasp import _validate_bounds_and_initial
+from givp.exceptions import InvalidInitialGuessError
 from givp.result import AlgorithmMeta, OptimizeResult, TerminationReason
 
 BoundsLike = Sequence[tuple[float, float]] | tuple[Sequence[float], Sequence[float]]
 ObjectiveFn = Callable[[NDArray[np.float64]], float]
 IterationCallback = Callable[[int, float, NDArray[np.float64]], None]
+
+
+def _normalize_initial_guesses(
+    initial_guess: Sequence[float] | None,
+    initial_guesses: Sequence[Sequence[float]] | None,
+    lower: list[float],
+    upper: list[float],
+    num_vars: int,
+) -> list[list[float]] | None:
+    """Validate and deduplicate warm-start candidates.
+
+    The returned candidates are ordered so the single ``initial_guess``
+    (when provided) remains first, preserving backward compatibility.
+    """
+    normalized: list[np.ndarray] = []
+
+    def add_candidate(candidate: Sequence[float], label: str) -> None:
+        candidate_arr = np.asarray(candidate, dtype=float)
+        _validate_bounds_and_initial(
+            np.asarray(lower, dtype=float),
+            np.asarray(upper, dtype=float),
+            candidate_arr,
+            num_vars,
+        )
+        for existing in normalized:
+            if np.array_equal(candidate_arr, existing):
+                raise InvalidInitialGuessError(
+                    f"{label} duplicates an existing warm-start candidate"
+                )
+        normalized.append(candidate_arr)
+
+    if initial_guess is not None:
+        add_candidate(initial_guess, "initial_guess")
+
+    if initial_guesses is not None:
+        if len(initial_guesses) == 0:
+            raise InvalidInitialGuessError(
+                "initial_guesses must contain at least one candidate"
+            )
+        for idx, candidate in enumerate(initial_guesses):
+            add_candidate(candidate, f"initial_guesses[{idx}]")
+
+    if not normalized:
+        return None
+    return [candidate.tolist() for candidate in normalized]
 
 
 def _normalize_bounds(
@@ -120,6 +167,7 @@ def givp(
     direction: str | None = None,
     config: GIVPConfig | None = None,
     initial_guess: Sequence[float] | None = None,
+    initial_guesses: Sequence[Sequence[float]] | None = None,
     iteration_callback: IterationCallback | None = None,
     seed: int | None = None,
     verbose: bool = False,
@@ -143,6 +191,8 @@ def givp(
                     explicit ``minimize``/``direction`` kwargs when provided.
             initial_guess: Optional warm-start vector, evaluated and inserted in
                     the elite pool before the first iteration.
+            initial_guesses: Optional collection of warm-start vectors to seed
+                    the elite pool with multiple known-good solutions.
             iteration_callback: Optional callable invoked once per outer iteration
                     with ``(iteration, best_cost_in_core_sign, best_solution)``.
             seed: Optional integer seed for full reproducibility. When given,
@@ -169,6 +219,13 @@ def givp(
     _set_seed(seed)
 
     lower, upper, n = _normalize_bounds(bounds, num_vars)
+    warm_start_guesses = _normalize_initial_guesses(
+        initial_guess,
+        initial_guesses,
+        lower,
+        upper,
+        n,
+    )
 
     # Default to a fully continuous problem when the user did not specify the
     # split. Callers with mixed continuous/integer models must set
@@ -186,7 +243,7 @@ def givp(
         iteration_callback=iteration_callback,
         lower=lower,
         upper=upper,
-        initial_guess=list(initial_guess) if initial_guess is not None else None,
+        initial_guesses=warm_start_guesses,
     )
 
     x = np.asarray(sol_list, dtype=float)
@@ -229,6 +286,7 @@ class GIVPOptimizer:
         direction: str | None = None,
         config: GIVPConfig | None = None,
         initial_guess: Sequence[float] | None = None,
+        initial_guesses: Sequence[Sequence[float]] | None = None,
         iteration_callback: IterationCallback | None = None,
         seed: int | None = None,
         verbose: bool = False,
@@ -240,6 +298,7 @@ class GIVPOptimizer:
         self.minimize = self.direction == "minimize"
         self.config = config or GIVPConfig()
         self.initial_guess = initial_guess
+        self.initial_guesses = initial_guesses
         self.iteration_callback = iteration_callback
         self.seed = seed
         self.verbose = verbose
@@ -264,6 +323,7 @@ class GIVPOptimizer:
             minimize=self.minimize,
             config=self.config,
             initial_guess=self.initial_guess,
+            initial_guesses=self.initial_guesses,
             iteration_callback=self.iteration_callback,
             seed=self.seed,
             verbose=self.verbose,
