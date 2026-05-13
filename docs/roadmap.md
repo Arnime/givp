@@ -6,43 +6,38 @@ available contributor time.
 
 ## Current version
 
-**v0.8.0** — stable, feature-complete implementation of the GRASP + ILS +
-VND + Path Relinking metaheuristic for continuous black-box optimization.
-Available in **Python**, **Julia**, **Rust**, and **C++** (header-only).
+**v1.0.0** - production release of the GRASP + ILS +
+VND + Path Relinking metaheuristic for continuous, integer, and mixed
+black-box optimization.
+Available in **Python**, **Julia**, **Rust**, **C++** (header-only), and **R**.
 
 ## Short-term (next 3 months)
 
-- **Publish Julia package to General Registry**: register `GIVPOptimizer.jl`
-  on the Julia General Registry via
-  [Registrator.jl](https://github.com/JuliaRegistries/Registrator.jl)
-  so users can `Pkg.add("GIVPOptimizer")`.
-- **Parallel neighbourhood evaluation (Rust)**: implement `n_workers` with
-  `rayon` in the Rust backend (currently declared but single-threaded).
 - **Rust literature comparison pipeline**: create
   `rust/benchmarks/run_literature_comparison.rs` with the same 6-function,
   30-seed protocol used in Python and Julia.
-- **C++ literature comparison pipeline**: equivalent script with
-  `nlohmann/json` output for reproducible SBPO/BRACIS comparisons.
-- **C++ vcpkg/conan packaging**: keep the staging port in
-  `cpp/vcpkg_ports/arnime-givp/` and the Conan recipe in `cpp/conan/` so C++ users
-  can install via overlay ports or package managers without manual
-  CMake FetchContent.
-- **Expanded examples**: add worked examples for combinatorial
-  problems (e.g., TSP-style discretised objective) and multi-objective
-  scalarisation.
+- **Docs architecture page**: add `docs/architecture.md` describing
+  core modules (`grasp`, `vnd`, `ils`, `pr`, cache, elite, convergence)
+  and the language-parity contract.
+- **Benchmark chart automation**: publish reusable plots/tables in docs from
+  the literature-comparison artifacts (Python, Julia, Rust, C++).
+- **C++ package promotion**: track migration from staging overlays
+  (`cpp/vcpkg_ports/arnime-givp/`, `cpp/conan/`) to upstream package indexes.
+- **Expanded examples**: add worked examples for combinatorial objectives
+  and multi-objective scalarization wrappers.
 
-> **Completed in v0.8.0:**
-> `julia/cli.jl` (✓), iteration callback (✓), warm start (✓),
-> Julia literature comparison notebook (✓), Wilcoxon + LaTeX reports (✓),
-> Julia fuzzing driver (✓), coverage gate 95% (✓), JuliaFormatter CI (✓),
-> `GIVPOptimizerWrapper` class (✓), `meta` cache stats in `OptimizeResult` (✓).
+> **Recently completed (v1.0.0 line):**
+> Julia package on General Registry (`Pkg.add("GIVPOptimizer")`),
+> Rust `n_workers` with `rayon`, C++ literature comparison pipeline,
+> C++ staging packaging (vcpkg/conan), Julia CLI, iteration callback,
+> warm start, fuzzing drivers, and coverage/format quality gates.
 
 ## Medium-term (3–6 months)
 
-- **Warm-start initialisation**: allow callers to seed the elite pool
-  with known-good solutions to accelerate convergence.
+- **Elite-pool warm start API**: allow callers to seed the elite pool with
+  multiple known-good solutions (beyond a single `initial_guess`).
 - **Configurable path-relinking strategies**: expose `forward`,
-  `backward`, and `random` PR direction as an explicit option.
+  `backward`, and randomized PR direction as an explicit option.
 - **Documentation improvements**: add a dedicated Architecture page
   and benchmark comparison charts.
 
@@ -61,8 +56,8 @@ Available in **Python**, **Julia**, **Rust**, and **C++** (header-only).
 The following are explicitly out of scope for this project:
 
 - **Gradient-based optimisation** — use SciPy or PyTorch for that.
-- **Integer / mixed-integer programming** — dedicated MIP solvers
-  (e.g., PuLP, OR-Tools) are better suited.
+- **Exact mathematical programming solvers** (MILP/MINLP) — dedicated tools
+  such as OR-Tools, CBC, or commercial solvers are better suited.
 - **GPU acceleration** — not currently planned.
 
 ## Feedback

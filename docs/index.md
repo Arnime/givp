@@ -2,7 +2,7 @@
 
 **GRASP-ILS-VND with Path Relinking** — a direction-agnostic metaheuristic
 optimizer for continuous, integer, and mixed-variable problems, available in
-**Python**, **Julia**, and **R**.
+**Python**, **Julia**, **Rust**, **C++**, and **R**.
 
 ## Highlights
 
