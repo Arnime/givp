@@ -41,9 +41,9 @@ jobs:
                   python-version: ${{ matrix.python-version }}
             - name: Install
               run: |
-                  pip install --only-binary=:all: --require-hashes -r ${{ matrix.lockfile }}
+                  python -m pip install --only-binary=:all: --require-hashes -r ${{ matrix.lockfile }}
                   bash .github/scripts/install-package-editable.sh
             - name: Audit
               run: |
-                  pip freeze --exclude-editable > /tmp/audit-reqs.txt
-                  pip-audit -r /tmp/audit-reqs.txt
+                  python -m pip freeze --exclude-editable | grep -viE '^(pip|setuptools|wheel)==' > /tmp/audit-reqs.txt
+                  python -m pip_audit -r /tmp/audit-reqs.txt
