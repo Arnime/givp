@@ -208,7 +208,8 @@ for alpha in weights:
 
 print("alpha | obj_return | obj_risk | scalarized | weights")
 for alpha, f1, f2, f, w in rows:
-    print(f"{alpha:>4.2f} | {f1:>10.6f} | {f2:>8.6f} | {f:>10.6f} | {np.round(w, 3)}")
+    print(f"{alpha:>4.2f} | {f1:>10.6f} | {f2:>8.6f} | {f:>10.6f} |
+    {np.round(w, 3)}")
 ```
 
 Interpretation tips:

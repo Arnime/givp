@@ -13,22 +13,42 @@ on:
 env:
     FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
-permissions:
-    contents: read
+concurrency:
+    group: pages
+    cancel-in-progress: false
 
 jobs:
     build:
         runs-on: ubuntu-latest
         permissions:
-            contents: write
+            contents: read
         steps:
             - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
             - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
               with:
                   python-version: "3.13"
+            - uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5.0.0
             - name: Install
               run: |
                   pip install --only-binary ":all:" --require-hashes -r python/requirements/docs.txt
                   bash .github/scripts/install-package.sh
             - name: Build
-              run: mkdocs build --strict
+              run: mkdocs build --strict --site-dir _site
+            - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v4.0.0
+              with:
+                  path: _site
+
+    deploy:
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        needs: build
+        runs-on: ubuntu-latest
+        permissions:
+            pages: write
+            id-token: write
+        environment:
+            name: github-pages
+            url: ${{ steps.deployment.outputs.page_url }}
+        steps:
+            - name: Deploy to GitHub Pages
+              id: deployment
+              uses: actions/deploy-pages@v4
