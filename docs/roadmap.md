@@ -13,8 +13,6 @@ Available in **Python**, **Julia**, **Rust**, **C++** (header-only), and **R**.
 
 ## Short-term (next 3 months)
 
-- **Benchmark chart automation**: publish reusable plots/tables in docs from
-  the literature-comparison artifacts (Python, Julia, Rust, C++).
 - **Expanded examples**: add worked examples for combinatorial objectives
   and multi-objective scalarization wrappers.
 
@@ -29,6 +27,10 @@ Available in **Python**, **Julia**, **Rust**, **C++** (header-only), and **R**.
 > literature-comparison runners, with a shared documentation page.
 > Rust literature comparison pipeline consolidated with canonical command,
 > benchmark-runner location, schema v1 output, and smoke test coverage.
+> Benchmark chart automation delivered through
+> `python/benchmarks/publish_docs_artifacts.py`, which publishes generated
+> benchmark report pages and reusable SVG charts in `docs/examples/` from the
+> committed Python, Julia, Rust, C++, and R literature-comparison artifacts.
 
 ## Medium-term (3–6 months)
 

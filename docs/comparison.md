@@ -110,113 +110,35 @@ See `python/benchmarks/README.md` for the full option reference, including
 higher-dimensional sweeps (`--dims 30`) and tuned-config runs
 (`--algorithms GIVP-tuned --tune-config best_config.json`).
 
-## Experimental results — GIVP-full vs. GRASP-only (30 seeds, 10-D)
+## Generated benchmark artifacts
 
-### Julia
+The docs-facing benchmark pages are now generated from the committed
+literature-comparison artifacts instead of being pasted manually into this
+page. Regenerate them from the repository root with:
 
-The table below summarises the Julia benchmark (`Notebooks/Julia/results_notebook_julia.json`),
-30 independent seeds per algorithm and function, 10 dimensions.
-All results are objective function values
-(lower = better, global minimum = 0 for all functions).
+```bash
+python benchmarks/publish_docs_artifacts.py
+```
 
-| Function | GIVP-full mean ± std | GRASP-only mean ± std | W | p-value | Sig |
-|---|---|---|---|---|---|
-| Sphere | 2.0692e-04 ± 6.3134e-05 | 2.5144e+00 ± 5.6531e-01 | 0.0 | < 0.0001 | ★ |
-| Rosenbrock | 4.3611e-01 ± 3.1966e-01 | 1.1314e+04 ± 5.7702e+03 | 0.0 | < 0.0001 | ★ |
-| Rastrigin | 9.8794e-01 ± 6.0726e-01 | 3.9875e+01 ± 7.4324e+00 | 0.0 | < 0.0001 | ★ |
-| Ackley | 1.3495e-01 ± 2.6316e-02 | 1.0992e+01 ± 7.9834e-01 | 0.0 | < 0.0001 | ★ |
-| Griewank | 1.7085e-01 ± 3.7264e-02 | 9.5772e+00 ± 1.7650e+00 | 0.0 | < 0.0001 | ★ |
-| Schwefel | 4.9916e+01 ± — | 1.9143e+03 ± 1.6299e+02 | 0.0 | < 0.0001 | ★ |
+The generated entry point lives at [examples/benchmark-reports/index.md](examples/benchmark-reports/index.md)
+and publishes per-language pages plus reusable SVG charts under
+`docs/examples/benchmark-reports/assets/`.
 
-**Statistical test**: two-sided Wilcoxon signed-rank test (α = 0.05).  
-**★** = statistically significant difference (p < 0.05) in favour of GIVP-full.
-**Metadata**: Julia 1.12.6, GIVPOptimizer v1.0.0, generated 2026-04-29.
+### Available generated pages
 
-### Rust
+| Language | Generated page | Source artifact |
+|---|---|---|
+| Python | [examples/benchmark-reports/python.md](examples/benchmark-reports/python.md) | `Notebooks/Python/benchmark_literature_comparison_results.json` |
+| Julia | [examples/benchmark-reports/julia.md](examples/benchmark-reports/julia.md) | `Notebooks/Julia/results_notebook_julia.json` |
+| Rust | [examples/benchmark-reports/rust.md](examples/benchmark-reports/rust.md) | `Notebooks/Rust/benchmark_literature_comparison_rust_results.json` |
+| C++ | [examples/benchmark-reports/cpp.md](examples/benchmark-reports/cpp.md) | `Notebooks/Cpp/benchmark_literature_comparison_cpp_results.json` |
+| R | [examples/benchmark-reports/r.md](examples/benchmark-reports/r.md) | `Notebooks/R/benchmark_literature_comparison_r_results.json` |
 
-The table below summarises the Rust notebook benchmark
-([Notebooks/Rust/benchmark_literature_comparison_rust.ipynb](https://github.com/Arnime/grasp_ils_vnd_pr/blob/main/Notebooks/Rust/benchmark_literature_comparison_rust.ipynb)),
-30 independent seeds per algorithm and function, 10 dimensions.
-All results are objective function values (lower = better).
+### Example generated chart
 
-| Function | GIVP-full mean ± std | GRASP-only mean ± std | W | p-value | Sig |
-|---|---|---|---|---|---|
-| Sphere | 1.2781e-04 ± 4.6940e-05 | 1.1746e+00 ± 4.6217e-01 | 0.0 | < 0.0001 | ★ |
-| Rosenbrock | 4.5897e-01 ± 1.4378e-01 | 5.5395e+03 ± 2.9638e+03 | 0.0 | < 0.0001 | ★ |
-| Rastrigin | 8.3469e-02 ± 4.6006e-02 | 1.9337e+01 ± 4.2390e+00 | 0.0 | < 0.0001 | ★ |
-| Ackley | 9.9556e-02 ± 2.5989e-02 | 8.5198e+00 ± 9.9896e-01 | 0.0 | < 0.0001 | ★ |
+The comparison page now consumes one of the generated SVG artifacts directly:
 
-**Statistical test**: one-sided Wilcoxon signed-rank test
-  (`alternative="less"`, α = 0.05).  
-**★** = statistically significant difference (p < 0.05) in favour of GIVP-full.
-**Metadata**: Rust crate `givp`, notebook output
-[Notebooks/Rust/benchmark_literature_comparison_rust_results.json](https://github.com/Arnime/grasp_ils_vnd_pr/blob/main/Notebooks/Rust/benchmark_literature_comparison_rust_results.json),
-  generated 2026-05-04.
+![Python mean objective value chart](examples/benchmark-reports/assets/python_mean_fun.svg)
 
-### C++
-
-The table below summarises the C++ notebook benchmark output
-(`Notebooks/Cpp/benchmark_literature_comparison_cpp_results.json`),
-30 independent seeds per algorithm and function, 10 dimensions.
-All results are objective function values (lower = better).
-
-| Function | GIVP-full mean +- std | GRASP-only mean +- std | GIVP-full median | GRASP-only median |
-|---|---|---|---|---|
-| Sphere | 1.7374e-06 +- 5.1980e-07 | 1.1361e+00 +- 4.0839e-01 | 1.7674e-06 | 1.1412e+00 |
-| Rosenbrock | 2.2411e-02 +- 8.1751e-03 | 6.0428e+03 +- 4.0905e+03 | 2.2461e-02 | 5.4019e+03 |
-| Rastrigin | 5.6247e-04 +- 1.9117e-04 | 1.9694e+01 +- 2.8138e+00 | 5.6499e-04 | 1.9809e+01 |
-| Ackley | 1.0648e-02 +- 1.9393e-03 | 8.4947e+00 +- 1.1307e+00 | 1.1009e-02 | 8.8055e+00 |
-
-Across all four functions, GIVP-full reaches several orders of magnitude lower
-objective values than GRASP-only. The same run also shows the expected
-intensification cost: mean `nfev` around 18.8M to 20.4M for GIVP-full versus
-about 4.2k to 4.3k for GRASP-only, with mean runtime around 72s to 82s versus
-around 0.01s.
-
-**Statistical test**: not present in the C++ JSON artifact (descriptive summary
-only).  
-**Metadata**: algorithms `["GIVP-full", "GRASP-only"]`, functions
-`["Ackley", "Rastrigin", "Rosenbrock", "Sphere"]`, generated 2026-05-04.
-
-### R
-
-The R notebook experiment currently has two documented runs:
-
-* **Medium**: completed JSON export (`n_runs=5`, `n_dims=10`, lighter config).
-* **Robust**: partial CSV checkpoint (`n_runs=10`, `n_dims=10`, `max_iterations=80`,
-  `vnd_iterations=150`, `ils_iterations=8`).
-
-Both runs show the same qualitative behaviour observed in other ports:
-GIVP-full consistently reaches lower objective values than GRASP-only,
-with substantially higher runtime.
-
-#### R Medium (n=5, 10-D)
-
-| Function | GIVP-full mean +- std | GRASP-only mean +- std | GIVP-full mean time (s) | GRASP-only mean time (s) |
-|---|---|---|---|---|
-| Sphere | 4.03e-02 +- 1.78e-02 | 2.691e+01 +- 7.1326e+00 | 8.8650 | 0.4568 |
-| Rosenbrock | 3.0751e+01 +- 1.2204e+01 | 5.3734e+04 +- 2.2511e+04 | 13.3699 | 0.4136 |
-| Rastrigin | 4.8871e+01 +- 6.7673e+00 | 8.5181e+01 +- 1.3954e+01 | 6.6203 | 0.4065 |
-| Ackley | 3.7770e+00 +- 4.828e-01 | 1.9383e+01 +- 3.657e-01 | 8.9671 | 0.3784 |
-
-#### R Robust checkpoint (n=10, 10-D)
-
-| Function | GIVP-full mean +- std | GRASP-only mean +- std | GIVP-full mean time (s) | GRASP-only mean time (s) |
-|---|---|---|---|---|
-| Sphere | 2.1223e-02 +- 6.985e-03 | 2.3234e+01 +- 4.7093e+00 | 226.7211 | 1.0279 |
-| Rosenbrock | 1.6037e+01 +- 3.6345e+00 | 3.1382e+04 +- 1.6223e+04 | 223.8017 | 0.9973 |
-| Rastrigin | 3.6156e+01 +- 4.5694e+00 | 8.3601e+01 +- 1.0687e+01 | 162.9951 | 1.0632 |
-| Ackley | 2.8140e+00 +- 3.4762e-01 | 1.8177e+01 +- 9.6254e-01 | 199.8611 | 1.3010 |
-
-Observed runtime in the robust checkpoint (`Notebooks/R/benchmark_literature_comparison_r_partial.csv`):
-
-* GIVP-full: `8123.83 s` (~2.26 h)
-* GRASP-only: `43.90 s`
-* Total: `8167.73 s` (~2.27 h)
-
-**Statistical test**: Wilcoxon results are available in the notebook output.
-For publication-grade comparison parity with Julia/Rust/C++, prefer `n_runs=30`.
-**Metadata**: medium JSON
-`Notebooks/R/benchmark_literature_comparison_r_results.json` and robust
-checkpoint CSV `Notebooks/R/benchmark_literature_comparison_r_partial.csv`,
-generated 2026-05-04.
+The per-language pages keep the detailed function tables, runtime ratios and
+source JSON links synchronized with the committed notebook artifacts.

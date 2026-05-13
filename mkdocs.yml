@@ -70,6 +70,13 @@ nav:
       - Overview: examples.md
       - Benchmarks: examples/benchmarks.md
       - Benchmark Schema: examples/benchmark-schema.md
+      - Benchmark Reports:
+        - Overview: examples/benchmark-reports/index.md
+        - Python: examples/benchmark-reports/python.md
+        - Julia: examples/benchmark-reports/julia.md
+        - Rust: examples/benchmark-reports/rust.md
+        - C++: examples/benchmark-reports/cpp.md
+        - R: examples/benchmark-reports/r.md
   - Comparison: comparison.md
   - Profiling: profiling.md
   - Roadmap: roadmap.md

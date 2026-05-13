@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="906" height="420" viewBox="0 0 906 420" role="img" aria-labelledby="title desc">
+<title>R Mean objective value</title>
+<desc>Mean objective value for the generated R benchmark artifact page.</desc>
+<rect x="0" y="0" width="906" height="100%" fill="#fffdf8" />
+<text x="24" y="32" font-size="24" font-family="Arial, sans-serif" fill="#1f2937">R Mean objective value</text>
+<text x="24" y="54" font-size="13" font-family="Arial, sans-serif" fill="#6b7280">log10 scale, lower is better</text>
+<rect x="24" y="60" width="14" height="14" fill="#0f4c5c" rx="3" />
+<text x="44" y="72" font-size="12" font-family="Arial, sans-serif" fill="#374151">GIVP-full</text>
+<rect x="134" y="60" width="14" height="14" fill="#e36414" rx="3" />
+<text x="154" y="72" font-size="12" font-family="Arial, sans-serif" fill="#374151">GRASP-only</text>
+<text x="24" y="121" font-size="13" font-family="Arial, sans-serif" fill="#111827">Ackley</text>
+<rect x="170" y="109" width="470" height="12" fill="#e5e7eb" rx="6" />
+<rect x="170" y="109" width="156.73" height="12" fill="#0f4c5c" rx="6" />
+<text x="656" y="120" font-size="11" font-family="Arial, sans-serif" fill="#374151">GIVP-full: 3.7770</text>
+<rect x="170" y="133" width="470" height="12" fill="#e5e7eb" rx="6" />
+<rect x="170" y="133" width="210.31" height="12" fill="#e36414" rx="6" />
+<text x="656" y="144" font-size="11" font-family="Arial, sans-serif" fill="#374151">GRASP-only: 19.3834</text>
+<text x="24" y="187" font-size="13" font-family="Arial, sans-serif" fill="#111827">Rastrigin</text>
+<rect x="170" y="175" width="470" height="12" fill="#e5e7eb" rx="6" />
+<rect x="170" y="175" width="240.60" height="12" fill="#0f4c5c" rx="6" />
+<text x="656" y="186" font-size="11" font-family="Arial, sans-serif" fill="#374151">GIVP-full: 48.8712</text>
+<rect x="170" y="199" width="470" height="12" fill="#e5e7eb" rx="6" />
+<rect x="170" y="199" width="258.80" height="12" fill="#e36414" rx="6" />
+<text x="656" y="210" font-size="11" font-family="Arial, sans-serif" fill="#374151">GRASP-only: 85.1809</text>
+<text x="24" y="253" font-size="13" font-family="Arial, sans-serif" fill="#111827">Rosenbrock</text>
+<rect x="170" y="241" width="470" height="12" fill="#e5e7eb" rx="6" />
+<rect x="170" y="241" width="225.43" height="12" fill="#0f4c5c" rx="6" />
+<text x="656" y="252" font-size="11" font-family="Arial, sans-serif" fill="#374151">GIVP-full: 30.7507</text>
+<rect x="170" y="265" width="470" height="12" fill="#e5e7eb" rx="6" />
+<rect x="170" y="265" width="470.00" height="12" fill="#e36414" rx="6" />
+<text x="656" y="276" font-size="11" font-family="Arial, sans-serif" fill="#374151">GRASP-only: 5.3734e+04</text>
+<text x="24" y="319" font-size="13" font-family="Arial, sans-serif" fill="#111827">Sphere</text>
+<rect x="170" y="307" width="470" height="12" fill="#e5e7eb" rx="6" />
+<rect x="170" y="307" width="8.00" height="12" fill="#0f4c5c" rx="6" />
+<text x="656" y="318" font-size="11" font-family="Arial, sans-serif" fill="#374151">GIVP-full: 0.0403</text>
+<rect x="170" y="331" width="470" height="12" fill="#e5e7eb" rx="6" />
+<rect x="170" y="331" width="221.06" height="12" fill="#e36414" rx="6" />
+<text x="656" y="342" font-size="11" font-family="Arial, sans-serif" fill="#374151">GRASP-only: 26.9120</text>
+</svg>
