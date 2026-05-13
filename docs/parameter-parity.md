@@ -58,7 +58,8 @@ arguments:
 
 - [x] Parameter checklist is versioned in repository docs.
 - [x] Default values are aligned for all shared config fields.
-- [x] Range semantics are aligned (`alpha` in [0,1], positive iteration limits, etc.).
+- [x] Range semantics are aligned (`alpha` in [0,1], positive iteration limits,
+  etc.).
 - [x] Direction semantics are aligned (`minimize` / `maximize`).
 - [x] Documentation references added to roadmap.
 
