@@ -6,9 +6,6 @@ updates:
       interval: "weekly"
       day: monday
     open-pull-requests-limit: 5
-    labels:
-      - "dependencies"
-      - "automerge"
     groups:
       python-dev:
         patterns:
@@ -29,6 +26,3 @@ updates:
       interval: "weekly"
       day: monday
     open-pull-requests-limit: 5
-    labels:
-      - "dependencies"
-      - "automerge"
