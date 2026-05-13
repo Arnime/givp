@@ -35,8 +35,10 @@ makedocs(;
     warnonly = [:missing_docs],
 )
 
-deploydocs(;
-    repo = "github.com/Arnime/grasp_ils_vnd_pr.git",
-    devbranch = "main",
-    push_preview = true,
-)
+if get(ENV, "GITHUB_EVENT_NAME", "") != "pull_request"
+    deploydocs(;
+        repo = "github.com/Arnime/grasp_ils_vnd_pr.git",
+        devbranch = "main",
+        push_preview = true,
+    )
+end
