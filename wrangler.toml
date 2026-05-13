@@ -1,0 +1,27 @@
+# SPDX-FileCopyrightText: 2026 Arnaldo Mendes Pires Junior
+# SPDX-License-Identifier: MIT
+
+# Cloudflare Pages configuration for givp documentation site.
+# Deployed from: https://github.com/Arnime/grasp_ils_vnd_pr
+#
+# Build settings:
+# - Framework: MkDocs 1.6+
+# - Build command: bash scripts/build-docs.sh
+# - Build output directory: site/
+# - Environment: Node 18.x
+#
+# Docs: https://developers.cloudflare.com/pages/configuration/build-configuration/
+
+name = "grasp_ils_vnd_pr"
+type = "javascript"
+
+[build]
+command = "bash scripts/build-docs.sh"
+cwd = "./"
+root_dir = "."
+
+[env.production]
+vars = { ENVIRONMENT = "production" }
+
+[env.preview]
+vars = { ENVIRONMENT = "preview" }
