@@ -14,7 +14,7 @@ env:
     FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 permissions:
-  contents: read
+    contents: write
 
 jobs:
     build:
@@ -30,5 +30,8 @@ jobs:
                   bash .github/scripts/install-package.sh
             - name: Build
               run: mkdocs build --strict
+            - name: Deploy to GitHub Pages (gh-pages)
+              if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+              run: mkdocs gh-deploy --force
 
 

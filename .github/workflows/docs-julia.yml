@@ -56,11 +56,11 @@ jobs:
                   path: julia/docs/build/
                   retention-days: 14
 
-    deploy:
+    build-main:
         if: github.event_name != 'pull_request'
         runs-on: ubuntu-latest
         permissions:
-            contents: write # required for deploydocs push to gh-pages
+            contents: read
         steps:
             - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
@@ -78,10 +78,9 @@ jobs:
                     Pkg.instantiate()
                   '
 
-            - name: Build and deploy documentation
+            - name: Build documentation (no deploy)
               run: julia --project=julia/docs julia/docs/make.jl
               env:
-                  DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 

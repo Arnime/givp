@@ -35,7 +35,8 @@ makedocs(;
     warnonly = [:missing_docs],
 )
 
-if get(ENV, "GITHUB_EVENT_NAME", "") != "pull_request"
+if get(ENV, "GIVP_JULIA_DOCS_DEPLOY", "false") == "true" &&
+   get(ENV, "GITHUB_EVENT_NAME", "") != "pull_request"
     deploydocs(;
         repo = "github.com/Arnime/grasp_ils_vnd_pr.git",
         devbranch = "main",
