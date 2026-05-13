@@ -311,6 +311,53 @@ def test_verbose_runs_without_error(
     assert np.isfinite(result.fun)
 
 
+def test_combinatorial_tsp_like_discretized_example() -> None:
+    """TSP-like discretized objective should be reproducible and finite."""
+    dist = np.array(
+        [
+            [0, 2, 9, 10, 7, 3],
+            [2, 0, 6, 4, 3, 8],
+            [9, 6, 0, 8, 5, 7],
+            [10, 4, 8, 0, 6, 9],
+            [7, 3, 5, 6, 0, 4],
+            [3, 8, 7, 9, 4, 0],
+        ],
+        dtype=float,
+    )
+
+    def decode_permutation(x: np.ndarray) -> np.ndarray:
+        scores = np.rint(np.clip(x, 0.0, dist.shape[0] - 1)).astype(int)
+        return np.argsort(scores, kind="mergesort")
+
+    def tsp_like_cost(x: np.ndarray) -> float:
+        p = decode_permutation(x)
+        total = 0.0
+        for i in range(len(p)):
+            a = int(p[i])
+            b = int(p[(i + 1) % len(p)])
+            total += float(dist[a, b])
+        return total
+
+    bounds = [(0.0, float(dist.shape[0] - 1))] * dist.shape[0]
+    cfg = GIVPConfig(
+        integer_split=dist.shape[0],
+        max_iterations=60,
+        ils_iterations=10,
+    )
+
+    r1 = givp(tsp_like_cost, bounds, seed=77, config=cfg)
+    r2 = givp(tsp_like_cost, bounds, seed=77, config=cfg)
+
+    p1 = decode_permutation(r1.x)
+    p2 = decode_permutation(r2.x)
+
+    assert np.isfinite(r1.fun)
+    assert np.isfinite(r2.fun)
+    assert np.isclose(r1.fun, r2.fun)
+    assert np.array_equal(np.sort(p1), np.arange(dist.shape[0]))
+    assert np.array_equal(np.sort(p2), np.arange(dist.shape[0]))
+
+
 def test_long_run_triggers_path_relinking_and_restart() -> None:
     cfg = GIVPConfig(
         max_iterations=8,
