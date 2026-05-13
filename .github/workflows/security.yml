@@ -18,14 +18,28 @@ jobs:
     pip-audit:
         name: pip-audit
         runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                include:
+                    - python-version: "3.10"
+                      lockfile: python/requirements/audit-py310.txt
+                    - python-version: "3.11"
+                      lockfile: python/requirements/audit-py310.txt
+                    - python-version: "3.12"
+                      lockfile: python/requirements/audit-py310.txt
+                    - python-version: "3.13"
+                      lockfile: python/requirements/audit.txt
+                    - python-version: "3.14"
+                      lockfile: python/requirements/audit.txt
         steps:
             - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
             - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
               with:
-                  python-version: "3.12"
+                  python-version: ${{ matrix.python-version }}
             - name: Install
               run: |
-                  pip install --only-binary=:all: --require-hashes -r python/requirements/audit.txt
+                  pip install --only-binary=:all: --require-hashes -r ${{ matrix.lockfile }}
                   bash .github/scripts/install-package-editable.sh
             - name: Run pip-audit
               run: |
