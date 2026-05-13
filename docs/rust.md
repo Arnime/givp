@@ -186,14 +186,17 @@ HTML reports are written to `rust/target/criterion/`.
 
 ## Literature comparison experiment
 
-A reproducible multi-run experiment is provided as a Cargo example:
+A reproducible multi-run experiment is provided as a benchmark runner binary
+at `rust/benchmarks/run_literature_comparison.rs`.
+
+Canonical command:
 
 ```bash
 # Default: 30 seeds × 10-D × 6 functions → rust/benchmarks/literature_comparison.json
-cargo run --example run_literature_comparison
+cargo run --bin run_literature_comparison
 
 # Custom parameters
-cargo run --example run_literature_comparison -- \
+cargo run --bin run_literature_comparison -- \
     --n-runs 30 --dims 10 --output results.json --verbose
 ```
 

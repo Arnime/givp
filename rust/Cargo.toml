@@ -36,8 +36,9 @@ harness = false
 name = "givp"
 path = "src/bin/givp.rs"
 
-[[example]]
+[[bin]]
 name = "run_literature_comparison"
+path = "benchmarks/run_literature_comparison.rs"
 
 [[example]]
 name = "seed_sweep"
