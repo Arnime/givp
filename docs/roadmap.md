@@ -15,7 +15,7 @@ Available in **Python**, **Julia**, **Rust**, **C++** (header-only), and **R**.
 
 - **Expanded examples**:
   - [x] multi-objective scalarization wrapper example (Issue #141)
-  - [ ] combinatorial TSP-like discretized objective example (Issue #140)
+  - [x] combinatorial TSP-like discretized objective example (Issue #140)
 
 > **Recently completed (v1.0.0 line):**
 > Julia package on General Registry (`Pkg.add("GIVPOptimizer")`),

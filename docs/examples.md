@@ -224,6 +224,65 @@ Limitations:
 - Objective scaling matters; normalize terms before production use.
 - You should run multiple seeds to evaluate robustness of the compromise set.
 
+## 6. Combinatorial: TSP-like objective via discretization
+
+This example encodes a route permutation indirectly from a continuous vector.
+Each position score is optimized in `[0, n-1]`, rounded, then converted into
+a permutation using `argsort` (stable tie handling).
+
+```python
+import numpy as np
+
+from givp import GIVPConfig, givp
+
+# 6-city symmetric toy distance matrix
+dist = np.array(
+    [
+        [0, 2, 9, 10, 7, 3],
+        [2, 0, 6, 4, 3, 8],
+        [9, 6, 0, 8, 5, 7],
+        [10, 4, 8, 0, 6, 9],
+        [7, 3, 5, 6, 0, 4],
+        [3, 8, 7, 9, 4, 0],
+    ],
+    dtype=float,
+)
+
+
+def decode_permutation(x: np.ndarray) -> np.ndarray:
+    # Discretize to reinforce combinatorial behavior, then map to a valid route.
+    scores = np.rint(np.clip(x, 0.0, dist.shape[0] - 1)).astype(int)
+    return np.argsort(scores, kind="mergesort")
+
+
+def tsp_like_cost(x: np.ndarray) -> float:
+    p = decode_permutation(x)
+    total = 0.0
+    for i in range(len(p)):
+        a = int(p[i])
+        b = int(p[(i + 1) % len(p)])
+        total += float(dist[a, b])
+    return total
+
+
+bounds = [(0.0, float(dist.shape[0] - 1))] * dist.shape[0]
+cfg = GIVPConfig(integer_split=dist.shape[0], max_iterations=60, ils_iterations=10)
+
+result = givp(tsp_like_cost, bounds, seed=77, config=cfg)
+route = decode_permutation(result.x)
+
+print("route:", route.tolist())
+print(f"tour length: {result.fun:.3f}")
+```
+
+Interpretation tips:
+
+- The objective is purely combinatorial after decoding, while optimization
+  stays in `givp`'s native continuous search space.
+- Using continuous search (`integer_split=n`) plus explicit rounding in the
+  objective is a robust way to model permutation-style objectives.
+- The route is deterministic for a fixed seed and config.
+
 ## See also
 
 - [Quickstart](quickstart.md) — minimal first run.
