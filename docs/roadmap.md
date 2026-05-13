@@ -13,16 +13,11 @@ Available in **Python**, **Julia**, **Rust**, **C++** (header-only), and **R**.
 
 ## Short-term (next 3 months)
 
-- **Rust literature comparison pipeline**: create
-  `rust/benchmarks/run_literature_comparison.rs` with the same 6-function,
-  30-seed protocol used in Python and Julia.
-- **Docs architecture page**: add `docs/architecture.md` describing
-  core modules (`grasp`, `vnd`, `ils`, `pr`, cache, elite, convergence)
-  and the language-parity contract.
+- **Rust literature comparison pipeline**: consolidate the existing runner,
+  standardize output schema and document one canonical execution path aligned
+  with Python and Julia protocols (6 functions, 30 seeds).
 - **Benchmark chart automation**: publish reusable plots/tables in docs from
   the literature-comparison artifacts (Python, Julia, Rust, C++).
-- **C++ package promotion**: track migration from staging overlays
-  (`cpp/vcpkg_ports/arnime-givp/`, `cpp/conan/`) to upstream package indexes.
 - **Expanded examples**: add worked examples for combinatorial objectives
   and multi-objective scalarization wrappers.
 
@@ -31,6 +26,8 @@ Available in **Python**, **Julia**, **Rust**, **C++** (header-only), and **R**.
 > Rust `n_workers` with `rayon`, C++ literature comparison pipeline,
 > C++ staging packaging (vcpkg/conan), Julia CLI, iteration callback,
 > warm start, fuzzing drivers, and coverage/format quality gates.
+> Architecture page with Mermaid diagrams (`docs/architecture.md`) and
+> navigation integration in MkDocs.
 
 ## Medium-term (3–6 months)
 
@@ -38,8 +35,11 @@ Available in **Python**, **Julia**, **Rust**, **C++** (header-only), and **R**.
   multiple known-good solutions (beyond a single `initial_guess`).
 - **Configurable path-relinking strategies**: expose `forward`,
   `backward`, and randomized PR direction as an explicit option.
-- **Documentation improvements**: add a dedicated Architecture page
-  and benchmark comparison charts.
+- **Documentation improvements**: maintain benchmark comparison charts,
+  parity tables, and roadmap status synchronized with implemented changes.
+- **C++ package promotion (from October 2026)**: track migration from staging
+  overlays (`cpp/vcpkg_ports/arnime-givp/`, `cpp/conan/`) to upstream package
+  indexes when the external submission window opens.
 
 ## Long-term (6–12 months)
 
