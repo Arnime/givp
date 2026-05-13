@@ -400,23 +400,26 @@ def write_metric_chart(report: ArtifactReport, metric: str, output_path: Path) -
     if not values:
         return
 
-    chart_width = 520
-    left_pad = 155
-    top_pad = 70
-    row_gap = 26
+    chart_width = 470
+    left_pad = 170
+    top_pad = 24
+    row_gap = 24
     group_gap = 18
-    legend_gap = 120
     title = "Mean objective value" if metric == "mean_fun" else "Mean runtime (s)"
     subtitle = "log10 scale, lower is better"
-    total_rows = len(report.functions) * max(len(report.algorithms), 1)
-    height = top_pad + total_rows * row_gap + len(report.functions) * group_gap + 85
+    label_samples = [
+        f"{row.algorithm}: {_fmt_number(row.mean)}" for row in report.summary_rows
+    ]
+    longest_label_chars = max((len(sample) for sample in label_samples), default=16)
+    right_col_width = max(210, longest_label_chars * 7)
+    canvas_width = left_pad + chart_width + right_col_width + 56
     min_positive = min(values)
     max_value = max(values)
 
     lines = [
         (
-            f'<svg xmlns="http://www.w3.org/2000/svg" width="760" '
-            f'height="{height}" viewBox="0 0 760 {height}" role="img" '
+            f'<svg xmlns="http://www.w3.org/2000/svg" width="{canvas_width}" '
+            f'height="520" viewBox="0 0 {canvas_width} 520" role="img" '
             'aria-labelledby="title desc">'
         ),
         f"<title>{escape(report.label)} {escape(title)}</title>",
@@ -424,7 +427,7 @@ def write_metric_chart(report: ArtifactReport, metric: str, output_path: Path) -
             f"<desc>{escape(title)} for the generated {report.label} benchmark "
             "artifact page.</desc>"
         ),
-        '<rect x="0" y="0" width="760" height="100%" fill="#fffdf8" />',
+        f'<rect x="0" y="0" width="{canvas_width}" height="100%" fill="#fffdf8" />',
         (
             f'<text x="24" y="32" font-size="24" '
             f'font-family="Arial, sans-serif" fill="#1f2937">'
@@ -438,22 +441,30 @@ def write_metric_chart(report: ArtifactReport, metric: str, output_path: Path) -
     ]
 
     legend_x = 24
+    legend_y = 72
+    legend_row_height = 20
+    max_legend_x = canvas_width - 24
     for index, algorithm in enumerate(report.algorithms):
         color = CHART_COLORS[index % len(CHART_COLORS)]
-        x = legend_x + index * legend_gap
+        item_width = max(110, len(algorithm) * 8 + 30)
+        if legend_x + item_width > max_legend_x:
+            legend_x = 24
+            legend_y += legend_row_height
+        x = legend_x
         lines.append(
-            f'<rect x="{x}" y="64" width="14" height="14" fill="{color}" rx="3" />'
+            f'<rect x="{x}" y="{legend_y - 12}" width="14" height="14" fill="{color}" rx="3" />'
         )
         lines.append(
-            f'<text x="{x + 20}" y="76" font-size="12" '
+            f'<text x="{x + 20}" y="{legend_y}" font-size="12" '
             f'font-family="Arial, sans-serif" fill="#374151">'
             f"{escape(algorithm)}</text>"
         )
+        legend_x += item_width
 
-    current_y = top_pad
+    current_y = max(top_pad + 92, legend_y + 28)
     for function in report.functions:
         lines.append(
-            f'<text x="24" y="{current_y + 14}" font-size="13" '
+            f'<text x="24" y="{current_y + 5}" font-size="13" '
             f'font-family="Arial, sans-serif" fill="#111827">'
             f"{escape(function)}</text>"
         )
@@ -468,7 +479,7 @@ def write_metric_chart(report: ArtifactReport, metric: str, output_path: Path) -
                 continue
             color = CHART_COLORS[index % len(CHART_COLORS)]
             bar_width = _scaled_width(value, min_positive, max_value, chart_width)
-            bar_y = current_y - 10
+            bar_y = current_y - 7
             lines.extend(
                 [
                     (
@@ -480,7 +491,7 @@ def write_metric_chart(report: ArtifactReport, metric: str, output_path: Path) -
                         f'height="12" fill="{color}" rx="6" />'
                     ),
                     (
-                        f'<text x="{left_pad + chart_width + 12}" y="{current_y}" '
+                        f'<text x="{left_pad + chart_width + 16}" y="{current_y + 4}" '
                         'font-size="11" font-family="Arial, sans-serif" '
                         f'fill="#374151">{escape(algorithm)}: {_fmt_number(value)}</text>'
                     ),
@@ -488,6 +499,13 @@ def write_metric_chart(report: ArtifactReport, metric: str, output_path: Path) -
             )
             current_y += row_gap
         current_y += group_gap
+
+    height = current_y + 40
+    lines[0] = (
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{canvas_width}" '
+        f'height="{height}" viewBox="0 0 {canvas_width} {height}" role="img" '
+        'aria-labelledby="title desc">'
+    )
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text("\n".join([*lines, "</svg>"]), encoding="utf-8")
