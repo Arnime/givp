@@ -11,10 +11,10 @@
 //!
 //! ```bash
 //! # Default: 30 seeds × 10-D × 6 functions
-//! cargo run --example run_literature_comparison
+//! cargo run --bin run_literature_comparison
 //!
 //! # Custom parameters
-//! cargo run --example run_literature_comparison -- \
+//! cargo run --bin run_literature_comparison -- \
 //!     --n-runs 30 --dims 10 --output results.json --verbose
 //! ```
 //!
