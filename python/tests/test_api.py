@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 import numpy as np
 import pytest
 from givp import (
@@ -371,7 +373,7 @@ def test_multiobjective_scalarization_tradeoff_sweep() -> None:
         risk = float(w @ cov @ w)
         return (ret - target_return) ** 2, risk
 
-    def make_scalarized(alpha: float):
+    def make_scalarized(alpha: float) -> Callable[[np.ndarray], float]:
         def scalarized(x: np.ndarray) -> float:
             f1, f2 = objectives(x)
             return alpha * f1 + (1.0 - alpha) * f2

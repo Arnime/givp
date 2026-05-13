@@ -226,9 +226,9 @@ Limitations:
 
 ## See also
 
-* [Quickstart](quickstart.md) — minimal first run.
-* [Algorithm overview](algorithm.md) — what each component does.
-* [Profiling](profiling.md) — measuring and improving performance.
+- [Quickstart](quickstart.md) — minimal first run.
+- [Algorithm overview](algorithm.md) — what each component does.
+- [Profiling](profiling.md) — measuring and improving performance.
 
 ---
 
