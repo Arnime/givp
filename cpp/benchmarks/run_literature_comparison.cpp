@@ -14,6 +14,8 @@
 #include <iomanip>
 #include <iostream>
 #include <limits>
+#include <numeric>
+#include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
@@ -30,15 +32,28 @@ struct BenchFunc {
     double (*func)(const Vec &);
     Bounds (*bounds_fn)(std::size_t);
     double optimum;
+    std::string reference;
 };
 
 struct TrialResult {
     std::string algorithm;
     std::string function;
     std::uint64_t seed;
-    double best;
+    double fun;
     std::size_t nfev;
     double elapsed_s;
+};
+
+struct SummaryRow {
+    std::string function;
+    std::string algorithm;
+    std::size_t n_runs;
+    double mean;
+    double std;
+    double best;
+    double median;
+    double worst;
+    double nfev_mean;
 };
 
 double sphere(const Vec &x) {
@@ -105,16 +120,22 @@ Bounds repeated_bounds(std::size_t d, double lo, double hi) {
 
 std::vector<BenchFunc> get_functions() {
     return {
-        {"sphere", sphere, [](std::size_t d) { return repeated_bounds(d, -5.12, 5.12); }, 0.0},
-        {"rosenbrock", rosenbrock, [](std::size_t d) { return repeated_bounds(d, -5.0, 10.0); },
-         0.0},
-        {"rastrigin", rastrigin, [](std::size_t d) { return repeated_bounds(d, -5.12, 5.12); },
-         0.0},
-        {"ackley", ackley, [](std::size_t d) { return repeated_bounds(d, -32.768, 32.768); }, 0.0},
-        {"griewank", griewank, [](std::size_t d) { return repeated_bounds(d, -600.0, 600.0); },
-         0.0},
-        {"schwefel", schwefel, [](std::size_t d) { return repeated_bounds(d, -500.0, 500.0); },
-         0.0},
+        {"Sphere", sphere, [](std::size_t d) { return repeated_bounds(d, -5.12, 5.12); }, 0.0,
+         "De Jong (1975)"},
+        {"Rosenbrock", rosenbrock,
+         [](std::size_t d) { return repeated_bounds(d, -5.0, 10.0); }, 0.0,
+         "Rosenbrock (1960)"},
+        {"Rastrigin", rastrigin,
+         [](std::size_t d) { return repeated_bounds(d, -5.12, 5.12); }, 0.0,
+         "Rastrigin (1974)"},
+        {"Ackley", ackley, [](std::size_t d) { return repeated_bounds(d, -32.768, 32.768); }, 0.0,
+         "Ackley (1987)"},
+        {"Griewank", griewank,
+         [](std::size_t d) { return repeated_bounds(d, -600.0, 600.0); }, 0.0,
+         "Griewank (1981)"},
+        {"Schwefel", schwefel,
+         [](std::size_t d) { return repeated_bounds(d, -500.0, 500.0); }, 0.0,
+         "Schwefel (1981)"},
     };
 }
 
@@ -133,24 +154,123 @@ std::string json_escape(const std::string &input) {
     return out;
 }
 
-void write_json(const std::string &path, const std::vector<TrialResult> &rows) {
+std::string format_run_json(const TrialResult &row) {
+    std::ostringstream out;
+    out << std::scientific << std::setprecision(10);
+    out << "{\"algorithm\":\"" << json_escape(row.algorithm) << "\",\"function\":\""
+        << json_escape(row.function) << "\",\"seed\":" << row.seed << ",\"fun\":" << row.fun
+        << ",\"nfev\":" << row.nfev << ",\"time_s\":" << std::fixed << std::setprecision(4)
+        << row.elapsed_s << "}";
+    return out.str();
+}
+
+std::string format_summary_json(const SummaryRow &row) {
+    std::ostringstream out;
+    out << std::scientific << std::setprecision(10);
+    out << "{\"function\":\"" << json_escape(row.function) << "\",\"algorithm\":\""
+        << json_escape(row.algorithm) << "\",\"n_runs\":" << row.n_runs << ",\"mean\":"
+        << row.mean << ",\"std\":" << row.std << ",\"best\":" << row.best
+        << ",\"median\":" << row.median << ",\"worst\":" << row.worst
+        << ",\"nfev_mean\":" << row.nfev_mean << "}";
+    return out.str();
+}
+
+std::vector<SummaryRow> build_summary(
+    const std::vector<TrialResult> &rows,
+    const std::vector<BenchFunc> &funcs
+) {
+    std::vector<SummaryRow> summary;
+    summary.reserve(funcs.size());
+    for (const auto &bf : funcs) {
+        std::vector<double> values;
+        std::vector<double> nfevs;
+        for (const auto &row : rows) {
+            if (row.function == bf.name && row.algorithm == "GIVP-full") {
+                values.push_back(row.fun);
+                nfevs.push_back(static_cast<double>(row.nfev));
+            }
+        }
+        if (values.empty()) {
+            continue;
+        }
+        std::sort(values.begin(), values.end());
+        const double mean = std::accumulate(values.begin(), values.end(), 0.0) /
+                            static_cast<double>(values.size());
+        double sum_sq = 0.0;
+        for (double value : values) {
+            const double delta = value - mean;
+            sum_sq += delta * delta;
+        }
+        const double std = values.size() > 1
+                               ? std::sqrt(sum_sq / static_cast<double>(values.size() - 1))
+                               : 0.0;
+        const std::size_t mid = values.size() / 2;
+        const double median = values.size() % 2 == 0 ? (values[mid - 1] + values[mid]) / 2.0
+                                                      : values[mid];
+        const double nfev_mean = std::accumulate(nfevs.begin(), nfevs.end(), 0.0) /
+                                 static_cast<double>(nfevs.size());
+        summary.push_back({bf.name, "GIVP-full", values.size(), mean, std, values.front(),
+                           median, values.back(), nfev_mean});
+    }
+    return summary;
+}
+
+void write_json(
+    const std::string &path,
+    const std::vector<TrialResult> &rows,
+    const std::vector<BenchFunc> &funcs,
+    std::size_t dims,
+    std::size_t n_runs
+) {
     std::filesystem::path out_path(path);
     if (!out_path.parent_path().empty()) {
         std::filesystem::create_directories(out_path.parent_path());
     }
 
     std::ofstream out(path, std::ios::out | std::ios::trunc);
-    out << "[\n";
-    out << std::scientific << std::setprecision(10);
-    for (std::size_t i = 0; i < rows.size(); ++i) {
-        const auto &r = rows[i];
-        out << "  {\"algorithm\":\"" << json_escape(r.algorithm) << "\",\"function\":\""
-            << json_escape(r.function) << "\",\"seed\":" << r.seed << ",\"best\":" << r.best
-            << ",\"nfev\":" << r.nfev << ",\"elapsed_s\":" << std::fixed << std::setprecision(4)
-            << r.elapsed_s << "}" << (i + 1 < rows.size() ? "," : "") << "\n";
-        out << std::scientific << std::setprecision(10);
+    const auto summary = build_summary(rows, funcs);
+
+    out << "{\n";
+    out << "  \"metadata\": {"
+        << "\"schema_version\":\"benchmark-schema-v1\"," 
+        << "\"givp_version\":\"1.0.0\"," 
+        << "\"dims\":" << dims << ","
+        << "\"n_runs\":" << n_runs << ","
+        << "\"algorithms\":[\"GIVP-full\"],"
+        << "\"functions\":[";
+    for (std::size_t i = 0; i < funcs.size(); ++i) {
+        out << "\"" << json_escape(funcs[i].name) << "\"";
+        if (i + 1 < funcs.size()) {
+            out << ",";
+        }
     }
-    out << "]\n";
+    out << "],\"problem_references\":{";
+    for (std::size_t i = 0; i < funcs.size(); ++i) {
+        out << "\"" << json_escape(funcs[i].name) << "\":\""
+            << json_escape(funcs[i].reference) << "\"";
+        if (i + 1 < funcs.size()) {
+            out << ",";
+        }
+    }
+    out << "},\"algo_descriptions\":{\"GIVP-full\":\"GRASP-ILS-VND-PR -- full hybrid pipeline (this work)\"}},\n";
+    out << "  \"runs\": [\n";
+    for (std::size_t i = 0; i < rows.size(); ++i) {
+        out << "    " << format_run_json(rows[i]) << (i + 1 < rows.size() ? "," : "") << "\n";
+    }
+    out << "  ],\n";
+    out << "  \"summary\": [\n";
+    for (std::size_t i = 0; i < summary.size(); ++i) {
+        out << "    " << format_summary_json(summary[i]) << (i + 1 < summary.size() ? "," : "")
+            << "\n";
+    }
+    out << "  ],\n";
+    out << "  \"stats\": [\n";
+    for (std::size_t i = 0; i < summary.size(); ++i) {
+        out << "    " << format_summary_json(summary[i]) << (i + 1 < summary.size() ? "," : "")
+            << "\n";
+    }
+    out << "  ]\n";
+    out << "}\n";
 }
 
 } // namespace
@@ -230,7 +350,7 @@ int main(int argc, char **argv) try {
                   << " best=" << best << " gap=" << std::abs(best - bf.optimum) << "\n";
     }
 
-    write_json(output, rows);
+    write_json(output, rows, funcs, dims, n_runs);
     std::cout << "\nResults written to " << output << "\n";
     return 0;
 } catch (const std::exception &e) {

@@ -362,6 +362,7 @@ function save_results(
 )
     data = Dict{String, Any}(
         "metadata" => Dict{String, Any}(
+            "schema_version" => "benchmark-schema-v1",
             "julia_version" => string(VERSION),
             "givp_version" => string(pkgversion(GIVPOptimizer)),
             "dims" => dims,
@@ -369,8 +370,12 @@ function save_results(
             "algorithms" => algorithms,
             "functions" => functions,
             "generated_at" => string(now()),
+            "problem_references" => Dict(fname => PROBLEM_REGISTRY[fname].reference for fname in functions),
+            "algo_descriptions" => Dict(algo => ALGO_DESCRIPTIONS[algo] for algo in algorithms),
         ),
+        "runs" => records,
         "summary" => build_summary(records),
+        "stats" => build_summary(records),
         "records" => records,
     )
     open(output, "w") do io

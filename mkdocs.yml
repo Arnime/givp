@@ -69,6 +69,7 @@ nav:
   - Examples:
       - Overview: examples.md
       - Benchmarks: examples/benchmarks.md
+      - Benchmark Schema: examples/benchmark-schema.md
   - Comparison: comparison.md
   - Profiling: profiling.md
   - Roadmap: roadmap.md

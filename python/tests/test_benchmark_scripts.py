@@ -151,11 +151,16 @@ def test_run_literature_comparison_smoke(tmp_path: Path) -> None:
 
     data = _read_json(output)
     assert "metadata" in data
+    assert "runs" in data
     assert "records" in data
     assert "summary" in data
+    assert "stats" in data
+    assert data["metadata"]["schema_version"] == "benchmark-schema-v1"
     assert data["metadata"]["n_runs"] == 2
     assert data["metadata"]["dims"] == 3
     assert "Sphere" in data["records"]
+    assert len(data["runs"]) == 4
+    assert data["stats"] == data["summary"]
     assert len(data["records"]["Sphere"]) == 4  # 2 algos x 2 runs
 
 

@@ -13,9 +13,10 @@ Available in **Python**, **Julia**, **Rust**, **C++** (header-only), and **R**.
 
 ## Short-term (next 3 months)
 
-- **Rust literature comparison pipeline**: consolidate the existing runner,
-  standardize output schema and document one canonical execution path aligned
-  with Python and Julia protocols (6 functions, 30 seeds).
+- **Rust literature comparison pipeline**: consolidate the existing runner and
+  document one canonical execution path aligned with Python and Julia
+  protocols (6 functions, 30 seeds). Benchmark schema v1 is now complete; the
+  remaining work is runner consolidation and execution-path documentation.
 - **Benchmark chart automation**: publish reusable plots/tables in docs from
   the literature-comparison artifacts (Python, Julia, Rust, C++).
 - **Expanded examples**: add worked examples for combinatorial objectives
@@ -28,6 +29,8 @@ Available in **Python**, **Julia**, **Rust**, **C++** (header-only), and **R**.
 > warm start, fuzzing drivers, and coverage/format quality gates.
 > Architecture page with Mermaid diagrams (`docs/architecture.md`) and
 > navigation integration in MkDocs.
+> Benchmark JSON schema v1 adopted by Python, Julia, Rust, and C++
+> literature-comparison runners, with a shared documentation page.
 
 ## Medium-term (3–6 months)
 
