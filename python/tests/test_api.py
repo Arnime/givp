@@ -311,6 +311,88 @@ def test_verbose_runs_without_error(
     assert np.isfinite(result.fun)
 
 
+def test_multiobjective_scalarization_reproducible() -> None:
+    """Weighted-sum scalarization should be reproducible with fixed seed."""
+    target_return = 0.08
+    mu = np.array([0.05, 0.09, 0.12])
+    cov = np.array(
+        [
+            [0.020, 0.004, 0.002],
+            [0.004, 0.030, 0.006],
+            [0.002, 0.006, 0.050],
+        ]
+    )
+
+    def project_simplex(v: np.ndarray) -> np.ndarray:
+        v = np.clip(v, 0.0, None)
+        s = float(v.sum())
+        return v / s if s > 0 else np.array([1.0, 0.0, 0.0])
+
+    def scalarized(x: np.ndarray) -> float:
+        w = project_simplex(x)
+        ret = float(w @ mu)
+        risk = float(w @ cov @ w)
+        obj_return = (ret - target_return) ** 2
+        obj_risk = risk
+        alpha = 0.5
+        return alpha * obj_return + (1.0 - alpha) * obj_risk
+
+    cfg = GIVPConfig(max_iterations=40, ils_iterations=8)
+    bounds = [(0.0, 1.0)] * 3
+
+    r1 = givp(scalarized, bounds, seed=123, config=cfg)
+    r2 = givp(scalarized, bounds, seed=123, config=cfg)
+
+    assert np.isfinite(r1.fun)
+    assert np.isfinite(r2.fun)
+    assert np.isclose(r1.fun, r2.fun)
+
+
+def test_multiobjective_scalarization_tradeoff_sweep() -> None:
+    """Changing the scalarization weight must alter objective priorities."""
+    target_return = 0.08
+    mu = np.array([0.05, 0.09, 0.12])
+    cov = np.array(
+        [
+            [0.020, 0.004, 0.002],
+            [0.004, 0.030, 0.006],
+            [0.002, 0.006, 0.050],
+        ]
+    )
+
+    def project_simplex(v: np.ndarray) -> np.ndarray:
+        v = np.clip(v, 0.0, None)
+        s = float(v.sum())
+        return v / s if s > 0 else np.array([1.0, 0.0, 0.0])
+
+    def objectives(x: np.ndarray) -> tuple[float, float]:
+        w = project_simplex(x)
+        ret = float(w @ mu)
+        risk = float(w @ cov @ w)
+        return (ret - target_return) ** 2, risk
+
+    def make_scalarized(alpha: float):
+        def scalarized(x: np.ndarray) -> float:
+            f1, f2 = objectives(x)
+            return alpha * f1 + (1.0 - alpha) * f2
+
+        return scalarized
+
+    cfg = GIVPConfig(max_iterations=40, ils_iterations=8)
+    bounds = [(0.0, 1.0)] * 3
+
+    r_return = givp(make_scalarized(1.0), bounds, seed=123, config=cfg)
+    r_risk = givp(make_scalarized(0.0), bounds, seed=123, config=cfg)
+
+    ret_obj_return, risk_obj_return = objectives(r_return.x)
+    ret_obj_risk, risk_obj_risk = objectives(r_risk.x)
+
+    assert np.isfinite(r_return.fun)
+    assert np.isfinite(r_risk.fun)
+    assert ret_obj_return <= ret_obj_risk + 1e-6
+    assert risk_obj_risk <= risk_obj_return + 1e-6
+
+
 def test_long_run_triggers_path_relinking_and_restart() -> None:
     cfg = GIVPConfig(
         max_iterations=8,
