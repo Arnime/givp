@@ -85,45 +85,52 @@ struct BenchFunc {
     func: fn(&[f64]) -> f64,
     bounds_fn: fn(usize) -> Vec<(f64, f64)>,
     optimum: f64,
+    reference: &'static str,
 }
 
 fn get_functions() -> Vec<BenchFunc> {
     vec![
         BenchFunc {
-            name: "sphere",
+            name: "Sphere",
             func: sphere,
             bounds_fn: |d| vec![(-5.12, 5.12); d],
             optimum: 0.0,
+            reference: "De Jong (1975)",
         },
         BenchFunc {
-            name: "rosenbrock",
+            name: "Rosenbrock",
             func: rosenbrock,
             bounds_fn: |d| vec![(-5.0, 10.0); d],
             optimum: 0.0,
+            reference: "Rosenbrock (1960)",
         },
         BenchFunc {
-            name: "rastrigin",
+            name: "Rastrigin",
             func: rastrigin,
             bounds_fn: |d| vec![(-5.12, 5.12); d],
             optimum: 0.0,
+            reference: "Rastrigin (1974)",
         },
         BenchFunc {
-            name: "ackley",
+            name: "Ackley",
             func: ackley,
             bounds_fn: |d| vec![(-32.768, 32.768); d],
             optimum: 0.0,
+            reference: "Ackley (1987)",
         },
         BenchFunc {
-            name: "griewank",
+            name: "Griewank",
             func: griewank,
             bounds_fn: |d| vec![(-600.0, 600.0); d],
             optimum: 0.0,
+            reference: "Griewank (1981)",
         },
         BenchFunc {
-            name: "schwefel",
+            name: "Schwefel",
             func: schwefel,
             bounds_fn: |d| vec![(-500.0, 500.0); d],
             optimum: 0.0,
+            reference: "Schwefel (1981)",
         },
     ]
 }
@@ -134,9 +141,21 @@ struct TrialResult {
     algorithm: &'static str,
     function: &'static str,
     seed: u64,
-    best: f64,
+    fun: f64,
     nfev: usize,
     elapsed_s: f64,
+}
+
+struct SummaryRow {
+    function: &'static str,
+    algorithm: &'static str,
+    n_runs: usize,
+    mean: f64,
+    std: f64,
+    best: f64,
+    median: f64,
+    worst: f64,
+    nfev_mean: f64,
 }
 
 fn run_trial(
@@ -164,24 +183,137 @@ fn json_escape(s: &str) -> String {
     s.replace('\\', "\\\\").replace('"', "\\\"")
 }
 
-fn results_to_json(entries: &[TrialResult]) -> String {
-    let mut out = String::from("[\n");
-    for (i, e) in entries.iter().enumerate() {
-        let comma = if i + 1 < entries.len() { "," } else { "" };
-        out.push_str(&format!(
-            "  {{\"algorithm\":\"{}\",\"function\":\"{}\",\
-\"seed\":{},\"best\":{:.10e},\"nfev\":{},\"elapsed_s\":{:.4}}}{}\n",
-            json_escape(e.algorithm),
-            json_escape(e.function),
-            e.seed,
-            e.best,
-            e.nfev,
-            e.elapsed_s,
-            comma,
-        ));
+fn format_run_json(e: &TrialResult) -> String {
+    format!(
+        "{{\"algorithm\":\"{}\",\"function\":\"{}\",\"seed\":{},\"fun\":{:.10e},\"nfev\":{},\"time_s\":{:.4}}}",
+        json_escape(e.algorithm),
+        json_escape(e.function),
+        e.seed,
+        e.fun,
+        e.nfev,
+        e.elapsed_s,
+    )
+}
+
+fn format_summary_json(e: &SummaryRow) -> String {
+    format!(
+        concat!(
+            "{{\"function\":\"{}\",\"algorithm\":\"{}\",\"n_runs\":{},",
+            "\"mean\":{:.10e},\"std\":{:.10e},\"best\":{:.10e},",
+            "\"median\":{:.10e},\"worst\":{:.10e},\"nfev_mean\":{:.10e}}}"
+        ),
+        json_escape(e.function),
+        json_escape(e.algorithm),
+        e.n_runs,
+        e.mean,
+        e.std,
+        e.best,
+        e.median,
+        e.worst,
+        e.nfev_mean,
+    )
+}
+
+fn build_summary(entries: &[TrialResult], functions: &[BenchFunc]) -> Vec<SummaryRow> {
+    let mut rows = Vec::new();
+    for bf in functions {
+        let mut vals: Vec<f64> = entries
+            .iter()
+            .filter(|entry| entry.function == bf.name && entry.algorithm == "GIVP-full")
+            .map(|entry| entry.fun)
+            .collect();
+        let nfevs: Vec<f64> = entries
+            .iter()
+            .filter(|entry| entry.function == bf.name && entry.algorithm == "GIVP-full")
+            .map(|entry| entry.nfev as f64)
+            .collect();
+        vals.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+        let n = vals.len();
+        if n == 0 {
+            continue;
+        }
+        let mean = vals.iter().sum::<f64>() / n as f64;
+        let std = if n > 1 {
+            let ss = vals.iter().map(|value| (value - mean).powi(2)).sum::<f64>();
+            (ss / (n as f64 - 1.0)).sqrt()
+        } else {
+            0.0
+        };
+        let median = if n % 2 == 0 {
+            (vals[n / 2 - 1] + vals[n / 2]) / 2.0
+        } else {
+            vals[n / 2]
+        };
+        rows.push(SummaryRow {
+            function: bf.name,
+            algorithm: "GIVP-full",
+            n_runs: n,
+            mean,
+            std,
+            best: vals[0],
+            median,
+            worst: vals[n - 1],
+            nfev_mean: nfevs.iter().sum::<f64>() / nfevs.len() as f64,
+        });
     }
-    out.push(']');
-    out
+    rows
+}
+
+fn payload_to_json(entries: &[TrialResult], functions: &[BenchFunc], args: &Args) -> String {
+    let summary = build_summary(entries, functions);
+    let runs_json = entries
+        .iter()
+        .map(format_run_json)
+        .collect::<Vec<_>>()
+        .join(",\n    ");
+    let summary_json = summary
+        .iter()
+        .map(format_summary_json)
+        .collect::<Vec<_>>()
+        .join(",\n    ");
+    let function_refs = functions
+        .iter()
+        .map(|bf| {
+            format!(
+                "\"{}\":\"{}\"",
+                json_escape(bf.name),
+                json_escape(bf.reference)
+            )
+        })
+        .collect::<Vec<_>>()
+        .join(",");
+    let function_names = functions
+        .iter()
+        .map(|bf| format!("\"{}\"", json_escape(bf.name)))
+        .collect::<Vec<_>>()
+        .join(", ");
+
+    format!(
+        concat!(
+            "{{\n",
+            "  \"metadata\": {{",
+            "\"schema_version\":\"benchmark-schema-v1\",",
+            "\"givp_version\":\"{}\",",
+            "\"dims\":{},\"n_runs\":{},",
+            "\"algorithms\":[\"GIVP-full\"],",
+            "\"functions\":[{}],",
+            "\"problem_references\":{{{}}},",
+            "\"algo_descriptions\":{{\"GIVP-full\":\"GRASP-ILS-VND-PR -- full hybrid pipeline (this work)\"}}",
+            "}},\n",
+            "  \"runs\": [\n    {}\n  ],\n",
+            "  \"summary\": [\n    {}\n  ],\n",
+            "  \"stats\": [\n    {}\n  ]\n",
+            "}}\n"
+        ),
+        env!("CARGO_PKG_VERSION"),
+        args.dims,
+        args.n_runs,
+        function_names,
+        function_refs,
+        runs_json,
+        summary_json,
+        summary_json,
+    )
 }
 
 // ── CLI argument parsing ─────────────────────────────────────────────────────
@@ -268,7 +400,7 @@ fn main() {
                 algorithm: "GIVP-full",
                 function: bf.name,
                 seed,
-                best,
+                fun: best,
                 nfev,
                 elapsed_s: elapsed,
             });
@@ -299,7 +431,7 @@ fn main() {
         }
     }
 
-    let json = results_to_json(&entries);
+    let json = payload_to_json(&entries, &functions, &args);
     match fs::write(&args.output, &json) {
         Ok(_) => println!("\nResults written to {}", args.output),
         Err(e) => {

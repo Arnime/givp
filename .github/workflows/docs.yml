@@ -14,11 +14,13 @@ env:
     FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 permissions:
-    contents: write
+    contents: read
 
 jobs:
     build:
         runs-on: ubuntu-latest
+        permissions:
+            contents: write
         steps:
             - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
             - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
@@ -26,12 +28,10 @@ jobs:
                   python-version: "3.13"
             - name: Install
               run: |
-                  pip install --require-hashes -r python/requirements/docs.txt
+                  pip install --only-binary ":all:" --require-hashes -r python/requirements/docs.txt
                   bash .github/scripts/install-package.sh
             - name: Build
               run: mkdocs build --strict
             - name: Deploy to GitHub Pages (gh-pages)
               if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
               run: mkdocs gh-deploy --force
-
-

@@ -356,6 +356,14 @@ def _build_summary_rows(
     return summary
 
 
+def _flatten_records(raw: dict[str, list[dict]], functions: list[str]) -> list[dict]:
+    """Return records as a flat list in function order for schema v1 consumers."""
+    runs: list[dict] = []
+    for fn_name in functions:
+        runs.extend(raw[fn_name])
+    return runs
+
+
 # ---------------------------------------------------------------------------
 # Experiment orchestration
 # ---------------------------------------------------------------------------
@@ -402,6 +410,7 @@ def _save_checkpoint(
     )
     partial_payload = {
         "metadata": {
+            "schema_version": "benchmark-schema-v1",
             "givp_version": _GIVP_VERSION,
             "dims": dims,
             "n_runs": n_runs,
@@ -418,7 +427,9 @@ def _save_checkpoint(
             },
             "algo_descriptions": {a: ALGO_DESCRIPTIONS[a] for a in algorithms},
         },
+        "runs": _flatten_records(raw, functions),
         "summary": partial_summary,
+        "stats": partial_summary,
         "records": raw,
     }
     checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
@@ -578,6 +589,7 @@ def run_experiment(
 
     return {
         "metadata": {
+            "schema_version": "benchmark-schema-v1",
             "givp_version": _GIVP_VERSION,
             "dims": dims,
             "n_runs": n_runs,
@@ -592,7 +604,9 @@ def run_experiment(
             },
             "algo_descriptions": {a: ALGO_DESCRIPTIONS[a] for a in algorithms},
         },
+        "runs": _flatten_records(raw, functions),
         "summary": summary,
+        "stats": summary,
         "records": raw,
     }
 
