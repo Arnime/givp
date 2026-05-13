@@ -388,6 +388,87 @@ def _scaled_width(
     return 8.0 + (numerator / denominator) * (width - 8.0)
 
 
+def _append_chart_legend(
+    lines: list[str], algorithms: list[str], canvas_width: int
+) -> int:
+    """Append the chart legend and return the final legend y coordinate."""
+
+    legend_x = 24
+    legend_y = 72
+    legend_row_height = 20
+    max_legend_x = canvas_width - 24
+    for index, algorithm in enumerate(algorithms):
+        color = CHART_COLORS[index % len(CHART_COLORS)]
+        item_width = max(110, len(algorithm) * 8 + 30)
+        if legend_x + item_width > max_legend_x:
+            legend_x = 24
+            legend_y += legend_row_height
+        x = legend_x
+        lines.append(
+            f'<rect x="{x}" y="{legend_y - 12}" width="14" height="14" fill="{color}" rx="3" />'
+        )
+        lines.append(
+            f'<text x="{x + 20}" y="{legend_y}" font-size="12" '
+            f'font-family="Arial, sans-serif" fill="#374151">'
+            f"{escape(algorithm)}</text>"
+        )
+        legend_x += item_width
+    return legend_y
+
+
+def _append_function_rows(
+    lines: list[str],
+    report: ArtifactReport,
+    grouped: dict[str, dict[str, SummaryRow]],
+    metric: str,
+    left_pad: int,
+    chart_width: int,
+    row_gap: int,
+    group_gap: int,
+    min_positive: float,
+    max_value: float,
+    start_y: int,
+) -> int:
+    """Append per-function metric bars and return the resulting chart y offset."""
+
+    current_y = start_y
+    for function in report.functions:
+        lines.append(
+            f'<text x="24" y="{current_y + 5}" font-size="13" '
+            f'font-family="Arial, sans-serif" fill="#111827">'
+            f"{escape(function)}</text>"
+        )
+        for index, algorithm in enumerate(report.algorithms):
+            row = grouped.get(function, {}).get(algorithm)
+            value = _metric_value(row, metric) if row is not None else None
+            if value is None or value <= 0:
+                current_y += row_gap
+                continue
+            color = CHART_COLORS[index % len(CHART_COLORS)]
+            bar_width = _scaled_width(value, min_positive, max_value, chart_width)
+            bar_y = current_y - 7
+            lines.extend(
+                [
+                    (
+                        f'<rect x="{left_pad}" y="{bar_y}" width="{chart_width}" '
+                        'height="12" fill="#e5e7eb" rx="6" />'
+                    ),
+                    (
+                        f'<rect x="{left_pad}" y="{bar_y}" width="{bar_width:.2f}" '
+                        f'height="12" fill="{color}" rx="6" />'
+                    ),
+                    (
+                        f'<text x="{left_pad + chart_width + 16}" y="{current_y + 4}" '
+                        'font-size="11" font-family="Arial, sans-serif" '
+                        f'fill="#374151">{escape(algorithm)}: {_fmt_number(value)}</text>'
+                    ),
+                ]
+            )
+            current_y += row_gap
+        current_y += group_gap
+    return current_y
+
+
 def write_metric_chart(report: ArtifactReport, metric: str, output_path: Path) -> None:
     """Render one grouped SVG bar chart for a normalized benchmark metric."""
 
@@ -440,65 +521,20 @@ def write_metric_chart(report: ArtifactReport, metric: str, output_path: Path) -
         ),
     ]
 
-    legend_x = 24
-    legend_y = 72
-    legend_row_height = 20
-    max_legend_x = canvas_width - 24
-    for index, algorithm in enumerate(report.algorithms):
-        color = CHART_COLORS[index % len(CHART_COLORS)]
-        item_width = max(110, len(algorithm) * 8 + 30)
-        if legend_x + item_width > max_legend_x:
-            legend_x = 24
-            legend_y += legend_row_height
-        x = legend_x
-        lines.append(
-            f'<rect x="{x}" y="{legend_y - 12}" width="14" height="14" fill="{color}" rx="3" />'
-        )
-        lines.append(
-            f'<text x="{x + 20}" y="{legend_y}" font-size="12" '
-            f'font-family="Arial, sans-serif" fill="#374151">'
-            f"{escape(algorithm)}</text>"
-        )
-        legend_x += item_width
-
-    current_y = max(top_pad + 92, legend_y + 28)
-    for function in report.functions:
-        lines.append(
-            f'<text x="24" y="{current_y + 5}" font-size="13" '
-            f'font-family="Arial, sans-serif" fill="#111827">'
-            f"{escape(function)}</text>"
-        )
-        for index, algorithm in enumerate(report.algorithms):
-            row = grouped.get(function, {}).get(algorithm)
-            if row is None:
-                current_y += row_gap
-                continue
-            value = _metric_value(row, metric)
-            if value is None or value <= 0:
-                current_y += row_gap
-                continue
-            color = CHART_COLORS[index % len(CHART_COLORS)]
-            bar_width = _scaled_width(value, min_positive, max_value, chart_width)
-            bar_y = current_y - 7
-            lines.extend(
-                [
-                    (
-                        f'<rect x="{left_pad}" y="{bar_y}" width="{chart_width}" '
-                        'height="12" fill="#e5e7eb" rx="6" />'
-                    ),
-                    (
-                        f'<rect x="{left_pad}" y="{bar_y}" width="{bar_width:.2f}" '
-                        f'height="12" fill="{color}" rx="6" />'
-                    ),
-                    (
-                        f'<text x="{left_pad + chart_width + 16}" y="{current_y + 4}" '
-                        'font-size="11" font-family="Arial, sans-serif" '
-                        f'fill="#374151">{escape(algorithm)}: {_fmt_number(value)}</text>'
-                    ),
-                ]
-            )
-            current_y += row_gap
-        current_y += group_gap
+    legend_y = _append_chart_legend(lines, report.algorithms, canvas_width)
+    current_y = _append_function_rows(
+        lines=lines,
+        report=report,
+        grouped=grouped,
+        metric=metric,
+        left_pad=left_pad,
+        chart_width=chart_width,
+        row_gap=row_gap,
+        group_gap=group_gap,
+        min_positive=min_positive,
+        max_value=max_value,
+        start_y=max(top_pad + 92, legend_y + 28),
+    )
 
     height = current_y + 40
     lines[0] = (
