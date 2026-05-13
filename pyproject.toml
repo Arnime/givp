@@ -44,8 +44,8 @@ dev = [
     "ruff>=0.15.12",
     "pre-commit>=3.7",
     "black>=24",
-    "mypy>=1.11",
-    "hypothesis>=6.152.4",
+    "mypy>=2.1.0",
+    "hypothesis>=6.152.6",
     "pytest-benchmark>=4.0",
     "tqdm>=4.66",
 ]
