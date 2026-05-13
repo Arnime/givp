@@ -15,6 +15,9 @@ Available in **Python**, **Julia**, **Rust**, **C++** (header-only), and **R**.
 
 - **Expanded examples**: add worked examples for combinatorial objectives
   and multi-objective scalarization wrappers.
+- **Cross-port parameter semantics sync**:
+  - [x] versioned parity checklist published (`docs/parameter-parity.md`) (Issue #138)
+  - [x] docs synchronized to the canonical config contract across Python, Julia, Rust, C++, and R
 
 > **Recently completed (v1.0.0 line):**
 > Julia package on General Registry (`Pkg.add("GIVPOptimizer")`),
