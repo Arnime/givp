@@ -148,11 +148,146 @@ print(f"best CV accuracy: {result.fun:.4f}")
 print(f"hyperparams     : lr={result.x[0]:.3f}, depth={int(result.x[1])}, n={int(result.x[2])}")
 ```
 
+## 5. Multi-objective: weighted-sum scalarization sweep
+
+`givp` is single-objective, but you can optimize multiple goals by combining
+them into a scalar objective. A practical baseline is weighted sum:
+
+\[
+f_w(x) = w\,f_1(x) + (1-w)\,f_2(x),\quad w \in [0, 1]
+\]
+
+The sweep below runs the same problem with different `w` values to expose
+trade-offs between objective 1 (distance to target return) and objective 2
+(portfolio variance surrogate).
+
+```python
+import numpy as np
+
+from givp import GIVPConfig, givp
+
+target_return = 0.08
+mu = np.array([0.05, 0.09, 0.12])
+cov = np.array(
+    [
+        [0.020, 0.004, 0.002],
+        [0.004, 0.030, 0.006],
+        [0.002, 0.006, 0.050],
+    ]
+)
+
+
+def project_simplex(v: np.ndarray) -> np.ndarray:
+    v = np.clip(v, 0.0, None)
+    s = float(v.sum())
+    return v / s if s > 0 else np.array([1.0, 0.0, 0.0])
+
+
+def objectives(x: np.ndarray) -> tuple[float, float]:
+    w = project_simplex(x)
+    ret = float(w @ mu)
+    risk = float(w @ cov @ w)
+    obj_return = (ret - target_return) ** 2
+    obj_risk = risk
+    return obj_return, obj_risk
+
+
+bounds = [(0.0, 1.0)] * 3
+config = GIVPConfig(max_iterations=40, ils_iterations=8)
+weights = [0.0, 0.25, 0.5, 0.75, 1.0]
+
+rows: list[tuple[float, float, float, float, np.ndarray]] = []
+for alpha in weights:
+    def scalarized(x: np.ndarray, a: float = alpha) -> float:
+        f1, f2 = objectives(x)
+        return a * f1 + (1.0 - a) * f2
+
+    r = givp(scalarized, bounds, seed=123, config=config)
+    f1, f2 = objectives(r.x)
+    rows.append((alpha, f1, f2, r.fun, project_simplex(r.x)))
+
+print("alpha | obj_return | obj_risk | scalarized | weights")
+for alpha, f1, f2, f, w in rows:
+    print(f"{alpha:>4.2f} | {f1:>10.6f} | {f2:>8.6f} | {f:>10.6f} | {np.round(w, 3)}")
+```
+
+Interpretation tips:
+
+- `alpha -> 1.0`: optimizer prioritizes return-target matching (`obj_return`).
+- `alpha -> 0.0`: optimizer prioritizes risk minimization (`obj_risk`).
+- Intermediate values produce compromise solutions; this is the first
+  approximation of a Pareto front for decision support.
+
+Limitations:
+
+- Weighted sum can miss non-convex Pareto regions.
+- Objective scaling matters; normalize terms before production use.
+- You should run multiple seeds to evaluate robustness of the compromise set.
+
+## 6. Combinatorial: TSP-like objective via discretization
+
+This example encodes a route permutation indirectly from a continuous vector.
+Each position score is optimized in `[0, n-1]`, rounded, then converted into
+a permutation using `argsort` (stable tie handling).
+
+```python
+import numpy as np
+
+from givp import GIVPConfig, givp
+
+# 6-city symmetric toy distance matrix
+dist = np.array(
+    [
+        [0, 2, 9, 10, 7, 3],
+        [2, 0, 6, 4, 3, 8],
+        [9, 6, 0, 8, 5, 7],
+        [10, 4, 8, 0, 6, 9],
+        [7, 3, 5, 6, 0, 4],
+        [3, 8, 7, 9, 4, 0],
+    ],
+    dtype=float,
+)
+
+
+def decode_permutation(x: np.ndarray) -> np.ndarray:
+    # Discretize to reinforce combinatorial behavior, then map to a valid route.
+    scores = np.rint(np.clip(x, 0.0, dist.shape[0] - 1)).astype(int)
+    return np.argsort(scores, kind="mergesort")
+
+
+def tsp_like_cost(x: np.ndarray) -> float:
+    p = decode_permutation(x)
+    total = 0.0
+    for i in range(len(p)):
+        a = int(p[i])
+        b = int(p[(i + 1) % len(p)])
+        total += float(dist[a, b])
+    return total
+
+
+bounds = [(0.0, float(dist.shape[0] - 1))] * dist.shape[0]
+cfg = GIVPConfig(integer_split=dist.shape[0], max_iterations=60, ils_iterations=10)
+
+result = givp(tsp_like_cost, bounds, seed=77, config=cfg)
+route = decode_permutation(result.x)
+
+print("route:", route.tolist())
+print(f"tour length: {result.fun:.3f}")
+```
+
+Interpretation tips:
+
+- The objective is purely combinatorial after decoding, while optimization
+  stays in `givp`'s native continuous search space.
+- Using continuous search (`integer_split=n`) plus explicit rounding in the
+  objective is a robust way to model permutation-style objectives.
+- The route is deterministic for a fixed seed and config.
+
 ## See also
 
-* [Quickstart](quickstart.md) — minimal first run.
-* [Algorithm overview](algorithm.md) — what each component does.
-* [Profiling](profiling.md) — measuring and improving performance.
+- [Quickstart](quickstart.md) — minimal first run.
+- [Algorithm overview](algorithm.md) — what each component does.
+- [Profiling](profiling.md) — measuring and improving performance.
 
 ---
 

@@ -13,8 +13,9 @@ Available in **Python**, **Julia**, **Rust**, **C++** (header-only), and **R**.
 
 ## Short-term (next 3 months)
 
-- **Expanded examples**: add worked examples for combinatorial objectives
-  and multi-objective scalarization wrappers.
+- **Expanded examples**:
+  - [x] multi-objective scalarization wrapper example (Issue #141)
+  - [x] combinatorial TSP-like discretized objective example (Issue #140)
 - **Cross-port parameter semantics sync**:
   - [x] versioned parity checklist published (`docs/parameter-parity.md`) (Issue #138)
   - [x] docs synchronized to the canonical config contract across Python, Julia, Rust, C++, and R
