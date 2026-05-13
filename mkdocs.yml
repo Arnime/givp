@@ -65,6 +65,7 @@ nav:
   - R: r.md
   - CLI Reference: cli.md
   - Algorithm: algorithm.md
+  - Architecture: architecture.md
   - Examples:
       - Overview: examples.md
       - Benchmarks: examples/benchmarks.md

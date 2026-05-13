@@ -18,8 +18,10 @@
 - [ ] `mypy` is clean.
 - [ ] `ruff check python/src python/tests` is clean.
 - [ ] Public API changes are reflected in `docs/`.
+- [ ] If roadmap-related, `docs/roadmap.md` was updated.
 - [ ] Commit messages follow Conventional Commits.
 
 ## Related issues
 
-<!-- e.g. Closes #123 -->
+<!-- Required: include at least one closing reference, e.g. Closes #123 -->
+Closes #
