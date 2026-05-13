@@ -18,7 +18,7 @@ The table below positions `givp` against widely used Python alternatives.
 | `scipy.optimize.dual_annealing` | yes | yes | continuous | maxiter | yes | Python | strong on basins of attraction |
 | `optuna` (TPE/CMA) | yes | yes | yes | n_trials, timeout | yes | Python | great for HP tuning, no SciPy-style API |
 | `pyomo`/`gurobi` | structured | depends | yes (MIP) | yes | yes | Python | needs the model to be expressible analytically |
-| **`givp`** | yes | yes | yes (mixed) | iter + time | yes (`seed=`) | Python+Julia+Rust | SciPy-style API, hybrid GRASP/ILS/VND/PR |
+| **`givp`** | yes | yes | yes (mixed) | iter + time | yes (`seed=`) | Python+Julia+Rust+C+++R | SciPy-style API, hybrid GRASP/ILS/VND/PR |
 
 ## Apples-to-apples: Rastrigin-30D
 
