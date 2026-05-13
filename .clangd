@@ -1,7 +1,7 @@
 CompileFlags:
   # Use compile_commands.json from the default build if available,
   # otherwise fall back to manual include paths below.
-  CompilationDatabase: cpp/build/default
+  CompilationDatabase: cpp/build
 
   Add:
     - -std=c++17
