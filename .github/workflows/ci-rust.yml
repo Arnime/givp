@@ -64,17 +64,27 @@ jobs:
         with:
           toolchain: ${{ matrix.rust }}
 
+      - name: Resolve Cargo binary
+        shell: bash
+        run: |
+          cargo_bin="$(rustup which cargo)"
+          echo "CARGO_BIN=$cargo_bin" >> "$GITHUB_ENV"
+          echo "Using cargo at: $cargo_bin"
+          "$cargo_bin" --version
+
       - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
         with:
           workspaces: "rust -> target"
 
       - name: Build
         working-directory: rust
-        run: cargo build --locked --verbose
+        run: |
+          "$CARGO_BIN" build --locked --verbose
 
       - name: Run tests
         working-directory: rust
-        run: cargo test --locked --verbose
+        run: |
+          "$CARGO_BIN" test --locked --verbose
 
   clippy:
     runs-on: ubuntu-latest
