@@ -16,9 +16,9 @@ from givp import (
     OptimizeResult,
     givp,
 )
+from givp.core.elite import ElitePool
 from givp.core.grasp import _validate_bounds_and_initial
 from givp.core.impl import _maybe_apply_warm_start
-from givp.core.elite import ElitePool
 
 
 def sphere(x: np.ndarray) -> float:

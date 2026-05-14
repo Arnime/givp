@@ -18,8 +18,8 @@ from numpy.typing import NDArray
 
 from givp import core
 from givp.config import GIVPConfig
-from givp.core.helpers import _set_seed
 from givp.core.grasp import _validate_bounds_and_initial
+from givp.core.helpers import _set_seed
 from givp.exceptions import InvalidInitialGuessError
 from givp.result import AlgorithmMeta, OptimizeResult, TerminationReason
 
