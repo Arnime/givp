@@ -35,7 +35,7 @@ from givp.core.helpers import (
     logger,
 )
 from givp.core.ils import ils_search
-from givp.core.pr import bidirectional_path_relinking
+from givp.core.pr import bidirectional_path_relinking, path_relinking
 from givp.core.vnd import _create_cached_cost_fn, local_search_vnd
 from givp.exceptions import InvalidBoundsError
 
@@ -314,9 +314,44 @@ def _apply_path_relinking_to_pair(
     deadline: float = 0.0,
 ) -> tuple[np.ndarray, float]:
     """Apply path relinking and VND local search to a pair of elite solutions."""
-    pr_solution, _ = bidirectional_path_relinking(
-        cached_fn, source, target, deadline=deadline
-    )
+    if config.path_relink_strategy == "bidirectional":
+        pr_solution, _ = bidirectional_path_relinking(
+            cached_fn, source, target, deadline=deadline
+        )
+    elif config.path_relink_strategy == "backward":
+        pr_solution, _ = path_relinking(
+            cached_fn,
+            target,
+            source,
+            strategy="forward",
+            deadline=deadline,
+        )
+    elif config.path_relink_strategy == "random":
+        rng = _new_rng()
+        if rng.integers(0, 2) == 0:
+            pr_solution, _ = path_relinking(
+                cached_fn,
+                source,
+                target,
+                strategy="forward",
+                deadline=deadline,
+            )
+        else:
+            pr_solution, _ = path_relinking(
+                cached_fn,
+                target,
+                source,
+                strategy="forward",
+                deadline=deadline,
+            )
+    else:
+        pr_solution, _ = path_relinking(
+            cached_fn,
+            source,
+            target,
+            strategy="forward",
+            deadline=deadline,
+        )
     pr_solution = local_search_vnd(
         cached_fn,
         pr_solution,

@@ -635,6 +635,123 @@ def test_bidirectional_path_relinking_returns_second_when_cost2_wins(
     assert result_cost == pytest.approx(0.5)
 
 
+def test_apply_path_relinking_to_pair_bidirectional_strategy(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    cfg = CoreConfig(path_relink_strategy="bidirectional", vnd_iterations=4)
+    called = {"bidirectional": 0, "path": 0}
+
+    def fake_bidirectional(*args: Any, **kwargs: Any) -> tuple[np.ndarray, float]:
+        called["bidirectional"] += 1
+        return np.array([1.0, 1.0, 1.0]), 3.0
+
+    def fake_path(*args: Any, **kwargs: Any) -> tuple[np.ndarray, float]:
+        called["path"] += 1
+        return np.array([2.0, 2.0, 2.0]), 12.0
+
+    monkeypatch.setattr(core_impl, "bidirectional_path_relinking", fake_bidirectional)
+    monkeypatch.setattr(core_impl, "path_relinking", fake_path)
+    out, cost = _apply_path_relinking_to_pair(
+        np.array([0.0, 0.0, 0.0]),
+        np.array([1.0, 1.0, 1.0]),
+        quad,
+        3,
+        cfg,
+        None,
+    )
+    assert called["bidirectional"] == 1
+    assert called["path"] == 0
+    assert out.shape == (3,)
+    assert cost <= quad(np.array([1.0, 1.0, 1.0]))
+
+
+def test_apply_path_relinking_to_pair_forward_and_backward_strategies(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[tuple[np.ndarray, np.ndarray, str]] = []
+
+    def fake_path(
+        cost_fn: Callable,
+        source: np.ndarray,
+        target: np.ndarray,
+        strategy: str = "best",
+        seed: int | None = None,
+        deadline: float = 0.0,
+    ) -> tuple[np.ndarray, float]:
+        calls.append((source.copy(), target.copy(), strategy))
+        return np.array([4.0, 4.0, 4.0]), 48.0
+
+    monkeypatch.setattr(core_impl, "path_relinking", fake_path)
+    monkeypatch.setattr(
+        core_impl, "bidirectional_path_relinking", lambda *a, **k: pytest.fail()
+    )
+
+    forward_cfg = CoreConfig(path_relink_strategy="forward", vnd_iterations=4)
+    _apply_path_relinking_to_pair(
+        np.array([0.0, 1.0, 2.0]),
+        np.array([3.0, 4.0, 5.0]),
+        quad,
+        3,
+        forward_cfg,
+        None,
+    )
+    backward_cfg = CoreConfig(path_relink_strategy="backward", vnd_iterations=4)
+    _apply_path_relinking_to_pair(
+        np.array([0.0, 1.0, 2.0]),
+        np.array([3.0, 4.0, 5.0]),
+        quad,
+        3,
+        backward_cfg,
+        None,
+    )
+
+    assert calls[0][0].tolist() == [0.0, 1.0, 2.0]
+    assert calls[0][1].tolist() == [3.0, 4.0, 5.0]
+    assert calls[0][2] == "forward"
+    assert calls[1][0].tolist() == [3.0, 4.0, 5.0]
+    assert calls[1][1].tolist() == [0.0, 1.0, 2.0]
+    assert calls[1][2] == "forward"
+
+
+def test_apply_path_relinking_to_pair_random_strategy(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FakeRng:
+        def __init__(self, choice_value: int) -> None:
+            self.choice_value = choice_value
+
+        def integers(self, low: int, high: int) -> int:
+            return self.choice_value
+
+    calls: list[tuple[np.ndarray, np.ndarray]] = []
+
+    def fake_path(
+        cost_fn: Callable,
+        source: np.ndarray,
+        target: np.ndarray,
+        strategy: str = "best",
+        seed: int | None = None,
+        deadline: float = 0.0,
+    ) -> tuple[np.ndarray, float]:
+        calls.append((source.copy(), target.copy()))
+        return np.array([6.0, 6.0, 6.0]), 108.0
+
+    monkeypatch.setattr(core_impl, "path_relinking", fake_path)
+    monkeypatch.setattr(core_impl, "bidirectional_path_relinking", lambda *a, **k: pytest.fail())
+    monkeypatch.setattr(core_impl, "_new_rng", lambda seed=None: FakeRng(0))
+    random_cfg = CoreConfig(path_relink_strategy="random", vnd_iterations=4)
+    _apply_path_relinking_to_pair(
+        np.array([1.0, 2.0, 3.0]),
+        np.array([4.0, 5.0, 6.0]),
+        quad,
+        3,
+        random_cfg,
+        None,
+    )
+    assert calls[0][0].tolist() == [1.0, 2.0, 3.0]
+    assert calls[0][1].tolist() == [4.0, 5.0, 6.0]
+
+
 # ----------------------------- perturb / alpha -----------------------------
 
 
@@ -1182,11 +1299,10 @@ def test_maybe_apply_warm_start_updates_best() -> None:
 
     pool = ElitePool(max_size=2, min_distance=0.0)
     init = np.array([0.5, 0.5])
-    new_cost, new_sol = _maybe_apply_warm_start(
-        initial_guess=[0.5, 0.5],
+    new_cost, new_sol, warm_best = _maybe_apply_warm_start(
+        initial_guesses=[[0.5, 0.5]],
         elite_pool=pool,
         cost_fn=quad,
-        initial_arr=init,
         best_cost=10.0,
         best_solution=np.zeros(2),
         verbose=True,
@@ -1194,36 +1310,37 @@ def test_maybe_apply_warm_start_updates_best() -> None:
     assert new_cost == quad(init)
     assert pool.size() == 1
     np.testing.assert_array_equal(new_sol, init)
+    assert warm_best is not None
+    np.testing.assert_array_equal(warm_best, init)
 
 
 def test_maybe_apply_warm_start_keeps_best_when_initial_worse() -> None:
 
     pool = ElitePool(max_size=2, min_distance=0.0)
-    init = np.array([5.0, 5.0])
-    new_cost, _ = _maybe_apply_warm_start(
-        initial_guess=[5.0, 5.0],
+    new_cost, _, warm_best = _maybe_apply_warm_start(
+        initial_guesses=[[5.0, 5.0]],
         elite_pool=pool,
         cost_fn=quad,
-        initial_arr=init,
         best_cost=0.0,
         best_solution=np.zeros(2),
         verbose=False,
     )
     assert new_cost == pytest.approx(0.0)
+    assert warm_best is not None
 
 
 def test_maybe_apply_warm_start_no_pool_short_circuit() -> None:
 
-    out_cost, _ = _maybe_apply_warm_start(
+    out_cost, _, warm_best = _maybe_apply_warm_start(
         None,
         None,
         quad,
-        np.zeros(2),
         1.0,
         np.zeros(2),
         False,
     )
     assert out_cost == pytest.approx(1.0)
+    assert warm_best is None
 
 
 def test_print_cache_stats_runs(caplog: pytest.LogCaptureFixture) -> None:

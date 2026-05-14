@@ -10,6 +10,7 @@ from typing import Literal
 from givp.exceptions import InvalidConfigError
 
 Direction = Literal["minimize", "maximize"]
+PathRelinkStrategy = Literal["bidirectional", "forward", "backward", "random"]
 
 
 @dataclass
@@ -33,6 +34,7 @@ class GIVPConfig:
         use_elite_pool: Whether to maintain an elite pool for path relinking.
         elite_size: Maximum size of the elite pool.
         path_relink_frequency: GRASP iteration period at which to run PR.
+        path_relink_strategy: Explicit path-relinking direction control.
         adaptive_alpha: If True, alpha varies between alpha_min and alpha_max.
         alpha_min: Lower bound used by adaptive alpha.
         alpha_max: Upper bound used by adaptive alpha.
@@ -85,6 +87,7 @@ class GIVPConfig:
     use_elite_pool: bool = True
     elite_size: int = 7
     path_relink_frequency: int = 8
+    path_relink_strategy: PathRelinkStrategy = "bidirectional"
     adaptive_alpha: bool = True
     alpha_min: float = 0.08
     alpha_max: float = 0.18
@@ -156,6 +159,16 @@ class GIVPConfig:
         if not 0.0 <= self.alpha_min <= 1.0:
             raise InvalidConfigError(
                 f"alpha_min must be in [0, 1], got {self.alpha_min!r}"
+            )
+        if self.path_relink_strategy not in (
+            "bidirectional",
+            "forward",
+            "backward",
+            "random",
+        ):
+            raise InvalidConfigError(
+                "path_relink_strategy must be one of 'bidirectional', 'forward', "
+                "'backward', or 'random'"
             )
         if not 0.0 <= self.alpha_max <= 1.0:
             raise InvalidConfigError(

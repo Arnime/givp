@@ -43,8 +43,9 @@ Available in **Python**, **Julia**, **Rust**, **C++** (header-only), and **R**.
 - **Elite-pool warm start API**: Python multi-seed initialization slice
   implemented; cross-port rollout still pending for the shared elite-pool warm
   start API (Issue #142).
-- **Configurable path-relinking strategies**: expose `forward`,
-  `backward`, and randomized PR direction as an explicit option.
+- **Configurable path-relinking strategies**: Python strategy-routing slice
+  implemented (`bidirectional`, `forward`, `backward`, `random`); cross-port
+  rollout still pending for parity across Julia, Rust, C++, and R (Issue #143).
 - **Documentation improvements**: maintain benchmark comparison charts,
   parity tables, and roadmap status synchronized with implemented changes.
 - **C++ package promotion (from October 2026)**: track migration from staging
