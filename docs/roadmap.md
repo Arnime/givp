@@ -21,6 +21,12 @@ Available in **Python**, **Julia**, **Rust**, **C++** (header-only), and **R**.
     (Issue #138)
   - [x] docs synchronized to the canonical config contract across Python, Julia,
     Rust, C++, and R
+- **Elite-pool warm start API — cross-port rollout** (Issue #142): Python slice
+  merged (PR #157); Julia, Rust, C++, and R ports still need multi-seed
+  `initial_guesses` exposed in their public APIs.
+- **Configurable path-relinking strategies — cross-port rollout** (Issue #143):
+  Python slice merged (PR #158); Julia, Rust, and R ports still need
+  `path_relink_strategy` exposed as a user-configurable parameter.
 
 > **Recently completed (v1.0.0 line):**
 > Julia package on General Registry (`Pkg.add("GIVPOptimizer")`),
@@ -40,26 +46,20 @@ Available in **Python**, **Julia**, **Rust**, **C++** (header-only), and **R**.
 
 ## Medium-term (3–6 months)
 
-- **Elite-pool warm start API**: Python multi-seed initialization slice
-  implemented; cross-port rollout still pending for the shared elite-pool warm
-  start API (Issue #142).
-- **Configurable path-relinking strategies**: Python strategy-routing slice
-  implemented (`bidirectional`, `forward`, `backward`, `random`); cross-port
-  rollout still pending for parity across Julia, Rust, C++, and R (Issue #143).
 - **Documentation improvements**: maintain benchmark comparison charts,
   parity tables, and roadmap status synchronized with implemented changes.
 - **C++ package promotion (from October 2026)**: track migration from staging
   overlays (`cpp/vcpkg_ports/arnime-givp/`, `cpp/conan/`) to upstream package
-  indexes when the external submission window opens.
+  indexes when the external submission window opens (Issue #139).
 
 ## Long-term (6–12 months)
 
-- **Optional scikit-learn integration**: expose `givp` as a
+- **Optional scikit-learn integration** (Issue #145): expose `givp` as a
   scikit-learn-compatible `BaseEstimator` for hyper-parameter tuning
   workflows.
-- **Type-safe bounds specification**: accept named-parameter bounds via
+- **Type-safe bounds specification** (Issue #146): accept named-parameter bounds via
   a mapping in addition to the current sequence-of-pairs format.
-- **Async support**: explore asyncio-compatible runner for use in
+- **Async support** (Issue #147): explore asyncio-compatible runner for use in
   Jupyter and async frameworks.
 
 ## Out of scope
