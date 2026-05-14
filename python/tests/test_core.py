@@ -1498,7 +1498,7 @@ def test_grasp_ils_vnd_uses_warm_best_solution_as_next_initial(
 
     monkeypatch.setattr(core_impl, "_run_grasp_loop", _fake_run_grasp_loop)
 
-    _sol, _cost, _nit, _msg = core_impl.grasp_ils_vnd(
+    _ = core_impl.grasp_ils_vnd(
         quad,
         num_vars=2,
         config=CoreConfig(max_iterations=1),

@@ -64,17 +64,78 @@ jobs:
         with:
           toolchain: ${{ matrix.rust }}
 
+      - name: Resolve Cargo binary (Linux/macOS)
+        if: runner.os != 'Windows'
+        shell: bash
+        env:
+          TOOLCHAIN: ${{ matrix.rust }}
+        run: |
+          cargo_bin="$(compgen -G "$HOME/.rustup/toolchains/${TOOLCHAIN}-*/bin/cargo" | head -n 1)"
+          if [ -z "$cargo_bin" ]; then
+            echo "::error::Unable to locate cargo binary for toolchain ${TOOLCHAIN}"
+            exit 1
+          fi
+          echo "CARGO_BIN=$cargo_bin" >> "$GITHUB_ENV"
+          echo "Using cargo at: $cargo_bin"
+          "$cargo_bin" --version
+
+      - name: Resolve Cargo binary (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          TOOLCHAIN: ${{ matrix.rust }}
+        run: |
+          $toolchain = Get-ChildItem "$env:USERPROFILE\.rustup\toolchains" -Directory |
+            Where-Object { $_.Name -like "$env:TOOLCHAIN-*" } |
+            Select-Object -First 1
+          if (-not $toolchain) {
+            Write-Error "Unable to locate cargo binary for toolchain $env:TOOLCHAIN"
+            exit 1
+          }
+          $cargoBin = Join-Path $toolchain.FullName "bin\cargo.exe"
+          if (-not (Test-Path $cargoBin)) {
+            Write-Error "Cargo executable not found at $cargoBin"
+            exit 1
+          }
+          "CARGO_BIN=$cargoBin" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          Write-Host "Using cargo at: $cargoBin"
+          & "$cargoBin" --version
+
       - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
         with:
           workspaces: "rust -> target"
 
-      - name: Build
+      - name: Build (Linux/macOS)
+        if: runner.os != 'Windows'
         working-directory: rust
-        run: cargo build --locked --verbose
+        run: |
+          TOOLCHAIN_BIN="$(dirname "$CARGO_BIN")"
+          PATH="$TOOLCHAIN_BIN:$PATH" "$CARGO_BIN" build --locked --verbose
 
-      - name: Run tests
+      - name: Build (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
         working-directory: rust
-        run: cargo test --locked --verbose
+        run: |
+          $toolchainBin = Split-Path $env:CARGO_BIN -Parent
+          $env:Path = "$toolchainBin;$env:Path"
+          & "$env:CARGO_BIN" build --locked --verbose
+
+      - name: Run tests (Linux/macOS)
+        if: runner.os != 'Windows'
+        working-directory: rust
+        run: |
+          TOOLCHAIN_BIN="$(dirname "$CARGO_BIN")"
+          PATH="$TOOLCHAIN_BIN:$PATH" "$CARGO_BIN" test --locked --verbose
+
+      - name: Run tests (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        working-directory: rust
+        run: |
+          $toolchainBin = Split-Path $env:CARGO_BIN -Parent
+          $env:Path = "$toolchainBin;$env:Path"
+          & "$env:CARGO_BIN" test --locked --verbose
 
   clippy:
     runs-on: ubuntu-latest
