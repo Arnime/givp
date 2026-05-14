@@ -109,26 +109,32 @@ jobs:
         if: runner.os != 'Windows'
         working-directory: rust
         run: |
-          "$CARGO_BIN" build --locked --verbose
+          TOOLCHAIN_BIN="$(dirname "$CARGO_BIN")"
+          PATH="$TOOLCHAIN_BIN:$PATH" "$CARGO_BIN" build --locked --verbose
 
       - name: Build (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         working-directory: rust
         run: |
+          $toolchainBin = Split-Path $env:CARGO_BIN -Parent
+          $env:Path = "$toolchainBin;$env:Path"
           & "$env:CARGO_BIN" build --locked --verbose
 
       - name: Run tests (Linux/macOS)
         if: runner.os != 'Windows'
         working-directory: rust
         run: |
-          "$CARGO_BIN" test --locked --verbose
+          TOOLCHAIN_BIN="$(dirname "$CARGO_BIN")"
+          PATH="$TOOLCHAIN_BIN:$PATH" "$CARGO_BIN" test --locked --verbose
 
       - name: Run tests (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         working-directory: rust
         run: |
+          $toolchainBin = Split-Path $env:CARGO_BIN -Parent
+          $env:Path = "$toolchainBin;$env:Path"
           & "$env:CARGO_BIN" test --locked --verbose
 
   clippy:
