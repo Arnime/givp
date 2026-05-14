@@ -496,14 +496,14 @@ def _prepare_bounds(
 
 
 def _prepare_initial_array(
-    initial_guess: list[float] | None,
+    initial_guesses: list[list[float]] | None,
     lower_arr: np.ndarray,
     upper_arr: np.ndarray,
     num_vars: int,
 ) -> np.ndarray:
-    """Build initial candidate either from initial_guess or random sample."""
-    if initial_guess is not None:
-        return np.array(initial_guess, dtype=float)
+    """Build initial candidate from the first warm-start seed or random sample."""
+    if initial_guesses is not None and len(initial_guesses) > 0:
+        return np.array(initial_guesses[0], dtype=float)
     rng = _new_rng()
     result: np.ndarray = np.asarray(
         lower_arr + (upper_arr - lower_arr) * rng.random(size=num_vars)
@@ -512,26 +512,36 @@ def _prepare_initial_array(
 
 
 def _maybe_apply_warm_start(
-    initial_guess: list[float] | None,
+    initial_guesses: list[list[float]] | None,
     elite_pool: ElitePool | None,
     cost_fn: Callable,
-    initial_arr: np.ndarray,
     best_cost: float,
     best_solution: np.ndarray,
     verbose: bool,
-) -> tuple[float, np.ndarray]:
-    """Insert warm start in elite pool and update incumbent if needed."""
-    if initial_guess is None or elite_pool is None:
-        return best_cost, best_solution
+) -> tuple[float, np.ndarray, np.ndarray | None]:
+    """Insert warm-start seeds into the elite pool and update the incumbent."""
+    if initial_guesses is None or len(initial_guesses) == 0:
+        return best_cost, best_solution, None
 
-    init_cost = cost_fn(initial_arr)
-    elite_pool.add(initial_arr.copy(), init_cost)
-    if init_cost < best_cost:
-        best_cost = init_cost
-        best_solution = initial_arr.copy()
-    if verbose:
-        logger.info("[P14 warm-start] initial_guess cost = %.2f", init_cost)
-    return best_cost, best_solution
+    warm_best_solution: np.ndarray | None = None
+    warm_best_cost = float("inf")
+
+    for idx, initial_guess in enumerate(initial_guesses):
+        initial_arr = np.array(initial_guess, dtype=float)
+        init_cost = cost_fn(initial_arr)
+        if elite_pool is not None:
+            elite_pool.add(initial_arr.copy(), init_cost)
+        if init_cost < warm_best_cost:
+            warm_best_cost = init_cost
+            warm_best_solution = initial_arr.copy()
+        if verbose:
+            logger.info("[P14 warm-start] seed %d cost = %.2f", idx, init_cost)
+
+    if warm_best_solution is not None and warm_best_cost < best_cost:
+        best_cost = warm_best_cost
+        best_solution = warm_best_solution.copy()
+
+    return best_cost, best_solution, warm_best_solution
 
 
 def _print_run_header(verbose: bool, num_vars: int, config: _CoreConfigProto) -> None:
@@ -637,7 +647,7 @@ def grasp_ils_vnd(
     iteration_callback: Callable | None = None,
     lower: list[float] | None = None,
     upper: list[float] | None = None,
-    initial_guess: list[float] | None = None,
+    initial_guesses: list[list[float]] | None = None,
 ) -> tuple[list[int], float, int, str]:
     """Run the GRASP-ILS-VND-PR algorithm and return the best solution found.
 
@@ -652,7 +662,7 @@ def grasp_ils_vnd(
         iteration_callback: Optional callable ``(iter, cost, solution)`` invoked after each iteration.
         lower: Lower bounds for each variable.
         upper: Upper bounds for each variable.
-        initial_guess: Optional warm-start solution vector.
+        initial_guesses: Optional collection of warm-start solution vectors.
 
     Returns:
         Tuple (solution_list, best_cost).
@@ -668,7 +678,7 @@ def grasp_ils_vnd(
     _set_integer_split(config.integer_split)
     _set_group_size(config.group_size)
 
-    initial_arr = _prepare_initial_array(initial_guess, lower_arr, upper_arr, num_vars)
+    initial_arr = _prepare_initial_array(initial_guesses, lower_arr, upper_arr, num_vars)
 
     elite_pool, cache, conv_monitor = _initialize_optimization_components(
         config, lower_arr, upper_arr
@@ -679,15 +689,16 @@ def grasp_ils_vnd(
     best_cost = float("inf")
     stagnation = 0
 
-    best_cost, best_solution = _maybe_apply_warm_start(
-        initial_guess,
+    best_cost, best_solution, warm_best_solution = _maybe_apply_warm_start(
+        initial_guesses,
         elite_pool,
         cost_fn,
-        initial_arr,
         best_cost,
         best_solution,
         verbose,
     )
+    if warm_best_solution is not None:
+        initial_arr = warm_best_solution
 
     best_cost, best_solution, stagnation, actual_nit, term_msg = _run_grasp_loop(
         cost_fn,

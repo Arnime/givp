@@ -16,7 +16,9 @@ from givp import (
     OptimizeResult,
     givp,
 )
+from givp.core.elite import ElitePool
 from givp.core.grasp import _validate_bounds_and_initial
+from givp.core.impl import _maybe_apply_warm_start
 
 
 def sphere(x: np.ndarray) -> float:
@@ -192,6 +194,51 @@ def test_initial_guess_warm_start(fast_config: GIVPConfig) -> None:
     result = givp(sphere, bounds, config=fast_config, initial_guess=initial)
     assert result.x.shape == (3,)
     assert np.isfinite(result.fun)
+
+
+def test_initial_guesses_multi_seed_warm_start(fast_config: GIVPConfig) -> None:
+    bounds = [(-3.0, 3.0)] * 3
+    warm_starts = [
+        [0.2, 0.2, 0.2],
+        [0.3, 0.1, 0.4],
+    ]
+    result = givp(sphere, bounds, config=fast_config, initial_guesses=warm_starts)
+    assert result.x.shape == (3,)
+    assert np.isfinite(result.fun)
+
+
+def test_initial_guesses_duplicate_candidates_are_rejected() -> None:
+    bounds = [(-3.0, 3.0)] * 2
+    with pytest.raises(InvalidInitialGuessError):
+        givp(
+            sphere,
+            bounds,
+            initial_guesses=[[0.2, 0.2], [0.2, 0.2]],
+        )
+
+
+def test_maybe_apply_warm_start_uses_best_seed() -> None:
+    elite_pool = ElitePool(max_size=5)
+    seeds = [
+        [1.0, 1.0, 1.0],
+        [0.1, 0.1, 0.1],
+        [0.5, 0.5, 0.5],
+    ]
+
+    best_cost, best_solution, warm_best = _maybe_apply_warm_start(
+        seeds,
+        elite_pool,
+        sphere,
+        float("inf"),
+        np.zeros(3),
+        verbose=False,
+    )
+
+    assert np.isclose(best_cost, sphere(np.array([0.1, 0.1, 0.1])))
+    assert np.allclose(best_solution, np.array([0.1, 0.1, 0.1]))
+    assert warm_best is not None
+    assert np.allclose(warm_best, np.array([0.1, 0.1, 0.1]))
+    assert elite_pool.size() == 3
 
 
 def test_iteration_callback_is_invoked(fast_config: GIVPConfig) -> None:

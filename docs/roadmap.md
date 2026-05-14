@@ -40,8 +40,9 @@ Available in **Python**, **Julia**, **Rust**, **C++** (header-only), and **R**.
 
 ## Medium-term (3–6 months)
 
-- **Elite-pool warm start API**: allow callers to seed the elite pool with
-  multiple known-good solutions (beyond a single `initial_guess`).
+- **Elite-pool warm start API**: Python multi-seed initialization slice
+  implemented; cross-port rollout still pending for the shared elite-pool warm
+  start API (Issue #142).
 - **Configurable path-relinking strategies**: expose `forward`,
   `backward`, and randomized PR direction as an explicit option.
 - **Documentation improvements**: maintain benchmark comparison charts,

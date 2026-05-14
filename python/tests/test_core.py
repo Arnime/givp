@@ -1182,11 +1182,10 @@ def test_maybe_apply_warm_start_updates_best() -> None:
 
     pool = ElitePool(max_size=2, min_distance=0.0)
     init = np.array([0.5, 0.5])
-    new_cost, new_sol = _maybe_apply_warm_start(
-        initial_guess=[0.5, 0.5],
+    new_cost, new_sol, warm_best = _maybe_apply_warm_start(
+        initial_guesses=[[0.5, 0.5]],
         elite_pool=pool,
         cost_fn=quad,
-        initial_arr=init,
         best_cost=10.0,
         best_solution=np.zeros(2),
         verbose=True,
@@ -1194,36 +1193,37 @@ def test_maybe_apply_warm_start_updates_best() -> None:
     assert new_cost == quad(init)
     assert pool.size() == 1
     np.testing.assert_array_equal(new_sol, init)
+    assert warm_best is not None
+    np.testing.assert_array_equal(warm_best, init)
 
 
 def test_maybe_apply_warm_start_keeps_best_when_initial_worse() -> None:
 
     pool = ElitePool(max_size=2, min_distance=0.0)
-    init = np.array([5.0, 5.0])
-    new_cost, _ = _maybe_apply_warm_start(
-        initial_guess=[5.0, 5.0],
+    new_cost, _, warm_best = _maybe_apply_warm_start(
+        initial_guesses=[[5.0, 5.0]],
         elite_pool=pool,
         cost_fn=quad,
-        initial_arr=init,
         best_cost=0.0,
         best_solution=np.zeros(2),
         verbose=False,
     )
     assert new_cost == pytest.approx(0.0)
+    assert warm_best is not None
 
 
 def test_maybe_apply_warm_start_no_pool_short_circuit() -> None:
 
-    out_cost, _ = _maybe_apply_warm_start(
+    out_cost, _, warm_best = _maybe_apply_warm_start(
         None,
         None,
         quad,
-        np.zeros(2),
         1.0,
         np.zeros(2),
         False,
     )
     assert out_cost == pytest.approx(1.0)
+    assert warm_best is None
 
 
 def test_print_cache_stats_runs(caplog: pytest.LogCaptureFixture) -> None:
