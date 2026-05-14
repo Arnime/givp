@@ -9,7 +9,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "config.hpp"
+#include <givp/config.hpp>
 
 namespace givp {
 

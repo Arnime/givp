@@ -7,7 +7,7 @@
 #include <limits>
 #include <vector>
 
-#include "elite.hpp"
+#include <givp/detail/elite.hpp>
 
 namespace givp::detail {
 

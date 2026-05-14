@@ -14,17 +14,17 @@
 #include <utility>
 #include <vector>
 
-#include "../config.hpp"
-#include "../exceptions.hpp"
-#include "../result.hpp"
-#include "cache.hpp"
-#include "convergence.hpp"
-#include "elite.hpp"
-#include "grasp.hpp"
-#include "helpers.hpp"
-#include "ils.hpp"
-#include "pr.hpp"
-#include "vnd.hpp"
+#include <givp/config.hpp>
+#include <givp/exceptions.hpp>
+#include <givp/result.hpp>
+#include <givp/detail/cache.hpp>
+#include <givp/detail/convergence.hpp>
+#include <givp/detail/elite.hpp>
+#include <givp/detail/grasp.hpp>
+#include <givp/detail/helpers.hpp>
+#include <givp/detail/ils.hpp>
+#include <givp/detail/pr.hpp>
+#include <givp/detail/vnd.hpp>
 
 namespace givp::detail {
 
