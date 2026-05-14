@@ -7,7 +7,7 @@
 #include <optional>
 #include <vector>
 
-#include "exceptions.hpp"
+#include <givp/exceptions.hpp>
 
 namespace givp {
 

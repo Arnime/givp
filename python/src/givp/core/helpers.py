@@ -14,12 +14,13 @@ import secrets
 import time as _time_mod
 from collections.abc import Callable
 from contextvars import ContextVar
-from typing import Protocol
+from typing import Literal, Protocol
 
 import numpy as np
 
 # Type alias for the user-supplied objective function.
 EvaluatorFn = Callable[[np.ndarray], float]
+PathRelinkStrategy = Literal["bidirectional", "forward", "backward", "random"]
 
 # Keep the legacy logger name so tests and external callers that listen to
 # "givp._core" continue receiving messages even after the package rename.
@@ -161,6 +162,7 @@ class _CoreConfigProto(Protocol):
     use_elite_pool: bool
     elite_size: int
     path_relink_frequency: int
+    path_relink_strategy: PathRelinkStrategy
     adaptive_alpha: bool
     alpha_min: float
     alpha_max: float

@@ -8,10 +8,10 @@
 #include <utility>
 #include <vector>
 
-#include "cache.hpp"
-#include "grasp.hpp"
-#include "helpers.hpp"
-#include "vnd.hpp"
+#include <givp/detail/cache.hpp>
+#include <givp/detail/grasp.hpp>
+#include <givp/detail/helpers.hpp>
+#include <givp/detail/vnd.hpp>
 
 namespace givp::detail {
 

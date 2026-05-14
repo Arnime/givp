@@ -8,9 +8,9 @@
 #include <utility>
 #include <vector>
 
-#include "cache.hpp"
-#include "grasp.hpp"
-#include "helpers.hpp"
+#include <givp/detail/cache.hpp>
+#include <givp/detail/grasp.hpp>
+#include <givp/detail/helpers.hpp>
 
 namespace givp::detail {
 

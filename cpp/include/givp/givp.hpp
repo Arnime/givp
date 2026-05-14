@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: MIT
 #pragma once
 
-#include "config.hpp"
-#include "detail/impl_core.hpp"
-#include "result.hpp"
+#include <givp/config.hpp>
+#include <givp/detail/impl_core.hpp>
+#include <givp/result.hpp>
 
 namespace givp {
 

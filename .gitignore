@@ -36,6 +36,7 @@ julia/benchmarks/Manifest.toml
 rust/target/
 rust/coverage*
 rust/cov*
+rust/lcov*
 Notebooks/_rust_*/
 Notebooks/_cpp_*/
 

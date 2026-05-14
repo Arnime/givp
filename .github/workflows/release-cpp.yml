@@ -17,8 +17,6 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   CMAKE_BUILD_PARALLEL_LEVEL: "4"
 
-permissions: {}
-
 jobs:
   validate:
     name: Validate and Extract Version
@@ -370,6 +368,8 @@ jobs:
     needs: [validate, test-multiplatform, validate-package, prepare-artifacts, create-release]
     runs-on: ubuntu-latest
     if: always()
+    permissions:
+      contents: read
     steps:
       - name: Generate summary
         env:
@@ -416,6 +416,8 @@ jobs:
     needs: [validate, release-summary]
     runs-on: ubuntu-latest
     if: always()
+    permissions:
+      contents: read
     steps:
       - name: Prepare notification
         env:

@@ -1,28 +1,46 @@
 {
     "recommendations": [
+        // ── Python ─────────────────────────────────────────────────────────
         "ms-python.python",
         "ms-python.vscode-pylance",
         "ms-python.black-formatter",
         "charliermarsh.ruff",
         "ms-python.mypy-type-checker",
         "ms-python.pytest-adapter",
+        // ── Rust ───────────────────────────────────────────────────────────
         "rust-lang.rust-analyzer",
-        "vadimcn.vscode-lldb",
-        "tamasfe.even-better-toml",
+        "vadimcn.vscode-lldb", // debugger nativo para Rust
+        "tamasfe.even-better-toml", // Cargo.toml com schema e validação
+        // ── Julia ──────────────────────────────────────────────────────────
         "julialang.language-julia",
-        "reditorsupport.r",
-        "rdebugger.r-debugger",
-        "ms-vscode-remote.remote-wsl",
-        // C/C++: clangd is the primary IntelliSense provider
-        // (Microsoft C++ extension is NOT needed and causes conflicts)
-        "llvm-vs-code-extensions.vscode-clangd",
-        "alesiong.clang-tidy-linter",
-        "cppchecksolutionsab.cppcheck-official",
+        // ── R ───────────────────────────────────────────────────────────────
+        "reditorsupport.r", // suporte principal de linguagem + diagnostics
+        "rdebugger.r-debugger", // depuração para scripts e testes em R
+        "ms-vscode-remote.remote-wsl", // abrir o repo dentro do WSL quando usar clangd/C++
+        // ── C/C++ ───────────────────────────────────────────────────────────
+        // IMPORTANT: clangd is the default C++ IntelliSense provider for this project.
+        // The Microsoft C++ extension (cpptools) is NOT needed and causes conflicts.
+        // See .vscode/settings.json for clangd configuration.
+        // "ms-vscode.cpptools", // ❌ DISABLED: conflicts with clangd
+        "llvm-vs-code-extensions.vscode-clangd", // ✅ PRIMARY: C++ IntelliSense via clangd
+        "alesiong.clang-tidy-linter", // diagnósticos do clang-tidy no editor
+        "cppchecksolutionsab.cppcheck-official", // diagnósticos do cppcheck no editor
+        // ── Notebooks / Jupyter ────────────────────────────────────────────
         "ms-toolsai.jupyter",
         "ms-toolsai.jupyter-renderers",
         "ms-toolsai.vscode-jupyter-cell-tags",
+        // ── Formato / Markup ───────────────────────────────────────────────
         "yzhang.markdown-all-in-one",
         "redhat.vscode-yaml",
+        // ── Theme & Icons ──────────────────────────────────────────────────
+        "PKief.material-icon-theme",
+        // ── Git ────────────────────────────────────────────────────────────
+        "eamodio.gitlens",
+        // ── Utilitários ────────────────────────────────────────────────────
+        "usernamehw.errorlens",
+        "christian-kohler.path-intellisense",
+        "aaron-bond.better-comments",
+        // ── Qualidade / Segurança ──────────────────────────────────────────
         "sonarsource.sonarlint-vscode"
     ]
 }

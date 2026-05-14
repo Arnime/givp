@@ -30,6 +30,7 @@ Checklist validates:
 | `use_elite_pool` | true | true | true | true | TRUE | Aligned |
 | `elite_size` | 7 | 7 | 7 | 7 | 7 | Aligned |
 | `path_relink_frequency` | 8 | 8 | 8 | 8 | 8 | Aligned |
+| `path_relink_strategy` | bidirectional | TBD | TBD | TBD | TBD | Python slice only |
 | `adaptive_alpha` | true | true | true | true | TRUE | Aligned |
 | `alpha_min` | 0.08 | 0.08 | 0.08 | 0.08 | 0.08 | Aligned |
 | `alpha_max` | 0.18 | 0.18 | 0.18 | 0.18 | 0.18 | Aligned |

@@ -21,6 +21,12 @@ def test_minimize_false_sets_direction_maximize() -> None:
     assert cfg.direction == "maximize"
 
 
+def test_minimize_true_sets_direction_minimize() -> None:
+    cfg = GIVPConfig(minimize=True, direction="maximize")
+    assert cfg.minimize is True
+    assert cfg.direction == "minimize"
+
+
 def test_direction_maximize_sets_minimize_false() -> None:
     cfg = GIVPConfig(direction="maximize")
     assert cfg.minimize is False
@@ -29,6 +35,11 @@ def test_direction_maximize_sets_minimize_false() -> None:
 def test_invalid_direction_raises_invalid_config() -> None:
     with pytest.raises(InvalidConfigError):
         GIVPConfig(direction="bogus")  # type: ignore[arg-type]
+
+
+def test_invalid_path_relink_strategy_raises_invalid_config() -> None:
+    with pytest.raises(InvalidConfigError):
+        GIVPConfig(path_relink_strategy="invalid")  # type: ignore[arg-type]
 
 
 @pytest.mark.parametrize(
@@ -85,6 +96,11 @@ def test_integer_split_negative_rejected() -> None:
 def test_integer_split_none_allowed() -> None:
     cfg = GIVPConfig(integer_split=None)
     assert cfg.integer_split is None
+
+
+def test_integer_split_positive_allowed() -> None:
+    cfg = GIVPConfig(integer_split=2)
+    assert cfg.integer_split == 2
 
 
 def test_as_core_config_copies_fields() -> None:

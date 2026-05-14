@@ -2,15 +2,25 @@
   "version": 4,
   "configurations": [
     {
-      "name": "Workspace Example",
+      "name": "Workspace",
       "cppStandard": "c++17",
-      "intelliSenseMode": "${default}",
+      "intelliSenseMode": "windows-msvc-x86",
+      "compilerPath": "C:/Program Files (x86)/Microsoft Visual Studio/18/BuildTools/VC/Tools/MSVC/14.50.35717/bin/Hostx86/x86/cl.exe",
+      "compileCommands": "${workspaceFolder}/cpp/build/default/compile_commands.json",
       "includePath": [
-        "${workspaceFolder}/cpp/include"
+        "${workspaceFolder}/cpp/include",
+        "${workspaceFolder}/cpp/include/givp",
+        "${workspaceFolder}/cpp/build/default/_deps/catch2-src/src",
+        "${workspaceFolder}/cpp/build/default/_deps/catch2-build/generated-includes",
+        "${workspaceFolder}/cpp/build/default/_deps/nanobench-src/src/include"
       ],
       "browse": {
         "path": [
-          "${workspaceFolder}/cpp/include"
+          "${workspaceFolder}/cpp/include",
+          "${workspaceFolder}/cpp/include/givp",
+          "${workspaceFolder}/cpp/build/default/_deps/catch2-src/src",
+          "${workspaceFolder}/cpp/build/default/_deps/catch2-build/generated-includes",
+          "${workspaceFolder}/cpp/build/default/_deps/nanobench-src/src/include"
         ]
       }
     }
