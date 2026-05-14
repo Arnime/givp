@@ -1295,6 +1295,154 @@ def test_handle_convergence_monitor_returns_zero_when_no_monitor() -> None:
     assert _handle_convergence_monitor(None, 0.0, None, False) == 0
 
 
+def test_safe_iteration_callback_logs_info_when_verbose_and_callback_raises(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls = {"warning": 0, "info": 0}
+
+    def _boom(*_args: Any, **_kwargs: Any) -> None:
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(core_impl.logger, "warning", lambda *a, **k: calls.__setitem__("warning", calls["warning"] + 1))
+    monkeypatch.setattr(core_impl.logger, "info", lambda *a, **k: calls.__setitem__("info", calls["info"] + 1))
+
+    core_impl._safe_iteration_callback(
+        _boom,
+        iter_idx=0,
+        benefit=1.0,
+        sol=np.array([0.0, 0.0]),
+        verbose=True,
+    )
+    assert calls["warning"] == 1
+    assert calls["info"] == 1
+
+
+def test_prepare_initial_array_prefers_first_warm_start_seed() -> None:
+    arr = core_impl._prepare_initial_array(
+        initial_guesses=[[1.0, 2.0], [3.0, 4.0]],
+        lower_arr=np.array([0.0, 0.0]),
+        upper_arr=np.array([5.0, 5.0]),
+        num_vars=2,
+    )
+    np.testing.assert_array_equal(arr, np.array([1.0, 2.0]))
+
+
+def test_run_iteration_step_restart_updates_best_with_better_restart(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    cfg = CoreConfig(
+        max_iterations=4,
+        vnd_iterations=2,
+        ils_iterations=1,
+        adaptive_alpha=False,
+        use_elite_pool=False,
+        use_convergence_monitor=False,
+    )
+
+    monkeypatch.setattr(core_impl, "construct_grasp", lambda *a, **k: np.array([1.0, 1.0]))
+    monkeypatch.setattr(core_impl, "local_search_vnd", lambda *a, **k: a[1].copy())
+
+    def _fake_ils(sol: np.ndarray, cur: float, *args: Any, **kwargs: Any) -> tuple[np.ndarray, float]:
+        if cur <= 0.0:
+            return sol, -1.0
+        return sol, cur
+
+    monkeypatch.setattr(core_impl, "ils_search", _fake_ils)
+    monkeypatch.setattr(
+        core_impl,
+        "do_path_relinking",
+        lambda *a, **k: (a[1], a[2], a[3]),
+    )
+
+    class _ZeroRng:
+        def random(self, size: int) -> np.ndarray:
+            return np.zeros(size)
+
+    monkeypatch.setattr(core_impl, "_new_rng", lambda seed=None: _ZeroRng())
+
+    monitor = ConvergenceMonitor(restart_threshold=999)
+
+    best_cost, best_solution, stagnation = core_impl._run_iteration_step(
+        iter_idx=0,
+        cost_fn=quad,
+        num_vars=2,
+        lower_arr=np.array([0.0, 0.0]),
+        upper_arr=np.array([1.0, 1.0]),
+        initial_guess=np.array([1.0, 1.0]),
+        config=cfg,
+        callbacks=(None, None, None, monitor),
+        verbose=False,
+        state=(1.0, np.array([9.0, 9.0]), 2),
+        deadline=0.0,
+        start_time=0.0,
+    )
+    assert best_cost == pytest.approx(-1.0)
+    np.testing.assert_array_equal(best_solution, np.array([0.0, 0.0]))
+    assert stagnation == 0
+
+
+def test_run_grasp_loop_time_limit_sets_message_without_verbose_log(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    cfg = CoreConfig(max_iterations=3, time_limit=1.0)
+    monkeypatch.setattr(core_impl, "_expired", lambda deadline: True)
+    monkeypatch.setattr(
+        core_impl,
+        "_run_iteration_step",
+        lambda *a, **k: pytest.fail("_run_iteration_step should not run when expired"),
+    )
+
+    best_cost, best_solution, stagnation, actual_nit, term_msg = core_impl._run_grasp_loop(
+        quad,
+        num_vars=2,
+        config=cfg,
+        lower_arr=np.array([0.0, 0.0]),
+        upper_arr=np.array([1.0, 1.0]),
+        initial_arr=np.array([0.5, 0.5]),
+        callbacks=(None, None, None, None),
+        verbose=False,
+        state=(10.0, np.array([1.0, 1.0]), 0),
+    )
+    assert best_cost == pytest.approx(10.0)
+    np.testing.assert_array_equal(best_solution, np.array([1.0, 1.0]))
+    assert stagnation == 0
+    assert actual_nit == 0
+    assert term_msg == "time limit"
+
+
+def test_grasp_ils_vnd_uses_warm_best_solution_as_next_initial(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    warm = np.array([0.2, 0.8])
+
+    monkeypatch.setattr(core_impl, "_prepare_initial_array", lambda *a, **k: np.array([0.9, 0.9]))
+    monkeypatch.setattr(core_impl, "_prepare_bounds", lambda lower, upper: (np.array([0.0, 0.0]), np.array([1.0, 1.0])))
+    monkeypatch.setattr(core_impl, "_initialize_optimization_components", lambda *a, **k: (None, None, None))
+    monkeypatch.setattr(
+        core_impl,
+        "_maybe_apply_warm_start",
+        lambda *a, **k: (1.0, np.array([0.0, 0.0]), warm),
+    )
+
+    captured: dict[str, np.ndarray] = {}
+
+    def _fake_run_grasp_loop(*args: Any, **kwargs: Any) -> tuple[float, np.ndarray, int, int, str]:
+        captured["initial_arr"] = args[5].copy()
+        return 1.0, np.array([0.0, 0.0]), 0, 1, "max_iterations"
+
+    monkeypatch.setattr(core_impl, "_run_grasp_loop", _fake_run_grasp_loop)
+
+    _sol, _cost, _nit, _msg = core_impl.grasp_ils_vnd(
+        quad,
+        num_vars=2,
+        config=CoreConfig(max_iterations=1),
+        lower=[0.0, 0.0],
+        upper=[1.0, 1.0],
+        initial_guesses=[[0.2, 0.8]],
+    )
+    np.testing.assert_array_equal(captured["initial_arr"], warm)
+
+
 def test_maybe_apply_warm_start_updates_best() -> None:
 
     pool = ElitePool(max_size=2, min_distance=0.0)
@@ -1327,6 +1475,22 @@ def test_maybe_apply_warm_start_keeps_best_when_initial_worse() -> None:
     )
     assert new_cost == pytest.approx(0.0)
     assert warm_best is not None
+
+
+def test_maybe_apply_warm_start_without_pool_and_non_improving_seed() -> None:
+
+    best_cost, best_solution, warm_best = _maybe_apply_warm_start(
+        initial_guesses=[[0.1, 0.1], [2.0, 2.0]],
+        elite_pool=None,
+        cost_fn=quad,
+        best_cost=0.0,
+        best_solution=np.array([0.0, 0.0]),
+        verbose=False,
+    )
+    assert best_cost == pytest.approx(0.0)
+    np.testing.assert_array_equal(best_solution, np.array([0.0, 0.0]))
+    assert warm_best is not None
+    np.testing.assert_array_equal(warm_best, np.array([0.1, 0.1]))
 
 
 def test_maybe_apply_warm_start_no_pool_short_circuit() -> None:
@@ -1381,6 +1545,41 @@ def test_apply_path_relinking_to_pair_runs() -> None:
     )
     assert sol.shape == (3,)
     assert np.isfinite(cost)
+
+
+def test_process_path_relinking_pairs_updates_best_when_pr_improves(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _set_integer_split(2)
+    src = np.array([1.0, 1.0, 1.0, 1.0])
+    tgt = np.array([0.0, 0.0, 0.0, 0.0])
+    elite_solutions = [(src, 4.0), (tgt, 0.0)]
+    cfg = CoreConfig(use_elite_pool=True, vnd_iterations=2)
+    pool = ElitePool(max_size=5, min_distance=0.0)
+    for s, c in elite_solutions:
+        pool.add(s, c)
+
+    monkeypatch.setattr(
+        core_impl,
+        "_apply_path_relinking_to_pair",
+        lambda *a, **k: (np.array([0.0, 0.0, 0.0, 0.0]), -1.0),
+    )
+
+    best_cost, best_solution, stagnation = core_impl._process_path_relinking_pairs(
+        elite_solutions,
+        quad,
+        num_vars=4,
+        config=cfg,
+        best_cost=5.0,
+        best_solution=src.copy(),
+        stagnation=3,
+        elite_pool=pool,
+        cache=None,
+        deadline=0.0,
+    )
+    assert best_cost == pytest.approx(-1.0)
+    np.testing.assert_array_equal(best_solution, np.array([0.0, 0.0, 0.0, 0.0]))
+    assert stagnation == 0
 
 
 def test_initialize_optimization_components_all_off() -> None:
