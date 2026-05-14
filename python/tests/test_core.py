@@ -737,7 +737,9 @@ def test_apply_path_relinking_to_pair_random_strategy(
         return np.array([6.0, 6.0, 6.0]), 108.0
 
     monkeypatch.setattr(core_impl, "path_relinking", fake_path)
-    monkeypatch.setattr(core_impl, "bidirectional_path_relinking", lambda *a, **k: pytest.fail())
+    monkeypatch.setattr(
+        core_impl, "bidirectional_path_relinking", lambda *a, **k: pytest.fail()
+    )
     monkeypatch.setattr(core_impl, "_new_rng", lambda seed=None: FakeRng(0))
     random_cfg = CoreConfig(path_relink_strategy="random", vnd_iterations=4)
     _apply_path_relinking_to_pair(
@@ -750,6 +752,44 @@ def test_apply_path_relinking_to_pair_random_strategy(
     )
     assert calls[0][0].tolist() == [1.0, 2.0, 3.0]
     assert calls[0][1].tolist() == [4.0, 5.0, 6.0]
+
+
+def test_apply_path_relinking_to_pair_random_strategy_reversed_branch(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FakeRng:
+        def integers(self, low: int, high: int) -> int:
+            return 1
+
+    calls: list[tuple[np.ndarray, np.ndarray]] = []
+
+    def fake_path(
+        cost_fn: Callable,
+        source: np.ndarray,
+        target: np.ndarray,
+        strategy: str = "best",
+        seed: int | None = None,
+        deadline: float = 0.0,
+    ) -> tuple[np.ndarray, float]:
+        calls.append((source.copy(), target.copy()))
+        return np.array([6.0, 6.0, 6.0]), 108.0
+
+    monkeypatch.setattr(core_impl, "path_relinking", fake_path)
+    monkeypatch.setattr(
+        core_impl, "bidirectional_path_relinking", lambda *a, **k: pytest.fail()
+    )
+    monkeypatch.setattr(core_impl, "_new_rng", lambda seed=None: FakeRng())
+    random_cfg = CoreConfig(path_relink_strategy="random", vnd_iterations=4)
+    _apply_path_relinking_to_pair(
+        np.array([1.0, 2.0, 3.0]),
+        np.array([4.0, 5.0, 6.0]),
+        quad,
+        3,
+        random_cfg,
+        None,
+    )
+    assert calls[0][0].tolist() == [4.0, 5.0, 6.0]
+    assert calls[0][1].tolist() == [1.0, 2.0, 3.0]
 
 
 # ----------------------------- perturb / alpha -----------------------------
@@ -1303,8 +1343,16 @@ def test_safe_iteration_callback_logs_info_when_verbose_and_callback_raises(
     def _boom(*_args: Any, **_kwargs: Any) -> None:
         raise RuntimeError("boom")
 
-    monkeypatch.setattr(core_impl.logger, "warning", lambda *a, **k: calls.__setitem__("warning", calls["warning"] + 1))
-    monkeypatch.setattr(core_impl.logger, "info", lambda *a, **k: calls.__setitem__("info", calls["info"] + 1))
+    monkeypatch.setattr(
+        core_impl.logger,
+        "warning",
+        lambda *a, **k: calls.__setitem__("warning", calls["warning"] + 1),
+    )
+    monkeypatch.setattr(
+        core_impl.logger,
+        "info",
+        lambda *a, **k: calls.__setitem__("info", calls["info"] + 1),
+    )
 
     core_impl._safe_iteration_callback(
         _boom,
@@ -1339,10 +1387,14 @@ def test_run_iteration_step_restart_updates_best_with_better_restart(
         use_convergence_monitor=False,
     )
 
-    monkeypatch.setattr(core_impl, "construct_grasp", lambda *a, **k: np.array([1.0, 1.0]))
+    monkeypatch.setattr(
+        core_impl, "construct_grasp", lambda *a, **k: np.array([1.0, 1.0])
+    )
     monkeypatch.setattr(core_impl, "local_search_vnd", lambda *a, **k: a[1].copy())
 
-    def _fake_ils(sol: np.ndarray, cur: float, *args: Any, **kwargs: Any) -> tuple[np.ndarray, float]:
+    def _fake_ils(
+        sol: np.ndarray, cur: float, *args: Any, **kwargs: Any
+    ) -> tuple[np.ndarray, float]:
         if cur <= 0.0:
             return sol, -1.0
         return sol, cur
@@ -1392,16 +1444,18 @@ def test_run_grasp_loop_time_limit_sets_message_without_verbose_log(
         lambda *a, **k: pytest.fail("_run_iteration_step should not run when expired"),
     )
 
-    best_cost, best_solution, stagnation, actual_nit, term_msg = core_impl._run_grasp_loop(
-        quad,
-        num_vars=2,
-        config=cfg,
-        lower_arr=np.array([0.0, 0.0]),
-        upper_arr=np.array([1.0, 1.0]),
-        initial_arr=np.array([0.5, 0.5]),
-        callbacks=(None, None, None, None),
-        verbose=False,
-        state=(10.0, np.array([1.0, 1.0]), 0),
+    best_cost, best_solution, stagnation, actual_nit, term_msg = (
+        core_impl._run_grasp_loop(
+            quad,
+            num_vars=2,
+            config=cfg,
+            lower_arr=np.array([0.0, 0.0]),
+            upper_arr=np.array([1.0, 1.0]),
+            initial_arr=np.array([0.5, 0.5]),
+            callbacks=(None, None, None, None),
+            verbose=False,
+            state=(10.0, np.array([1.0, 1.0]), 0),
+        )
     )
     assert best_cost == pytest.approx(10.0)
     np.testing.assert_array_equal(best_solution, np.array([1.0, 1.0]))
@@ -1415,9 +1469,19 @@ def test_grasp_ils_vnd_uses_warm_best_solution_as_next_initial(
 ) -> None:
     warm = np.array([0.2, 0.8])
 
-    monkeypatch.setattr(core_impl, "_prepare_initial_array", lambda *a, **k: np.array([0.9, 0.9]))
-    monkeypatch.setattr(core_impl, "_prepare_bounds", lambda lower, upper: (np.array([0.0, 0.0]), np.array([1.0, 1.0])))
-    monkeypatch.setattr(core_impl, "_initialize_optimization_components", lambda *a, **k: (None, None, None))
+    monkeypatch.setattr(
+        core_impl, "_prepare_initial_array", lambda *a, **k: np.array([0.9, 0.9])
+    )
+    monkeypatch.setattr(
+        core_impl,
+        "_prepare_bounds",
+        lambda lower, upper: (np.array([0.0, 0.0]), np.array([1.0, 1.0])),
+    )
+    monkeypatch.setattr(
+        core_impl,
+        "_initialize_optimization_components",
+        lambda *a, **k: (None, None, None),
+    )
     monkeypatch.setattr(
         core_impl,
         "_maybe_apply_warm_start",
@@ -1426,7 +1490,9 @@ def test_grasp_ils_vnd_uses_warm_best_solution_as_next_initial(
 
     captured: dict[str, np.ndarray] = {}
 
-    def _fake_run_grasp_loop(*args: Any, **kwargs: Any) -> tuple[float, np.ndarray, int, int, str]:
+    def _fake_run_grasp_loop(
+        *args: Any, **kwargs: Any
+    ) -> tuple[float, np.ndarray, int, int, str]:
         captured["initial_arr"] = args[5].copy()
         return 1.0, np.array([0.0, 0.0]), 0, 1, "max_iterations"
 

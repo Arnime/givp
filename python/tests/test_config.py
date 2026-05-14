@@ -37,6 +37,11 @@ def test_invalid_direction_raises_invalid_config() -> None:
         GIVPConfig(direction="bogus")  # type: ignore[arg-type]
 
 
+def test_invalid_path_relink_strategy_raises_invalid_config() -> None:
+    with pytest.raises(InvalidConfigError):
+        GIVPConfig(path_relink_strategy="invalid")  # type: ignore[arg-type]
+
+
 @pytest.mark.parametrize(
     "field,value",
     [

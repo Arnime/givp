@@ -15,8 +15,6 @@
 #include <vector>
 
 #include <givp/config.hpp>
-#include <givp/exceptions.hpp>
-#include <givp/result.hpp>
 #include <givp/detail/cache.hpp>
 #include <givp/detail/convergence.hpp>
 #include <givp/detail/elite.hpp>
@@ -25,6 +23,8 @@
 #include <givp/detail/ils.hpp>
 #include <givp/detail/pr.hpp>
 #include <givp/detail/vnd.hpp>
+#include <givp/exceptions.hpp>
+#include <givp/result.hpp>
 
 namespace givp::detail {
 

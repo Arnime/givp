@@ -713,7 +713,9 @@ def grasp_ils_vnd(
     _set_integer_split(config.integer_split)
     _set_group_size(config.group_size)
 
-    initial_arr = _prepare_initial_array(initial_guesses, lower_arr, upper_arr, num_vars)
+    initial_arr = _prepare_initial_array(
+        initial_guesses, lower_arr, upper_arr, num_vars
+    )
 
     elite_pool, cache, conv_monitor = _initialize_optimization_components(
         config, lower_arr, upper_arr
