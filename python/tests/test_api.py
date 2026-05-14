@@ -217,6 +217,16 @@ def test_initial_guesses_duplicate_candidates_are_rejected() -> None:
         )
 
 
+def test_initial_guesses_empty_list_is_rejected() -> None:
+    bounds = [(-3.0, 3.0)] * 2
+    with pytest.raises(InvalidInitialGuessError):
+        givp(
+            sphere,
+            bounds,
+            initial_guesses=[],
+        )
+
+
 def test_maybe_apply_warm_start_uses_best_seed() -> None:
     elite_pool = ElitePool(max_size=5)
     seeds = [
