@@ -119,6 +119,8 @@ jobs:
     needs: test
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
 
       - name: Install system dependencies
         shell: bash
@@ -158,6 +160,18 @@ jobs:
             covr::to_cobertura(cov, filename = 'coverage-r.xml')
             if (pct < 90) stop(sprintf('Coverage below 90%% threshold (got %.1f%%)', pct))
           "
+
+      - name: Check patch coverage on PR (>= 90%)
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          python3 .github/scripts/check_patch_coverage.py \
+            --base-sha "${{ github.event.pull_request.base.sha }}" \
+            --paths "r/R" \
+            --report-format cobertura \
+            --report-file coverage-r.xml \
+            --threshold 90 \
+            --label "R"
 
       - name: Upload to Codecov
         uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2 # v6
