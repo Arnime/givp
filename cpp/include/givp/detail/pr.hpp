@@ -25,6 +25,13 @@ struct PrTarget {
     const std::vector<double> &value;
 };
 
+template <typename RngT> struct PrApplyContext {
+    std::size_t half;
+    std::optional<EvaluationCache> &cache;
+    RngT &rng;
+    const Deadline &deadline;
+};
+
 /// Greedy (best-move) path relinking from source toward target.
 template <typename F>
 static std::pair<std::vector<double>, double>
@@ -114,12 +121,12 @@ template <typename F, typename RngT>
 std::pair<std::vector<double>, double>
 apply_path_relinking_strategy(const F &func, const std::vector<double> &source,
                               const std::vector<double> &target, PathRelinkStrategy strategy,
-                              std::size_t half, std::optional<EvaluationCache> &cache, RngT &rng,
-                              const Deadline &deadline) {
+                              PrApplyContext<RngT> ctx) {
 
     switch (strategy) {
     case PathRelinkStrategy::Bidirectional:
-        return bidirectional_path_relinking(func, source, target, half, cache, rng, deadline);
+        return bidirectional_path_relinking(func, source, target, ctx.half, ctx.cache, ctx.rng,
+                                            ctx.deadline);
     case PathRelinkStrategy::Forward:
     case PathRelinkStrategy::Backward: {
         const auto &src = (strategy == PathRelinkStrategy::Forward) ? source : target;
@@ -131,7 +138,7 @@ apply_path_relinking_strategy(const F &func, const std::vector<double> &source,
                 diff_indices.push_back(i);
 
         if (diff_indices.empty()) {
-            double cost = evaluate_with_cache(src, func, cache, half);
+            double cost = evaluate_with_cache(src, func, ctx.cache, ctx.half);
             return {src, cost};
         }
 
@@ -143,21 +150,22 @@ apply_path_relinking_strategy(const F &func, const std::vector<double> &source,
         }
 
         for (std::size_t i = diff_indices.size() - 1; i > 0; --i) {
-            std::size_t j = rng.uniform_index(0, i);
+            std::size_t j = ctx.rng.uniform_index(0, i);
             std::swap(diff_indices[i], diff_indices[j]);
         }
 
         return path_relinking_best(func, PrSource{src}, PrTarget{tgt}, std::move(diff_indices),
-                                   cache, half, deadline);
+                                   ctx.cache, ctx.half, ctx.deadline);
     }
     case PathRelinkStrategy::Randomized:
-        if (rng.uniform_index(0, 1) == 0)
+        if (ctx.rng.uniform_index(0, 1) == 0)
             return apply_path_relinking_strategy(func, source, target, PathRelinkStrategy::Forward,
-                                                 half, cache, rng, deadline);
+                                                 ctx);
         return apply_path_relinking_strategy(func, source, target, PathRelinkStrategy::Backward,
-                                             half, cache, rng, deadline);
+                                             ctx);
     }
-    return bidirectional_path_relinking(func, source, target, half, cache, rng, deadline);
+    return bidirectional_path_relinking(func, source, target, ctx.half, ctx.cache, ctx.rng,
+                                        ctx.deadline);
 }
 
 } // namespace givp::detail

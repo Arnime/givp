@@ -268,14 +268,18 @@ TEST_CASE("path relinking strategy helper supports all modes", "[pr]") {
     Rng rng_bi = Rng::from_seed(13);
     Rng rng_rand = Rng::from_seed(14);
 
+    PrApplyContext<Rng> pr_ctx_fwd{3, cache, rng_fwd, dl};
     auto [_fwd_sol, fwd_cost] = apply_path_relinking_strategy(
-        sphere, source, target, PathRelinkStrategy::Forward, 3, cache, rng_fwd, dl);
+        sphere, source, target, PathRelinkStrategy::Forward, pr_ctx_fwd);
+    PrApplyContext<Rng> pr_ctx_bwd{3, cache, rng_bwd, dl};
     auto [_bwd_sol, bwd_cost] = apply_path_relinking_strategy(
-        sphere, source, target, PathRelinkStrategy::Backward, 3, cache, rng_bwd, dl);
+        sphere, source, target, PathRelinkStrategy::Backward, pr_ctx_bwd);
+    PrApplyContext<Rng> pr_ctx_bi{3, cache, rng_bi, dl};
     auto [_bi_sol, bi_cost] = apply_path_relinking_strategy(
-        sphere, source, target, PathRelinkStrategy::Bidirectional, 3, cache, rng_bi, dl);
+        sphere, source, target, PathRelinkStrategy::Bidirectional, pr_ctx_bi);
+    PrApplyContext<Rng> pr_ctx_rand{3, cache, rng_rand, dl};
     auto [_rand_sol, rand_cost] = apply_path_relinking_strategy(
-        sphere, source, target, PathRelinkStrategy::Randomized, 3, cache, rng_rand, dl);
+        sphere, source, target, PathRelinkStrategy::Randomized, pr_ctx_rand);
 
     REQUIRE(std::isfinite(fwd_cost));
     REQUIRE(std::isfinite(bwd_cost));
