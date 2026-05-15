@@ -4,8 +4,7 @@
 #[cfg(test)]
 mod tests {
     use givp::{
-        givp, seed_sweep, Direction, GivpConfig, GivpError, PathRelinkStrategy,
-        TerminationReason,
+        givp, seed_sweep, Direction, GivpConfig, GivpError, PathRelinkStrategy, TerminationReason,
     };
     use proptest::prelude::*;
 

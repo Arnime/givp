@@ -180,8 +180,7 @@
     @testset "givp accepts path_relink_strategy via config" begin
         sphere(x) = sum(x .^ 2)
         bounds = [(-2.0, 2.0), (-2.0, 2.0)]
-        config = GIVPConfig(
-            ;
+        config = GIVPConfig(;
             max_iterations = 3,
             vnd_iterations = 5,
             ils_iterations = 1,

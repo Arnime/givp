@@ -104,18 +104,10 @@
         source = [2.0, 2.0]
         target = [0.0, 0.0]
 
-        fwd_sol, fwd_cost = GIVPOptimizer._apply_path_relinking_strategy(
-            sphere,
-            source,
-            target,
-            :forward,
-        )
-        bwd_sol, bwd_cost = GIVPOptimizer._apply_path_relinking_strategy(
-            sphere,
-            source,
-            target,
-            :backward,
-        )
+        fwd_sol, fwd_cost =
+            GIVPOptimizer._apply_path_relinking_strategy(sphere, source, target, :forward)
+        bwd_sol, bwd_cost =
+            GIVPOptimizer._apply_path_relinking_strategy(sphere, source, target, :backward)
         bi_sol, bi_cost = GIVPOptimizer._apply_path_relinking_strategy(
             sphere,
             source,

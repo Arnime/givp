@@ -146,8 +146,10 @@ pub(crate) fn bidirectional_path_relinking<F>(
 where
     F: Fn(&[f64]) -> f64,
 {
-    let (best_fwd, cost_fwd) = directional_path_relinking(func, sol1, sol2, half, cache, rng, deadline);
-    let (best_bwd, cost_bwd) = directional_path_relinking(func, sol2, sol1, half, cache, rng, deadline);
+    let (best_fwd, cost_fwd) =
+        directional_path_relinking(func, sol1, sol2, half, cache, rng, deadline);
+    let (best_bwd, cost_bwd) =
+        directional_path_relinking(func, sol2, sol1, half, cache, rng, deadline);
 
     if cost_fwd <= cost_bwd {
         (best_fwd, cost_fwd)
