@@ -93,13 +93,55 @@ jobs:
       - name: Check patch coverage on PR (>= 90%)
         if: github.event_name == 'pull_request'
         run: |
-          node .github/scripts/check_patch_coverage.mjs \
-            --base-sha "${{ github.event.pull_request.base.sha }}" \
-            --paths "python/src" \
-            --report-format cobertura \
-            --report-file coverage-python.xml \
-            --threshold 90 \
-            --label "Python"
+          python3 - <<'PY'
+          import re
+          import subprocess
+          import xml.etree.ElementTree as ET
+
+          base = "${{ github.event.pull_request.base.sha }}"
+          threshold = 90.0
+
+          diff = subprocess.check_output(
+            ["git", "diff", "--unified=0", f"{base}...HEAD", "--", "python/src"],
+            text=True,
+          )
+
+          changed = {}
+          current = None
+          for line in diff.splitlines():
+            if line.startswith("+++ b/"):
+              current = line[6:]
+              changed.setdefault(current, set())
+              continue
+            m = re.match(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@", line)
+            if current and m:
+              start = int(m.group(1))
+              length = int(m.group(2) or "1")
+              for ln in range(start, start + max(length, 0)):
+                changed[current].add(ln)
+
+          changed_lines = {(f, ln) for f, lines in changed.items() for ln in lines if f.startswith("python/src/")}
+          if not changed_lines:
+            print("Python patch coverage: N/A (no changed lines in python/src)")
+            raise SystemExit(0)
+
+          cov = {}
+          root = ET.parse("coverage-python.xml").getroot()
+          for cls in root.findall(".//class"):
+            fn = cls.attrib.get("filename", "")
+            for ln in cls.findall(".//line"):
+              num = int(ln.attrib.get("number", "0"))
+              hits = int(float(ln.attrib.get("hits", "0")))
+              cov[(fn, num)] = hits
+
+          total = len(changed_lines)
+          covered = sum(1 for k in changed_lines if cov.get(k, 0) > 0)
+          pct = (covered / total) * 100.0
+          print(f"Python patch coverage: {pct:.1f}%  ({covered} / {total} changed lines)")
+          if pct + 1e-9 < threshold:
+            print(f"::error::Python patch coverage below {threshold:.1f}% threshold (got {pct:.1f}%)")
+            raise SystemExit(1)
+          PY
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2 # v6
         with:
