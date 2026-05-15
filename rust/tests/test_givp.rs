@@ -3,7 +3,10 @@
 
 #[cfg(test)]
 mod tests {
-    use givp::{givp, seed_sweep, Direction, GivpConfig, GivpError, TerminationReason};
+    use givp::{
+        givp, seed_sweep, Direction, GivpConfig, GivpError, PathRelinkStrategy,
+        TerminationReason,
+    };
     use proptest::prelude::*;
 
     // ── Test functions ──────────────────────────────────────────────
@@ -33,6 +36,23 @@ mod tests {
     fn test_config_default_is_valid() {
         let cfg = GivpConfig::default();
         assert!(cfg.validate().is_ok());
+        assert_eq!(cfg.path_relink_strategy, PathRelinkStrategy::Bidirectional);
+    }
+
+    #[test]
+    fn test_config_accepts_all_path_relink_strategies() {
+        for strategy in [
+            PathRelinkStrategy::Bidirectional,
+            PathRelinkStrategy::Forward,
+            PathRelinkStrategy::Backward,
+            PathRelinkStrategy::Randomized,
+        ] {
+            let cfg = GivpConfig {
+                path_relink_strategy: strategy,
+                ..Default::default()
+            };
+            assert!(cfg.validate().is_ok());
+        }
     }
 
     #[test]

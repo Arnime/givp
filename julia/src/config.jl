@@ -27,6 +27,7 @@ Base.@kwdef mutable struct GIVPConfig
     use_elite_pool::Bool = true
     elite_size::Int = 7
     path_relink_frequency::Int = 8
+    path_relink_strategy::Symbol = :bidirectional
     adaptive_alpha::Bool = true
     alpha_min::Float64 = 0.08
     alpha_max::Float64 = 0.18
@@ -87,6 +88,15 @@ function validate_config!(cfg::GIVPConfig)
     cfg.alpha_min > cfg.alpha_max && throw(
         InvalidConfigError(
             "alpha_min ($(cfg.alpha_min)) must be <= alpha_max ($(cfg.alpha_max))",
+        ),
+    )
+
+    if cfg.path_relink_strategy == :random
+        cfg.path_relink_strategy = :randomized
+    end
+    cfg.path_relink_strategy in (:bidirectional, :forward, :backward, :randomized) || throw(
+        InvalidConfigError(
+            "path_relink_strategy must be :bidirectional, :forward, :backward, :randomized, or :random",
         ),
     )
 

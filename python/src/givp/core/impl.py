@@ -326,7 +326,7 @@ def _apply_path_relinking_to_pair(
             strategy="forward",
             deadline=deadline,
         )
-    elif config.path_relink_strategy == "random":
+    elif config.path_relink_strategy in ("randomized", "random"):
         rng = _new_rng()
         if rng.integers(0, 2) == 0:
             pr_solution, _ = path_relinking(

@@ -713,7 +713,7 @@ def test_apply_path_relinking_to_pair_forward_and_backward_strategies(
     assert calls[1][2] == "forward"
 
 
-def test_apply_path_relinking_to_pair_random_strategy(
+def test_apply_path_relinking_to_pair_randomized_strategy(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     class FakeRng:
@@ -741,7 +741,7 @@ def test_apply_path_relinking_to_pair_random_strategy(
         core_impl, "bidirectional_path_relinking", lambda *a, **k: pytest.fail()
     )
     monkeypatch.setattr(core_impl, "_new_rng", lambda seed=None: FakeRng(0))
-    random_cfg = CoreConfig(path_relink_strategy="random", vnd_iterations=4)
+    random_cfg = CoreConfig(path_relink_strategy="randomized", vnd_iterations=4)
     _apply_path_relinking_to_pair(
         np.array([1.0, 2.0, 3.0]),
         np.array([4.0, 5.0, 6.0]),
@@ -754,12 +754,50 @@ def test_apply_path_relinking_to_pair_random_strategy(
     assert calls[0][1].tolist() == [4.0, 5.0, 6.0]
 
 
-def test_apply_path_relinking_to_pair_random_strategy_reversed_branch(
+def test_apply_path_relinking_to_pair_randomized_strategy_reversed_branch(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     class FakeRng:
         def integers(self, low: int, high: int) -> int:
             return 1
+
+    calls: list[tuple[np.ndarray, np.ndarray]] = []
+
+    def fake_path(
+        cost_fn: Callable,
+        source: np.ndarray,
+        target: np.ndarray,
+        strategy: str = "best",
+        seed: int | None = None,
+        deadline: float = 0.0,
+    ) -> tuple[np.ndarray, float]:
+        calls.append((source.copy(), target.copy()))
+        return np.array([6.0, 6.0, 6.0]), 108.0
+
+    monkeypatch.setattr(core_impl, "path_relinking", fake_path)
+    monkeypatch.setattr(
+        core_impl, "bidirectional_path_relinking", lambda *a, **k: pytest.fail()
+    )
+    monkeypatch.setattr(core_impl, "_new_rng", lambda seed=None: FakeRng())
+    random_cfg = CoreConfig(path_relink_strategy="randomized", vnd_iterations=4)
+    _apply_path_relinking_to_pair(
+        np.array([1.0, 2.0, 3.0]),
+        np.array([4.0, 5.0, 6.0]),
+        quad,
+        3,
+        random_cfg,
+        None,
+    )
+    assert calls[0][0].tolist() == [4.0, 5.0, 6.0]
+    assert calls[0][1].tolist() == [1.0, 2.0, 3.0]
+
+
+def test_apply_path_relinking_to_pair_random_alias_kept_compatible(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FakeRng:
+        def integers(self, low: int, high: int) -> int:
+            return 0
 
     calls: list[tuple[np.ndarray, np.ndarray]] = []
 
@@ -788,8 +826,8 @@ def test_apply_path_relinking_to_pair_random_strategy_reversed_branch(
         random_cfg,
         None,
     )
-    assert calls[0][0].tolist() == [4.0, 5.0, 6.0]
-    assert calls[0][1].tolist() == [1.0, 2.0, 3.0]
+    assert calls[0][0].tolist() == [1.0, 2.0, 3.0]
+    assert calls[0][1].tolist() == [4.0, 5.0, 6.0]
 
 
 # ----------------------------- perturb / alpha -----------------------------

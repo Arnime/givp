@@ -108,4 +108,56 @@ std::pair<std::vector<double>, double> bidirectional_path_relinking(
                                   : std::make_pair(std::move(best_bwd), cost_bwd);
 }
 
+/// Select and execute path relinking according to the configured strategy.
+template <typename F, typename RngT>
+std::pair<std::vector<double>, double> apply_path_relinking_strategy(
+    const F &func, const std::vector<double> &source, const std::vector<double> &target,
+    PathRelinkStrategy strategy, std::size_t half, std::optional<EvaluationCache> &cache,
+    RngT &rng, const Deadline &deadline) {
+
+    switch (strategy) {
+    case PathRelinkStrategy::Bidirectional:
+        return bidirectional_path_relinking(func, source, target, half, cache, rng, deadline);
+    case PathRelinkStrategy::Forward:
+    case PathRelinkStrategy::Backward: {
+        const auto &src = (strategy == PathRelinkStrategy::Forward) ? source : target;
+        const auto &tgt = (strategy == PathRelinkStrategy::Forward) ? target : source;
+
+        std::vector<std::size_t> diff_indices;
+        for (std::size_t i = 0; i < src.size(); ++i)
+            if (std::abs(src[i] - tgt[i]) > 1e-12)
+                diff_indices.push_back(i);
+
+        if (diff_indices.empty()) {
+            double cost = evaluate_with_cache(src, func, cache, half);
+            return {src, cost};
+        }
+
+        if (diff_indices.size() > MAX_PR_VARS) {
+            std::sort(diff_indices.begin(), diff_indices.end(), [&](std::size_t a, std::size_t b) {
+                return std::abs(src[b] - tgt[b]) < std::abs(src[a] - tgt[a]);
+            });
+            diff_indices.resize(MAX_PR_VARS);
+        }
+
+        for (std::size_t i = diff_indices.size() - 1; i > 0; --i) {
+            std::size_t j = rng.uniform_index(0, i);
+            std::swap(diff_indices[i], diff_indices[j]);
+        }
+
+        return path_relinking_best(func, PrSource{src}, PrTarget{tgt}, std::move(diff_indices),
+                                   cache, half, deadline);
+    }
+    case PathRelinkStrategy::Randomized:
+        if (rng.uniform_index(0, 1) == 0)
+            return apply_path_relinking_strategy(func, source, target,
+                                                 PathRelinkStrategy::Forward, half, cache, rng,
+                                                 deadline);
+        return apply_path_relinking_strategy(func, source, target,
+                                             PathRelinkStrategy::Backward, half, cache, rng,
+                                             deadline);
+    }
+    return bidirectional_path_relinking(func, source, target, half, cache, rng, deadline);
+}
+
 } // namespace givp::detail

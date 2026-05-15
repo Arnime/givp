@@ -17,6 +17,14 @@ enum class Direction : std::uint8_t {
     Maximize,
 };
 
+/// Path relinking direction strategy.
+enum class PathRelinkStrategy : std::uint8_t {
+    Bidirectional,
+    Forward,
+    Backward,
+    Randomized,
+};
+
 /// Algorithm hyper-parameters.  Defaults mirror the Rust implementation.
 struct GivpConfigRuntime {
     std::optional<std::size_t> integer_split;
@@ -37,6 +45,7 @@ struct GivpConfig : public GivpConfigRuntime {
     bool use_elite_pool = true;
     std::size_t elite_size = 7;
     std::size_t path_relink_frequency = 8;
+    PathRelinkStrategy path_relink_strategy = PathRelinkStrategy::Bidirectional;
     bool adaptive_alpha = true;
     double alpha_min = 0.08;
     double alpha_max = 0.18;
@@ -71,6 +80,15 @@ struct GivpConfig : public GivpConfigRuntime {
             throw InvalidConfig("alpha_max must be in [0.0, 1.0]");
         if (alpha_min > alpha_max)
             throw InvalidConfig("alpha_min must be <= alpha_max");
+        switch (path_relink_strategy) {
+        case PathRelinkStrategy::Bidirectional:
+        case PathRelinkStrategy::Forward:
+        case PathRelinkStrategy::Backward:
+        case PathRelinkStrategy::Randomized:
+            break;
+        default:
+            throw InvalidConfig("path_relink_strategy has an invalid value");
+        }
     }
 };
 

@@ -99,6 +99,46 @@
         GIVPOptimizer.set_integer_split!(nothing)
     end
 
+    @testset "_apply_path_relinking_strategy supports all modes" begin
+        sphere(x) = sum(x .^ 2)
+        source = [2.0, 2.0]
+        target = [0.0, 0.0]
+
+        fwd_sol, fwd_cost = GIVPOptimizer._apply_path_relinking_strategy(
+            sphere,
+            source,
+            target,
+            :forward,
+        )
+        bwd_sol, bwd_cost = GIVPOptimizer._apply_path_relinking_strategy(
+            sphere,
+            source,
+            target,
+            :backward,
+        )
+        bi_sol, bi_cost = GIVPOptimizer._apply_path_relinking_strategy(
+            sphere,
+            source,
+            target,
+            :bidirectional,
+        )
+        rand_sol, rand_cost = GIVPOptimizer._apply_path_relinking_strategy(
+            sphere,
+            source,
+            target,
+            :randomized,
+        )
+
+        @test isfinite(fwd_cost)
+        @test isfinite(bwd_cost)
+        @test isfinite(bi_cost)
+        @test isfinite(rand_cost)
+        @test length(fwd_sol) == 2
+        @test length(bwd_sol) == 2
+        @test length(bi_sol) == 2
+        @test length(rand_sol) == 2
+    end
+
     @testset "do_path_relinking! respects expired deadline" begin
         GIVPOptimizer.set_integer_split!(2)
         sphere(x) = sum(x .^ 2)

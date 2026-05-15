@@ -12,6 +12,7 @@
         @test cfg.use_elite_pool == true
         @test cfg.elite_size == 7
         @test cfg.path_relink_frequency == 8
+        @test cfg.path_relink_strategy == :bidirectional
         @test cfg.adaptive_alpha == true
         @test cfg.alpha_min == 0.08
         @test cfg.alpha_max == 0.18
@@ -39,6 +40,16 @@
         @test cfg.time_limit == 0.0
         cfg = validate_config!(GIVPConfig(integer_split = 0))
         @test cfg.integer_split == 0
+        cfg = validate_config!(GIVPConfig(path_relink_strategy = :randomized))
+        @test cfg.path_relink_strategy == :randomized
+        cfg = validate_config!(GIVPConfig(path_relink_strategy = :random))
+        @test cfg.path_relink_strategy == :randomized
+    end
+
+    @testset "path_relink_strategy validation" begin
+        @test_throws InvalidConfigError validate_config!(
+            GIVPConfig(path_relink_strategy = :invalid),
+        )
     end
 
     @testset "Direction enum" begin

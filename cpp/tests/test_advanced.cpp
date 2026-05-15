@@ -263,6 +263,12 @@ TEST_CASE("alpha_max out of range throws", "[config]") {
     REQUIRE_THROWS_AS(cfg.validate(), InvalidConfig);
 }
 
+TEST_CASE("invalid path_relink_strategy enum value throws", "[config]") {
+    GivpConfig cfg;
+    cfg.path_relink_strategy = static_cast<PathRelinkStrategy>(255);
+    REQUIRE_THROWS_AS(cfg.validate(), InvalidConfig);
+}
+
 // ── pr.hpp: backward path is chosen when cost_bwd < cost_fwd ─────────────────
 
 TEST_CASE("path relinking backward direction selected", "[advanced]") {

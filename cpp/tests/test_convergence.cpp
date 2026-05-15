@@ -249,6 +249,67 @@ TEST_CASE("bidirectional PR with expired deadline exits early", "[pr]") {
     REQUIRE_NOTHROW(bidirectional_path_relinking(obj, sol1, sol2, 3, cache, rng, past_dl));
 }
 
+TEST_CASE("path relinking strategy helper supports all modes", "[pr]") {
+    auto sphere = [](const std::vector<double> &x) -> double {
+        double s = 0.0;
+        for (double v : x)
+            s += v * v;
+        return s;
+    };
+
+    std::vector<double> source = {2.0, 2.0, 2.0};
+    std::vector<double> target = {0.0, 0.0, 0.0};
+
+    std::optional<EvaluationCache> cache = std::nullopt;
+    Deadline dl;
+    Rng rng_fwd = Rng::from_seed(11);
+    Rng rng_bwd = Rng::from_seed(12);
+    Rng rng_bi = Rng::from_seed(13);
+    Rng rng_rand = Rng::from_seed(14);
+
+    auto [_fwd_sol, fwd_cost] = apply_path_relinking_strategy(
+        sphere,
+        source,
+        target,
+        PathRelinkStrategy::Forward,
+        3,
+        cache,
+        rng_fwd,
+        dl);
+    auto [_bwd_sol, bwd_cost] = apply_path_relinking_strategy(
+        sphere,
+        source,
+        target,
+        PathRelinkStrategy::Backward,
+        3,
+        cache,
+        rng_bwd,
+        dl);
+    auto [_bi_sol, bi_cost] = apply_path_relinking_strategy(
+        sphere,
+        source,
+        target,
+        PathRelinkStrategy::Bidirectional,
+        3,
+        cache,
+        rng_bi,
+        dl);
+    auto [_rand_sol, rand_cost] = apply_path_relinking_strategy(
+        sphere,
+        source,
+        target,
+        PathRelinkStrategy::Randomized,
+        3,
+        cache,
+        rng_rand,
+        dl);
+
+    REQUIRE(std::isfinite(fwd_cost));
+    REQUIRE(std::isfinite(bwd_cost));
+    REQUIRE(std::isfinite(bi_cost));
+    REQUIRE(std::isfinite(rand_cost));
+}
+
 // ── vnd.hpp: neighborhood_multiflip finds improvement (any_improved = true) ──
 
 TEST_CASE("vnd multiflip branch improves negative product objective", "[vnd]") {

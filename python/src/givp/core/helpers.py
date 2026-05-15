@@ -20,7 +20,13 @@ import numpy as np
 
 # Type alias for the user-supplied objective function.
 EvaluatorFn = Callable[[np.ndarray], float]
-PathRelinkStrategy = Literal["bidirectional", "forward", "backward", "random"]
+PathRelinkStrategy = Literal[
+    "bidirectional",
+    "forward",
+    "backward",
+    "randomized",
+    "random",
+]
 
 # Keep the legacy logger name so tests and external callers that listen to
 # "givp._core" continue receiving messages even after the package rename.

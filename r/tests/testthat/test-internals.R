@@ -29,6 +29,7 @@ givp_abort <- ns_get("givp_abort")
 abort_invalid_bounds <- ns_get("abort_invalid_bounds")
 abort_invalid_config <- ns_get("abort_invalid_config")
 abort_invalid_initial_guess <- ns_get("abort_invalid_initial_guess")
+path_relink <- ns_get("path_relink")
 
 seed_sweep <- ns_get("seed_sweep")
 sweep_summary <- ns_get("sweep_summary")
@@ -188,4 +189,31 @@ test_that("run_givp_native supports single initial_guess fallback", {
 
   expect_s3_class(res, "givp_result")
   expect_true(is.finite(res$fun))
+})
+
+test_that("path_relink supports all configured strategy modes", {
+  quad <- function(x) sum(x * x)
+  bounds <- normalize_bounds(list(c(-5, 5), c(-5, 5)))
+  xa <- c(4, 4)
+  xb <- c(-4, -4)
+
+  for (strategy in c("bidirectional", "forward", "backward", "randomized")) {
+    cfg <- givp_config(
+      path_relink_frequency = 4L,
+      path_relink_strategy = strategy
+    )
+    out <- path_relink(
+      quad,
+      xa,
+      xb,
+      bounds,
+      cfg,
+      "minimize",
+      make_eval_cache(256L),
+      new.env(parent = emptyenv())
+    )
+    expect_true(is.list(out))
+    expect_true(all(c("x", "value") %in% names(out)))
+    expect_true(is.finite(out$value))
+  }
 })

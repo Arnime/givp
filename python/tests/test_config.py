@@ -42,6 +42,13 @@ def test_invalid_path_relink_strategy_raises_invalid_config() -> None:
         GIVPConfig(path_relink_strategy="invalid")  # type: ignore[arg-type]
 
 
+def test_path_relink_strategy_accepts_randomized_and_random_alias() -> None:
+    randomized_cfg = GIVPConfig(path_relink_strategy="randomized")
+    random_alias_cfg = GIVPConfig(path_relink_strategy="random")
+    assert randomized_cfg.path_relink_strategy == "randomized"
+    assert random_alias_cfg.path_relink_strategy == "random"
+
+
 @pytest.mark.parametrize(
     "field,value",
     [

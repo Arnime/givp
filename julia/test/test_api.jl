@@ -177,6 +177,20 @@
         @test result.success
     end
 
+    @testset "givp accepts path_relink_strategy via config" begin
+        sphere(x) = sum(x .^ 2)
+        bounds = [(-2.0, 2.0), (-2.0, 2.0)]
+        config = GIVPConfig(
+            ;
+            max_iterations = 3,
+            vnd_iterations = 5,
+            ils_iterations = 1,
+            path_relink_strategy = :randomized,
+        )
+        result = givp(sphere, bounds; config = config, seed = 42)
+        @test result.success
+    end
+
     @testset "givp with evaluator that throws" begin
         bad_fn(x) = error("evaluator crash")
         bounds = [(-5.0, 5.0), (-5.0, 5.0)]

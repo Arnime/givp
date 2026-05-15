@@ -32,6 +32,34 @@ test_that("config validates direction", {
   )
 })
 
+test_that("config validates path_relink_strategy", {
+  expect_error(
+    givp_config(path_relink_strategy = "invalid"),
+    class = "givp_error_invalid_config"
+  )
+})
+
+test_that("config accepts path_relink_strategy values and random alias", {
+  cfg <- givp_config(path_relink_strategy = "randomized")
+  expect_equal(cfg$path_relink_strategy, "randomized")
+
+  alias_cfg <- givp_config(path_relink_strategy = "random")
+  expect_equal(alias_cfg$path_relink_strategy, "randomized")
+
+  expect_equal(
+    givp_config(path_relink_strategy = "bidirectional")$path_relink_strategy,
+    "bidirectional"
+  )
+  expect_equal(
+    givp_config(path_relink_strategy = "forward")$path_relink_strategy,
+    "forward"
+  )
+  expect_equal(
+    givp_config(path_relink_strategy = "backward")$path_relink_strategy,
+    "backward"
+  )
+})
+
 test_that("config validates positive iteration and size fields", {
   expect_error(
     givp_config(vnd_iterations = 0L),

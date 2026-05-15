@@ -10,7 +10,13 @@ from typing import Literal
 from givp.exceptions import InvalidConfigError
 
 Direction = Literal["minimize", "maximize"]
-PathRelinkStrategy = Literal["bidirectional", "forward", "backward", "random"]
+PathRelinkStrategy = Literal[
+    "bidirectional",
+    "forward",
+    "backward",
+    "randomized",
+    "random",
+]
 
 
 @dataclass
@@ -164,11 +170,12 @@ class GIVPConfig:
             "bidirectional",
             "forward",
             "backward",
+            "randomized",
             "random",
         ):
             raise InvalidConfigError(
                 "path_relink_strategy must be one of 'bidirectional', 'forward', "
-                "'backward', or 'random'"
+                "'backward', 'randomized', or 'random'"
             )
         if not 0.0 <= self.alpha_max <= 1.0:
             raise InvalidConfigError(

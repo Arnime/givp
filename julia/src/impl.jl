@@ -50,9 +50,13 @@ function do_path_relinking!(
             expired(deadline) && break
             source = elite_solutions[i][1]
             target = elite_solutions[j][1]
-
-            pr_solution, _ =
-                bidirectional_path_relinking(cached_fn, source, target; deadline)
+            pr_solution, _ = _apply_path_relinking_strategy(
+                cached_fn,
+                source,
+                target,
+                config.path_relink_strategy;
+                deadline,
+            )
             pr_solution = local_search_vnd(
                 cached_fn,
                 pr_solution,
@@ -75,6 +79,29 @@ function do_path_relinking!(
     end
 
     return best_cost, best_solution, stagnation
+end
+
+function _apply_path_relinking_strategy(
+    cost_fn::Function,
+    source::Vector{Float64},
+    target::Vector{Float64},
+    strategy::Symbol;
+    deadline::Float64 = 0.0,
+)::Tuple{Vector{Float64}, Float64}
+    strategy == :bidirectional &&
+        return bidirectional_path_relinking(cost_fn, source, target; deadline)
+    strategy == :forward &&
+        return path_relinking(cost_fn, source, target; strategy = :forward, deadline)
+    strategy == :backward &&
+        return path_relinking(cost_fn, target, source; strategy = :forward, deadline)
+    if strategy == :randomized
+        rng = new_rng()
+        if rand(rng, Bool)
+            return path_relinking(cost_fn, source, target; strategy = :forward, deadline)
+        end
+        return path_relinking(cost_fn, target, source; strategy = :forward, deadline)
+    end
+    throw(InvalidConfigError("unsupported path_relink_strategy: $strategy"))
 end
 
 function grasp_ils_vnd(

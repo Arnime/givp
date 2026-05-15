@@ -32,7 +32,7 @@ mod pr;
 mod result;
 mod vnd;
 
-pub use config::{Direction, GivpConfig};
+pub use config::{Direction, GivpConfig, PathRelinkStrategy};
 pub use error::{GivpError, Result};
 pub use experiment::{seed_sweep, SweepSummary};
 pub use result::{OptimizeResult, TerminationReason};
