@@ -28,6 +28,23 @@
 
 namespace givp::detail {
 
+inline void validate_initial_guess_candidate(
+    const std::vector<std::pair<double, double>> &bounds,
+    const std::vector<double> &initial_guess) {
+    if (initial_guess.size() != bounds.size())
+        throw InvalidInitialGuess("expected " + std::to_string(bounds.size()) +
+                                  " values, got " + std::to_string(initial_guess.size()));
+
+    for (std::size_t i = 0; i < initial_guess.size(); ++i) {
+        double v = initial_guess[i];
+        if (v < bounds[i].first || v > bounds[i].second)
+            throw InvalidInitialGuess("value " + std::to_string(v) + " out of bounds [" +
+                                      std::to_string(bounds[i].first) + ", " +
+                                      std::to_string(bounds[i].second) + "] at index " +
+                                      std::to_string(i));
+    }
+}
+
 inline std::pair<std::vector<double>, std::vector<double>>
 validate_bounds(const std::vector<std::pair<double, double>> &bounds,
                 const std::optional<std::vector<std::vector<double>>> &initial_guesses) {
@@ -52,22 +69,10 @@ validate_bounds(const std::vector<std::pair<double, double>> &bounds,
         upper.push_back(hi);
     }
 
-    if (initial_guesses) {
-        for (const auto &initial_guess : *initial_guesses) {
-            if (initial_guess.size() != bounds.size())
-                throw InvalidInitialGuess("expected " + std::to_string(bounds.size()) +
-                                          " values, got " +
-                                          std::to_string(initial_guess.size()));
-            for (std::size_t i = 0; i < initial_guess.size(); ++i) {
-                double v = initial_guess[i];
-                if (v < bounds[i].first || v > bounds[i].second)
-                    throw InvalidInitialGuess(
-                        "value " + std::to_string(v) + " out of bounds [" +
-                        std::to_string(bounds[i].first) + ", " + std::to_string(bounds[i].second) +
-                        "] at index " + std::to_string(i));
-            }
-        }
-    }
+    if (initial_guesses)
+        for (const auto &initial_guess : *initial_guesses)
+            validate_initial_guess_candidate(bounds, initial_guess);
+
     return {std::move(lower), std::move(upper)};
 }
 
@@ -84,11 +89,12 @@ normalize_warm_start_guesses(const GivpConfig &config) {
 
         for (std::size_t idx = 0; idx < config.initial_guesses->size(); ++idx) {
             const auto &candidate = (*config.initial_guesses)[idx];
-            bool duplicate = std::any_of(normalized.begin(), normalized.end(),
-                                         [&](const std::vector<double> &existing) {
-                                             return existing == candidate;
-                                         });
-            if (duplicate)
+            if (const bool duplicate =
+                    std::any_of(normalized.begin(), normalized.end(),
+                                [&](const std::vector<double> &existing) {
+                                    return existing == candidate;
+                                });
+                duplicate)
                 throw InvalidInitialGuess("initial_guesses[" + std::to_string(idx) +
                                           "] duplicates an existing warm-start candidate");
             normalized.push_back(candidate);
