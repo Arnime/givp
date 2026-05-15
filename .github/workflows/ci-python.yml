@@ -66,7 +66,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install
         run: |
-          pip install --require-hashes -r ${{ matrix.lockfile || 'python/requirements/ci.txt' }}
+          pip install --only-binary=:all: --require-hashes -r ${{ matrix.lockfile || 'python/requirements/ci.txt' }}
           bash .github/scripts/install-package.sh
       - name: Lint
         run: ruff check python/src python/tests
@@ -86,7 +86,7 @@ jobs:
           python-version: "3.13"
       - name: Install
         run: |
-          pip install --require-hashes -r python/requirements/ci.txt
+          pip install --only-binary=:all: --require-hashes -r python/requirements/ci.txt
           bash .github/scripts/install-package.sh
       - name: Test with coverage
         run: pytest --cov=givp --cov-report=xml:coverage-python.xml --cov-fail-under=95
@@ -122,7 +122,7 @@ jobs:
           python-version: "3.13"
       - name: Install
         run: |
-          pip install --require-hashes -r python/requirements/ci.txt
+          pip install --only-binary=:all: --require-hashes -r python/requirements/ci.txt
           bash .github/scripts/install-package.sh
       - name: Run property tests
         # Run only test_properties.py with a generous timeout; --no-cov keeps it fast.
@@ -145,8 +145,8 @@ jobs:
           python-version: "3.13"
       - name: Install (with benchmark extras)
         run: |
-          pip install --require-hashes -r python/requirements/ci.txt
-          pip install --require-hashes -r python/requirements/benchmarks.txt
+          pip install --only-binary=:all: --require-hashes -r python/requirements/ci.txt
+          pip install --only-binary=:all: --require-hashes -r python/requirements/benchmarks.txt
           bash .github/scripts/install-package.sh
       - name: Benchmark smoke tests
         run: pytest -m slow python/tests/test_benchmark_scripts.py -v
@@ -168,7 +168,7 @@ jobs:
           python-version: "3.13"
       - name: Install
         run: |
-          pip install --require-hashes -r python/requirements/ci.txt
+          pip install --only-binary=:all: --require-hashes -r python/requirements/ci.txt
           bash .github/scripts/install-package.sh
       - name: Run convergence quality gate
         run: |
@@ -191,7 +191,7 @@ jobs:
           python-version: "3.13"
       - name: Install
         run: |
-          pip install --require-hashes -r python/requirements/ci.txt
+          pip install --only-binary=:all: --require-hashes -r python/requirements/ci.txt
           bash .github/scripts/install-package.sh
       - name: Run performance benchmarks
         run: |
@@ -223,9 +223,9 @@ jobs:
           python-version: "3.13"
       - name: Install dependencies
         run: |
-          pip install --require-hashes -r python/requirements/ci.txt
+          pip install --only-binary=:all: --require-hashes -r python/requirements/ci.txt
           bash .github/scripts/install-package.sh
-          pip install --require-hashes -r python/requirements/mutation.txt
+          pip install --only-binary=:all: --require-hashes -r python/requirements/mutation.txt
       - name: Remove broken symlinks (mutmut workaround)
         run: |
           BROKEN_LINKS=$(find . -xtype l | wc -l)
@@ -283,7 +283,7 @@ jobs:
           allow-prereleases: true
       - name: Install
         run: |
-          pip install --require-hashes -r python/requirements/ci.txt
+          pip install --only-binary=:all: --require-hashes -r python/requirements/ci.txt
           bash .github/scripts/install-package.sh
       - name: Lint
         run: ruff check python/src python/tests
@@ -301,7 +301,7 @@ jobs:
           python-version: "3.13"
       - name: Install
         run: |
-          pip install --require-hashes -r python/requirements/docs.txt
+          pip install --only-binary=:all: --require-hashes -r python/requirements/docs.txt
           bash .github/scripts/install-package.sh
       - name: Build docs (strict)
         run: mkdocs build --strict
