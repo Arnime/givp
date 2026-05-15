@@ -129,6 +129,12 @@ jobs:
           root = ET.parse("coverage-python.xml").getroot()
           for cls in root.findall(".//class"):
             fn = cls.attrib.get("filename", "")
+            # Normalize absolute installed paths to repo-relative.
+            # XML stores e.g. /opt/.../site-packages/givp/api.py;
+            # changed_lines keys use python/src/givp/api.py.
+            m = re.search(r"/givp/", fn)
+            if m:
+              fn = "python/src/givp/" + fn[m.end():]
             for ln in cls.findall(".//line"):
               num = int(ln.attrib.get("number", "0"))
               hits = int(float(ln.attrib.get("hits", "0")))
@@ -325,7 +331,7 @@ jobs:
           allow-prereleases: true
       - name: Install
         run: |
-          pip install --only-binary=:all: --require-hashes -r python/requirements/ci.txt
+          pip install -r python/requirements/ci.txt
           bash .github/scripts/install-package.sh
       - name: Lint
         run: ruff check python/src python/tests

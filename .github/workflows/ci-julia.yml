@@ -148,7 +148,7 @@ jobs:
       - name: Check patch coverage on PR (>= 90%)
         if: github.event_name == 'pull_request'
         run: |
-          julia -e '
+          julia <<'JLEOF'
             base = ENV["PR_BASE_SHA"]
             threshold = 90.0
 
@@ -203,7 +203,7 @@ jobs:
               println("::error::Julia patch coverage below $(threshold)% threshold (got $(round(pct; digits=1))%)")
               exit(1)
             end
-          '
+          JLEOF
         env:
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
 
