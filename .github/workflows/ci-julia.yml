@@ -63,6 +63,7 @@ jobs:
           version: ${{ matrix.julia-version }}
 
       - uses: julia-actions/cache@a45e8fa8be21c18a06b7177052533149e61e9b38 # v3.1.0
+        continue-on-error: true
         with:
           delete-old-caches: false
 
