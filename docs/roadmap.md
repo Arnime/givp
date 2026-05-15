@@ -21,9 +21,9 @@ Available in **Python**, **Julia**, **Rust**, **C++** (header-only), and **R**.
     (Issue #138)
   - [x] docs synchronized to the canonical config contract across Python, Julia,
     Rust, C++, and R
-- **Elite-pool warm start API — cross-port rollout** (Issue #142): Python slice
-  merged (PR #157); Julia, Rust, C++, and R ports still need multi-seed
-  `initial_guesses` exposed in their public APIs.
+- **Elite-pool warm start API — cross-port rollout** (Issue #142): completed
+  across Python, Julia, Rust, C++, and R with multi-seed `initial_guesses`
+  exposed in public APIs.
 - **Configurable path-relinking strategies — cross-port rollout** (Issue #143):
   Python slice merged (PR #158); Julia, Rust, and R ports still need
   `path_relink_strategy` exposed as a user-configurable parameter.
