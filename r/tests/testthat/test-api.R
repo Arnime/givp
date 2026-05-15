@@ -145,6 +145,15 @@ test_that("givp validates initial_guesses", {
     ),
     class = "givp_error_invalid_initial_guess"
   )
+
+  expect_error(
+    givp(
+      f,
+      bounds = list(c(-1, 1)),
+      initial_guesses = c(0.1)
+    ),
+    class = "givp_error_invalid_initial_guess"
+  )
 })
 
 test_that("GIVPOptimizer wrapper runs", {
