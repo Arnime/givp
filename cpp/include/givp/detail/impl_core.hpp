@@ -127,15 +127,9 @@ template <typename F> static void do_path_relinking(const F &func, PathRelinking
             if (expired(ctx.deadline))
                 return;
 
-            auto [pr_sol, pr_cost] = apply_path_relinking_strategy(
-                func,
-                all[i].first,
-                all[j].first,
-                ctx.strategy,
-                ctx.half,
-                ctx.cache,
-                ctx.rng,
-                ctx.deadline);
+            auto [pr_sol, pr_cost] =
+                apply_path_relinking_strategy(func, all[i].first, all[j].first, ctx.strategy,
+                                              ctx.half, ctx.cache, ctx.rng, ctx.deadline);
             VndContext<Rng> vnd_ctx{ctx.lower, ctx.upper, ctx.cache,
                                     ctx.half,  ctx.rng,   ctx.deadline};
             double refined_cost = local_search_vnd(

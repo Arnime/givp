@@ -111,10 +111,11 @@ std::pair<std::vector<double>, double> bidirectional_path_relinking(
 
 /// Select and execute path relinking according to the configured strategy.
 template <typename F, typename RngT>
-std::pair<std::vector<double>, double> apply_path_relinking_strategy(
-    const F &func, const std::vector<double> &source, const std::vector<double> &target,
-    PathRelinkStrategy strategy, std::size_t half, std::optional<EvaluationCache> &cache,
-    RngT &rng, const Deadline &deadline) {
+std::pair<std::vector<double>, double>
+apply_path_relinking_strategy(const F &func, const std::vector<double> &source,
+                              const std::vector<double> &target, PathRelinkStrategy strategy,
+                              std::size_t half, std::optional<EvaluationCache> &cache, RngT &rng,
+                              const Deadline &deadline) {
 
     switch (strategy) {
     case PathRelinkStrategy::Bidirectional:
@@ -151,12 +152,10 @@ std::pair<std::vector<double>, double> apply_path_relinking_strategy(
     }
     case PathRelinkStrategy::Randomized:
         if (rng.uniform_index(0, 1) == 0)
-            return apply_path_relinking_strategy(func, source, target,
-                                                 PathRelinkStrategy::Forward, half, cache, rng,
-                                                 deadline);
-        return apply_path_relinking_strategy(func, source, target,
-                                             PathRelinkStrategy::Backward, half, cache, rng,
-                                             deadline);
+            return apply_path_relinking_strategy(func, source, target, PathRelinkStrategy::Forward,
+                                                 half, cache, rng, deadline);
+        return apply_path_relinking_strategy(func, source, target, PathRelinkStrategy::Backward,
+                                             half, cache, rng, deadline);
     }
     return bidirectional_path_relinking(func, source, target, half, cache, rng, deadline);
 }
