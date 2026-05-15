@@ -18,7 +18,7 @@ use std::time::{Duration, Instant};
 /// Validate bounds and initial guess.
 fn validate_bounds(
     bounds: &[(f64, f64)],
-    initial_guess: Option<&[f64]>,
+    initial_guesses: Option<&[Vec<f64>]>,
 ) -> Result<(Vec<f64>, Vec<f64>)> {
     if bounds.is_empty() {
         return Err(GivpError::InvalidBounds("bounds cannot be empty".into()));
@@ -30,10 +30,42 @@ fn validate_bounds(
         lower.push(lo);
         upper.push(hi);
     }
-    if let Some(ig) = initial_guess {
-        validate_initial_guess(bounds, ig)?;
+    if let Some(initials) = initial_guesses {
+        for ig in initials {
+            validate_initial_guess(bounds, ig)?;
+        }
     }
     Ok((lower, upper))
+}
+
+fn normalize_warm_start_guesses(config: &GivpConfig) -> Result<Option<Vec<Vec<f64>>>> {
+    let mut normalized: Vec<Vec<f64>> = Vec::new();
+
+    if let Some(initial_guess) = &config.initial_guess {
+        normalized.push(initial_guess.clone());
+    }
+
+    if let Some(initial_guesses) = &config.initial_guesses {
+        if initial_guesses.is_empty() {
+            return Err(GivpError::InvalidInitialGuess(
+                "initial_guesses must contain at least one candidate".into(),
+            ));
+        }
+        for (idx, candidate) in initial_guesses.iter().enumerate() {
+            if normalized.iter().any(|existing| existing == candidate) {
+                return Err(GivpError::InvalidInitialGuess(format!(
+                    "initial_guesses[{idx}] duplicates an existing warm-start candidate"
+                )));
+            }
+            normalized.push(candidate.clone());
+        }
+    }
+
+    if normalized.is_empty() {
+        Ok(None)
+    } else {
+        Ok(Some(normalized))
+    }
 }
 
 fn validate_single_bound(index: usize, lo: f64, hi: f64) -> Result<()> {
@@ -97,6 +129,7 @@ fn build_deadline(config: &GivpConfig) -> Option<Instant> {
 #[allow(clippy::too_many_arguments)]
 fn initialize_best_solution<F>(
     config: &GivpConfig,
+    warm_start_guesses: Option<&[Vec<f64>]>,
     num_vars: usize,
     lower: &[f64],
     upper: &[f64],
@@ -109,10 +142,21 @@ fn initialize_best_solution<F>(
 where
     F: Fn(&[f64]) -> f64 + Send + Sync,
 {
-    if let Some(ref ig) = config.initial_guess {
-        let mut best_solution = ig.clone();
+    if let Some(guesses) = warm_start_guesses {
+        let mut best_solution = guesses[0].clone();
         normalize_integer_tail(&mut best_solution, half);
-        let best_cost = evaluate_with_cache(&best_solution, func, cache, half);
+        let mut best_cost = evaluate_with_cache(&best_solution, func, cache, half);
+
+        for ig in guesses.iter().skip(1) {
+            let mut candidate = ig.clone();
+            normalize_integer_tail(&mut candidate, half);
+            let candidate_cost = evaluate_with_cache(&candidate, func, cache, half);
+            if candidate_cost < best_cost {
+                best_solution = candidate;
+                best_cost = candidate_cost;
+            }
+        }
+
         return (best_solution, best_cost);
     }
 
@@ -145,6 +189,7 @@ fn build_and_improve_candidate<F>(
     half: usize,
     cache: &mut Option<EvaluationCache>,
     rng: &mut rand_chacha::ChaCha8Rng,
+    first_initial_guess: Option<&[f64]>,
     deadline: Option<Instant>,
 ) -> (Vec<f64>, f64)
 where
@@ -152,7 +197,7 @@ where
 {
     let mut child = child_rng(rng);
     let ig = if iteration == 0 {
-        config.initial_guess.as_deref()
+        first_initial_guess
     } else {
         None
     };
@@ -333,6 +378,7 @@ fn execute_iteration<F>(
     best_solution: &mut Vec<f64>,
     best_cost: &mut f64,
     stagnation: &mut usize,
+    first_initial_guess: Option<&[f64]>,
     deadline: Option<Instant>,
 ) -> Option<&'static str>
 where
@@ -348,7 +394,18 @@ where
     );
 
     let (candidate, ils_cost) = build_and_improve_candidate(
-        iteration, num_vars, lower, upper, wrapped, config, alpha, half, cache, rng, deadline,
+        iteration,
+        num_vars,
+        lower,
+        upper,
+        wrapped,
+        config,
+        alpha,
+        half,
+        cache,
+        rng,
+        first_initial_guess,
+        deadline,
     );
 
     if update_best(best_solution, best_cost, &candidate, ils_cost) {
@@ -462,7 +519,9 @@ where
 {
     config.validate()?;
 
-    let (lower, upper) = validate_bounds(bounds, config.initial_guess.as_deref())?;
+    let warm_start_guesses = normalize_warm_start_guesses(&config)?;
+
+    let (lower, upper) = validate_bounds(bounds, warm_start_guesses.as_deref())?;
     let num_vars = bounds.len();
     let half = get_half(num_vars, config.integer_split.or(Some(num_vars)));
     let is_maximize = config.direction == Direction::Maximize;
@@ -487,12 +546,33 @@ where
 
     let deadline = build_deadline(&config);
     let (mut best_solution, mut best_cost) = initialize_best_solution(
-        &config, num_vars, &lower, &upper, &wrapped, half, &mut cache, &mut rng, deadline,
+        &config,
+        warm_start_guesses.as_deref(),
+        num_vars,
+        &lower,
+        &upper,
+        &wrapped,
+        half,
+        &mut cache,
+        &mut rng,
+        deadline,
     );
 
     if config.use_elite_pool {
         elite_pool.add(best_solution.clone(), best_cost);
+        if let Some(guesses) = warm_start_guesses.as_deref() {
+            for guess in guesses {
+                let mut warm_seed = guess.clone();
+                normalize_integer_tail(&mut warm_seed, half);
+                let warm_cost = evaluate_with_cache(&warm_seed, &wrapped, &mut cache, half);
+                elite_pool.add(warm_seed, warm_cost);
+            }
+        }
     }
+
+    let first_initial_guess = warm_start_guesses
+        .as_ref()
+        .map(|guesses| guesses[0].as_slice());
 
     let mut stagnation: usize = 0;
     let mut iterations_executed: usize = 0;
@@ -521,6 +601,7 @@ where
             &mut best_solution,
             &mut best_cost,
             &mut stagnation,
+            first_initial_guess,
             deadline,
         ) {
             message = stop_message.into();
