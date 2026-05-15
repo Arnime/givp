@@ -109,6 +109,41 @@ mod tests {
         assert!(matches!(result, Err(GivpError::InvalidInitialGuess(_))));
     }
 
+    #[test]
+    fn test_initial_guesses_empty_rejected() {
+        let cfg = GivpConfig {
+            initial_guesses: Some(vec![]),
+            ..Default::default()
+        };
+        let result = givp(sphere, &[(-5.0, 5.0)], cfg);
+        assert!(matches!(result, Err(GivpError::InvalidInitialGuess(_))));
+    }
+
+    #[test]
+    fn test_initial_guesses_duplicate_rejected() {
+        let cfg = GivpConfig {
+            initial_guess: Some(vec![0.1]),
+            initial_guesses: Some(vec![vec![0.1]]),
+            ..Default::default()
+        };
+        let result = givp(sphere, &[(-5.0, 5.0)], cfg);
+        assert!(matches!(result, Err(GivpError::InvalidInitialGuess(_))));
+    }
+
+    #[test]
+    fn test_initial_guesses_accepted() {
+        let cfg = GivpConfig {
+            max_iterations: 10,
+            initial_guesses: Some(vec![vec![1.0, 1.0], vec![0.2, -0.2]]),
+            seed: Some(42),
+            integer_split: Some(2),
+            ..Default::default()
+        };
+        let bounds = vec![(-5.0, 5.0); 2];
+        let result = givp(sphere, &bounds, cfg).unwrap();
+        assert!(result.success);
+    }
+
     // ── Optimization ────────────────────────────────────────────────
 
     #[test]

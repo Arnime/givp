@@ -1,27 +1,15 @@
 # SPDX-FileCopyrightText: 2026 Arnaldo Mendes Pires Junior
 # SPDX-License-Identifier: MIT
 
-"""Public API for the GIVPOptimizer library."""
-
 const _OBJECTIVE_EXCEPTION_WARNED = Ref(false)
 
 """
     givp(func, bounds; kwargs...) -> OptimizeResult
 
-Minimize (or maximize) a scalar function with GRASP-ILS-VND-PR.
+Minimize or maximize a scalar objective with GRASP-ILS-VND-PR.
 
-# Arguments
-- `func`: Objective callable mapping a `Vector{Float64}` to a scalar.
-- `bounds`: Vector of `(low, high)` tuples or a `(lower, upper)` tuple.
-
-# Keyword Arguments
-- `num_vars::Union{Int,Nothing}=nothing`: Number of variables (inferred from bounds).
-- `direction::Direction=minimize`: Optimization direction.
-- `config::Union{GIVPConfig,Nothing}=nothing`: Algorithm hyper-parameters.
-- `initial_guess::Union{Vector{Float64},Nothing}=nothing`: Warm-start vector.
-- `iteration_callback::Union{Function,Nothing}=nothing`: Called per iteration.
-- `seed::Union{Int,Nothing}=nothing`: RNG seed for reproducibility.
-- `verbose::Bool=false`: Print progress.
+Supports warm-starting through `initial_guess` and multi-seed
+`initial_guesses`.
 """
 function givp(
     func::Function,
@@ -30,6 +18,7 @@ function givp(
     direction::Direction = minimize,
     config::Union{GIVPConfig, Nothing} = nothing,
     initial_guess::Union{Vector{Float64}, Nothing} = nothing,
+    initial_guesses::Union{Vector{Vector{Float64}}, Nothing} = nothing,
     iteration_callback::Union{Function, Nothing} = nothing,
     seed::Union{Int, Nothing} = nothing,
     verbose::Bool = false,
@@ -49,6 +38,8 @@ function givp(
     # Normalize bounds
     lower, upper, n = _normalize_bounds(bounds, num_vars)
     n > 0 || throw(InvalidBoundsError("bounds must be non-empty (got 0 variables)"))
+    warm_start_guesses =
+        _normalize_initial_guesses(initial_guess, initial_guesses, lower, upper, n)
 
     # Default to fully continuous when integer_split not specified
     if cfg.integer_split === nothing
@@ -82,7 +73,9 @@ function givp(
         iteration_callback,
         lower,
         upper,
-        initial_guess,
+        initial_guess = warm_start_guesses === nothing ? nothing :
+                        copy(first(warm_start_guesses)),
+        initial_guesses = warm_start_guesses,
     )
 
     x = sol
@@ -129,6 +122,7 @@ mutable struct GIVPOptimizerWrapper{B}
     direction::Direction
     config::GIVPConfig
     initial_guess::Union{Vector{Float64}, Nothing}
+    initial_guesses::Union{Vector{Vector{Float64}}, Nothing}
     iteration_callback::Union{Function, Nothing}
     seed::Union{Int, Nothing}
     verbose::Bool
@@ -144,6 +138,7 @@ function GIVPOptimizerWrapper(
     direction::Direction = minimize,
     config::Union{GIVPConfig, Nothing} = nothing,
     initial_guess::Union{Vector{Float64}, Nothing} = nothing,
+    initial_guesses::Union{Vector{Vector{Float64}}, Nothing} = nothing,
     iteration_callback::Union{Function, Nothing} = nothing,
     seed::Union{Int, Nothing} = nothing,
     verbose::Bool = false,
@@ -156,6 +151,7 @@ function GIVPOptimizerWrapper(
         direction,
         config !== nothing ? config : GIVPConfig(),
         initial_guess,
+        initial_guesses,
         iteration_callback,
         seed,
         verbose,
@@ -182,6 +178,7 @@ function optimize!(opt::GIVPOptimizerWrapper)::OptimizeResult
         direction = opt.direction,
         config = opt.config,
         initial_guess = opt.initial_guess,
+        initial_guesses = opt.initial_guesses,
         iteration_callback = opt.iteration_callback,
         seed = opt.seed,
         verbose = opt.verbose,
@@ -192,6 +189,45 @@ function optimize!(opt::GIVPOptimizerWrapper)::OptimizeResult
         opt.best_fun = result.fun
     end
     return result
+end
+
+function _normalize_initial_guesses(
+    initial_guess::Union{Vector{Float64}, Nothing},
+    initial_guesses::Union{Vector{Vector{Float64}}, Nothing},
+    lower::Vector{Float64},
+    upper::Vector{Float64},
+    num_vars::Int,
+)::Union{Vector{Vector{Float64}}, Nothing}
+    normalized = Vector{Vector{Float64}}()
+
+    function add_candidate(candidate::Vector{Float64}, label::String)
+        validate_bounds_and_initial!(lower, upper, candidate, num_vars)
+        for existing in normalized
+            if existing == candidate
+                throw(
+                    InvalidInitialGuessError(
+                        "$label duplicates an existing warm-start candidate",
+                    ),
+                )
+            end
+        end
+        push!(normalized, copy(candidate))
+    end
+
+    if initial_guess !== nothing
+        add_candidate(initial_guess, "initial_guess")
+    end
+
+    if initial_guesses !== nothing
+        isempty(initial_guesses) && throw(
+            InvalidInitialGuessError("initial_guesses must contain at least one candidate"),
+        )
+        for (idx, candidate) in enumerate(initial_guesses)
+            add_candidate(candidate, "initial_guesses[$idx]")
+        end
+    end
+
+    return isempty(normalized) ? nothing : normalized
 end
 
 """

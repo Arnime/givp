@@ -86,6 +86,7 @@ function grasp_ils_vnd(
     lower::Union{Vector{Float64}, Nothing} = nothing,
     upper::Union{Vector{Float64}, Nothing} = nothing,
     initial_guess::Union{Vector{Float64}, Nothing} = nothing,
+    initial_guesses::Union{Vector{Vector{Float64}}, Nothing} = nothing,
 )
     if lower === nothing || upper === nothing
         throw(InvalidBoundsError("lower and upper bounds must be provided"))
@@ -130,6 +131,23 @@ function grasp_ils_vnd(
     best_cost = init_cost
     if elite_pool !== nothing
         add!(elite_pool, copy(initial_arr), init_cost)
+    end
+
+    if initial_guesses !== nothing && !isempty(initial_guesses)
+        warm_best_cost = init_cost
+        warm_best_solution = copy(initial_arr)
+        for warm_seed in initial_guesses
+            seed_cost = evaluate_with_cache_impl(warm_seed, cost_fn, cache)
+            if elite_pool !== nothing
+                add!(elite_pool, copy(warm_seed), seed_cost)
+            end
+            if seed_cost < warm_best_cost
+                warm_best_cost = seed_cost
+                warm_best_solution = copy(warm_seed)
+            end
+        end
+        best_cost = warm_best_cost
+        best_solution = warm_best_solution
     end
 
     verbose && @info @sprintf(

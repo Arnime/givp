@@ -38,6 +38,7 @@ pub struct GivpConfig {
     pub integer_split: Option<usize>,
     pub group_size: Option<usize>,
     pub initial_guess: Option<Vec<f64>>,
+    pub initial_guesses: Option<Vec<Vec<f64>>>,
     pub seed: Option<u64>,
     pub verbose: bool,
 }
@@ -67,6 +68,7 @@ impl Default for GivpConfig {
             integer_split: None,
             group_size: None,
             initial_guess: None,
+            initial_guesses: None,
             seed: None,
             verbose: false,
         }

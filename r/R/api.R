@@ -13,6 +13,7 @@
 #' @param direction Optional string (`"minimize"` or `"maximize"`).
 #' @param config Optional `GIVPConfig` object.
 #' @param initial_guess Optional warm-start vector.
+#' @param initial_guesses Optional list of warm-start vectors.
 #' @param iteration_callback Optional callback per iteration.
 #' @param seed Optional RNG seed.
 #' @param verbose Enable verbose output.
@@ -27,6 +28,7 @@ givp <- function(func,
                  direction = NULL,
                  config = NULL,
                  initial_guess = NULL,
+                 initial_guesses = NULL,
                  iteration_callback = NULL,
                  seed = NULL,
                  verbose = FALSE) {
@@ -60,18 +62,54 @@ givp <- function(func,
 
   b <- normalize_bounds(bounds, num_vars)
 
+  normalized_initial_guesses <- list()
+  add_candidate <- function(candidate, label) {
+    candidate_num <- as.numeric(candidate)
+    if (length(candidate_num) != nrow(b)) {
+      abort_invalid_initial_guess(
+        paste0(label, " length does not match number of variables")
+      )
+    }
+    if (any(candidate_num <= b[, 1] | candidate_num >= b[, 2])) {
+      abort_invalid_initial_guess(
+        paste0(label, " must be strictly inside bounds")
+      )
+    }
+    duplicate <- any(vapply(normalized_initial_guesses, function(existing) {
+      identical(existing, candidate_num)
+    }, logical(1)))
+    if (duplicate) {
+      abort_invalid_initial_guess(
+        paste0(label, " duplicates an existing warm-start candidate")
+      )
+    }
+    normalized_initial_guesses[[length(normalized_initial_guesses) + 1L]] <<- candidate_num
+  }
+
   if (!is.null(initial_guess)) {
-    if (length(initial_guess) != nrow(b)) {
+    add_candidate(initial_guess, "initial_guess")
+  }
+
+  if (!is.null(initial_guesses)) {
+    if (!is.list(initial_guesses)) {
+      abort_invalid_initial_guess("initial_guesses must be a list of numeric vectors")
+    }
+    if (length(initial_guesses) == 0L) {
       abort_invalid_initial_guess(
-        "initial_guess length does not match number of variables"
+        "initial_guesses must contain at least one candidate"
       )
     }
-    if (any(initial_guess <= b[, 1] | initial_guess >= b[, 2])) {
-      abort_invalid_initial_guess(
-        "initial_guess must be strictly inside bounds"
-      )
+    for (idx in seq_along(initial_guesses)) {
+      add_candidate(initial_guesses[[idx]], paste0("initial_guesses[", idx, "]"))
     }
-    config$initial_guess <- as.numeric(initial_guess)
+  }
+
+  if (length(normalized_initial_guesses) > 0L) {
+    config$initial_guess <- normalized_initial_guesses[[1L]]
+    config$initial_guesses <- normalized_initial_guesses
+  } else {
+    config$initial_guess <- NULL
+    config$initial_guesses <- NULL
   }
 
   config$direction <- resolved_direction
@@ -101,6 +139,7 @@ GIVPOptimizer <- R6::R6Class(
     direction = NULL,
     config = NULL,
     initial_guess = NULL,
+    initial_guesses = NULL,
     iteration_callback = NULL,
     seed = NULL,
     verbose = FALSE,
@@ -111,6 +150,7 @@ GIVPOptimizer <- R6::R6Class(
                           direction = NULL,
                           config = NULL,
                           initial_guess = NULL,
+                          initial_guesses = NULL,
                           iteration_callback = NULL,
                           seed = NULL,
                           verbose = FALSE) {
@@ -121,6 +161,7 @@ GIVPOptimizer <- R6::R6Class(
       self$direction <- direction
       self$config <- config
       self$initial_guess <- initial_guess
+      self$initial_guesses <- initial_guesses
       self$iteration_callback <- iteration_callback
       self$seed <- seed
       self$verbose <- verbose
@@ -134,6 +175,7 @@ GIVPOptimizer <- R6::R6Class(
         direction = self$direction,
         config = self$config,
         initial_guess = self$initial_guess,
+        initial_guesses = self$initial_guesses,
         iteration_callback = self$iteration_callback,
         seed = self$seed,
         verbose = self$verbose

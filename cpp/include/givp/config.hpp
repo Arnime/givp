@@ -22,6 +22,7 @@ struct GivpConfigRuntime {
     std::optional<std::size_t> integer_split;
     std::optional<std::size_t> group_size;
     std::optional<std::vector<double>> initial_guess;
+    std::optional<std::vector<std::vector<double>>> initial_guesses;
     std::optional<std::uint64_t> seed;
     bool verbose = false;
 };

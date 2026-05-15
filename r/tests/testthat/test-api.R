@@ -110,6 +110,52 @@ test_that("givp validates initial guess inside bounds", {
   )
 })
 
+test_that("givp accepts initial_guesses", {
+  f <- function(x) sum(x * x)
+  res <- givp(
+    f,
+    bounds = list(c(-5, 5), c(-5, 5)),
+    initial_guesses = list(c(1.0, 1.0), c(0.2, -0.2)),
+    seed = 42,
+    config = smoke_config()
+  )
+
+  expect_s3_class(res, "givp_result")
+  expect_equal(length(res$x), 2)
+})
+
+test_that("givp validates initial_guesses", {
+  f <- function(x) sum(x * x)
+
+  expect_error(
+    givp(
+      f,
+      bounds = list(c(-1, 1)),
+      initial_guesses = list()
+    ),
+    class = "givp_error_invalid_initial_guess"
+  )
+
+  expect_error(
+    givp(
+      f,
+      bounds = list(c(-1, 1)),
+      initial_guess = c(0.5),
+      initial_guesses = list(c(0.5))
+    ),
+    class = "givp_error_invalid_initial_guess"
+  )
+
+  expect_error(
+    givp(
+      f,
+      bounds = list(c(-1, 1)),
+      initial_guesses = c(0.1)
+    ),
+    class = "givp_error_invalid_initial_guess"
+  )
+})
+
 test_that("GIVPOptimizer wrapper runs", {
   opt <- GIVPOptimizer$new(
     func = function(x) sum(x * x),

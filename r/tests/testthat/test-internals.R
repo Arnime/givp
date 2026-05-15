@@ -33,6 +33,7 @@ abort_invalid_initial_guess <- ns_get("abort_invalid_initial_guess")
 seed_sweep <- ns_get("seed_sweep")
 sweep_summary <- ns_get("sweep_summary")
 sphere <- ns_get("sphere")
+run_givp_native <- ns_get("run_givp_native")
 
 test_that("cache implements get/set and LRU eviction", {
   cache <- make_eval_cache(max_size = 2L)
@@ -163,4 +164,28 @@ test_that("seed_sweep and sweep_summary validate invalid inputs", {
   )
 
   expect_error(sweep_summary(list()), class = "givp_error_invalid_config")
+})
+
+test_that("run_givp_native supports single initial_guess fallback", {
+  cfg <- givp_config(
+    max_iterations = 3L,
+    vnd_iterations = 6L,
+    ils_iterations = 1L,
+    num_candidates_per_step = 5L,
+    seed = 7L,
+    direction = "minimize"
+  )
+  cfg$initial_guess <- c(0.25, -0.25)
+  cfg$initial_guesses <- NULL
+
+  res <- run_givp_native(
+    sphere,
+    list(c(-1, 1), c(-1, 1)),
+    cfg,
+    "minimize",
+    seed = 7L
+  )
+
+  expect_s3_class(res, "givp_result")
+  expect_true(is.finite(res$fun))
 })

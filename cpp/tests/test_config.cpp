@@ -107,6 +107,23 @@ TEST_CASE("initial_guess out of bounds throws InvalidInitialGuess", "[config]") 
                       InvalidInitialGuess);
 }
 
+TEST_CASE("initial_guesses empty throws InvalidInitialGuess", "[config]") {
+    std::vector<std::pair<double, double>> bounds(1, {-1.0, 1.0});
+    GivpConfig cfg;
+    cfg.initial_guesses = std::vector<std::vector<double>>{};
+    REQUIRE_THROWS_AS(givp::givp([](const std::vector<double> &) { return 0.0; }, bounds, cfg),
+                      InvalidInitialGuess);
+}
+
+TEST_CASE("initial_guesses duplicate throws InvalidInitialGuess", "[config]") {
+    std::vector<std::pair<double, double>> bounds(1, {-1.0, 1.0});
+    GivpConfig cfg;
+    cfg.initial_guess = std::vector<double>{0.5};
+    cfg.initial_guesses = std::vector<std::vector<double>>{{0.5}};
+    REQUIRE_THROWS_AS(givp::givp([](const std::vector<double> &) { return 0.0; }, bounds, cfg),
+                      InvalidInitialGuess);
+}
+
 // ── TerminationReason parsing ─────────────────────────────────────────────────
 
 TEST_CASE("termination_from_message parses known strings", "[config]") {
