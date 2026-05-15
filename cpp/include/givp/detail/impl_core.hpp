@@ -30,7 +30,7 @@ namespace givp::detail {
 
 inline std::pair<std::vector<double>, std::vector<double>>
 validate_bounds(const std::vector<std::pair<double, double>> &bounds,
-                const std::optional<std::vector<double>> &initial_guess) {
+                const std::optional<std::vector<std::vector<double>>> &initial_guesses) {
 
     if (bounds.empty())
         throw InvalidBounds("bounds cannot be empty");
@@ -52,20 +52,52 @@ validate_bounds(const std::vector<std::pair<double, double>> &bounds,
         upper.push_back(hi);
     }
 
-    if (initial_guess) {
-        if (initial_guess->size() != bounds.size())
-            throw InvalidInitialGuess("expected " + std::to_string(bounds.size()) +
-                                      " values, got " + std::to_string(initial_guess->size()));
-        for (std::size_t i = 0; i < initial_guess->size(); ++i) {
-            double v = (*initial_guess)[i];
-            if (v < bounds[i].first || v > bounds[i].second)
-                throw InvalidInitialGuess("value " + std::to_string(v) + " out of bounds [" +
-                                          std::to_string(bounds[i].first) + ", " +
-                                          std::to_string(bounds[i].second) + "] at index " +
-                                          std::to_string(i));
+    if (initial_guesses) {
+        for (const auto &initial_guess : *initial_guesses) {
+            if (initial_guess.size() != bounds.size())
+                throw InvalidInitialGuess("expected " + std::to_string(bounds.size()) +
+                                          " values, got " +
+                                          std::to_string(initial_guess.size()));
+            for (std::size_t i = 0; i < initial_guess.size(); ++i) {
+                double v = initial_guess[i];
+                if (v < bounds[i].first || v > bounds[i].second)
+                    throw InvalidInitialGuess(
+                        "value " + std::to_string(v) + " out of bounds [" +
+                        std::to_string(bounds[i].first) + ", " + std::to_string(bounds[i].second) +
+                        "] at index " + std::to_string(i));
+            }
         }
     }
     return {std::move(lower), std::move(upper)};
+}
+
+inline std::optional<std::vector<std::vector<double>>>
+normalize_warm_start_guesses(const GivpConfig &config) {
+    std::vector<std::vector<double>> normalized;
+
+    if (config.initial_guess)
+        normalized.push_back(*config.initial_guess);
+
+    if (config.initial_guesses) {
+        if (config.initial_guesses->empty())
+            throw InvalidInitialGuess("initial_guesses must contain at least one candidate");
+
+        for (std::size_t idx = 0; idx < config.initial_guesses->size(); ++idx) {
+            const auto &candidate = (*config.initial_guesses)[idx];
+            bool duplicate = std::any_of(normalized.begin(), normalized.end(),
+                                         [&](const std::vector<double> &existing) {
+                                             return existing == candidate;
+                                         });
+            if (duplicate)
+                throw InvalidInitialGuess("initial_guesses[" + std::to_string(idx) +
+                                          "] duplicates an existing warm-start candidate");
+            normalized.push_back(candidate);
+        }
+    }
+
+    if (normalized.empty())
+        return std::nullopt;
+    return normalized;
 }
 
 struct PathRelinkingContext {
@@ -133,11 +165,24 @@ template <typename WrappedF> struct CoreIterationContext {
 template <typename F>
 static std::pair<std::vector<double>, double>
 initialize_best_solution(const CoreContext<F> &ctx, std::optional<EvaluationCache> &cache,
-                         Rng &rng) {
-    if (ctx.config.initial_guess) {
-        std::vector<double> best_solution = *ctx.config.initial_guess;
+                         Rng &rng,
+                         const std::optional<std::vector<std::vector<double>>> &warm_starts) {
+    if (warm_starts && !warm_starts->empty()) {
+        std::vector<double> best_solution = (*warm_starts)[0];
         normalize_integer_tail(best_solution, ctx.shape.half);
         double best_cost = evaluate_with_cache(best_solution, ctx.wrapped, cache, ctx.shape.half);
+
+        for (std::size_t i = 1; i < warm_starts->size(); ++i) {
+            auto candidate = (*warm_starts)[i];
+            normalize_integer_tail(candidate, ctx.shape.half);
+            double candidate_cost =
+                evaluate_with_cache(candidate, ctx.wrapped, cache, ctx.shape.half);
+            if (candidate_cost < best_cost) {
+                best_solution = std::move(candidate);
+                best_cost = candidate_cost;
+            }
+        }
+
         return {std::move(best_solution), best_cost};
     }
 
@@ -252,9 +297,9 @@ inline Deadline compute_deadline(double time_limit) {
 
 inline const std::vector<double> *
 iteration_initial_guess(std::size_t iteration,
-                        const std::optional<std::vector<double>> &initial_guess) {
-    if (iteration == 0 && initial_guess)
-        return &(*initial_guess);
+                        const std::optional<std::vector<std::vector<double>>> &initial_guesses) {
+    if (iteration == 0 && initial_guesses && !initial_guesses->empty())
+        return &(*initial_guesses)[0];
     return nullptr;
 }
 
@@ -330,7 +375,7 @@ run_main_iteration(const CoreContext<WrappedF> &core_ctx, std::optional<Evaluati
     const auto iter_ctx = CoreIterationContext<WrappedF>{core_ctx, alpha};
 
     const std::vector<double> *ig =
-        iteration_initial_guess(iteration, core_ctx.config.initial_guess);
+        iteration_initial_guess(iteration, core_ctx.config.initial_guesses);
 
     CandidateCost iteration_result = (core_ctx.config.n_workers <= 1)
                                          ? run_single_worker_iteration(iter_ctx, ig, cache, rng)
@@ -387,7 +432,10 @@ OptimizeResult run(F &&func, const std::vector<std::pair<double, double>> &bound
                    GivpConfig config) {
     config.validate();
 
-    auto [lower, upper] = validate_bounds(bounds, config.initial_guess);
+    auto warm_start_guesses = normalize_warm_start_guesses(config);
+    config.initial_guesses = warm_start_guesses;
+
+    auto [lower, upper] = validate_bounds(bounds, warm_start_guesses);
     std::size_t num_vars = bounds.size();
 
     // When integer_split is not set, treat all variables as continuous
@@ -424,10 +472,20 @@ OptimizeResult run(F &&func, const std::vector<std::pair<double, double>> &bound
     const ProblemShape shape{num_vars, half};
     const auto core_ctx =
         CoreContext<decltype(wrapped)>{wrapped, config, shape, lower, upper, deadline};
-    auto [best_solution, best_cost] = initialize_best_solution(core_ctx, cache, rng);
+    auto [best_solution, best_cost] =
+        initialize_best_solution(core_ctx, cache, rng, warm_start_guesses);
 
-    if (config.use_elite_pool)
+    if (config.use_elite_pool) {
         elite_pool.add(best_solution, best_cost);
+        if (warm_start_guesses) {
+            for (const auto &guess : *warm_start_guesses) {
+                auto warm_seed = guess;
+                normalize_integer_tail(warm_seed, half);
+                double warm_cost = evaluate_with_cache(warm_seed, wrapped, cache, half);
+                elite_pool.add(warm_seed, warm_cost);
+            }
+        }
+    }
 
     std::size_t stagnation = 0;
     std::size_t iterations_executed = 0;
