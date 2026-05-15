@@ -28,12 +28,11 @@
 
 namespace givp::detail {
 
-inline void validate_initial_guess_candidate(
-    const std::vector<std::pair<double, double>> &bounds,
-    const std::vector<double> &initial_guess) {
+inline void validate_initial_guess_candidate(const std::vector<std::pair<double, double>> &bounds,
+                                             const std::vector<double> &initial_guess) {
     if (initial_guess.size() != bounds.size())
-        throw InvalidInitialGuess("expected " + std::to_string(bounds.size()) +
-                                  " values, got " + std::to_string(initial_guess.size()));
+        throw InvalidInitialGuess("expected " + std::to_string(bounds.size()) + " values, got " +
+                                  std::to_string(initial_guess.size()));
 
     for (std::size_t i = 0; i < initial_guess.size(); ++i) {
         double v = initial_guess[i];
@@ -89,11 +88,9 @@ normalize_warm_start_guesses(const GivpConfig &config) {
 
         for (std::size_t idx = 0; idx < config.initial_guesses->size(); ++idx) {
             const auto &candidate = (*config.initial_guesses)[idx];
-            if (const bool duplicate =
-                    std::any_of(normalized.begin(), normalized.end(),
-                                [&](const std::vector<double> &existing) {
-                                    return existing == candidate;
-                                });
+            if (const bool duplicate = std::any_of(
+                    normalized.begin(), normalized.end(),
+                    [&](const std::vector<double> &existing) { return existing == candidate; });
                 duplicate)
                 throw InvalidInitialGuess("initial_guesses[" + std::to_string(idx) +
                                           "] duplicates an existing warm-start candidate");
@@ -170,8 +167,7 @@ template <typename WrappedF> struct CoreIterationContext {
 
 template <typename F>
 static std::pair<std::vector<double>, double>
-initialize_best_solution(const CoreContext<F> &ctx, std::optional<EvaluationCache> &cache,
-                         Rng &rng,
+initialize_best_solution(const CoreContext<F> &ctx, std::optional<EvaluationCache> &cache, Rng &rng,
                          const std::optional<std::vector<std::vector<double>>> &warm_starts) {
     if (warm_starts && !warm_starts->empty()) {
         std::vector<double> best_solution = (*warm_starts)[0];

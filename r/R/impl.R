@@ -34,7 +34,10 @@ run_givp_native <- function(func, bounds, config, direction, seed = NULL) {
   }
 
   if (!is.null(warm_starts) && length(warm_starts) > 0L) {
-    best_x <- normalize_integer_tail(as.numeric(warm_starts[[1L]]), config$integer_split)
+    best_x <- normalize_integer_tail(
+      as.numeric(warm_starts[[1L]]),
+      config$integer_split
+    )
     best_x <- clamp_to_bounds(best_x, b)
     best_value <- evaluate_candidate(func, best_x, cache, state)
 
@@ -53,7 +56,10 @@ run_givp_native <- function(func, bounds, config, direction, seed = NULL) {
         if (!is.null(elite) && is.finite(warm_value)) {
           elite <- elite_add(elite, warm_x, warm_value)
         }
-        if (is.finite(warm_value) && is_improvement(warm_value, best_value, direction)) {
+        if (
+          is.finite(warm_value) &&
+            is_improvement(warm_value, best_value, direction)
+        ) {
           best_x <- warm_x
           best_value <- warm_value
         }
@@ -65,8 +71,11 @@ run_givp_native <- function(func, bounds, config, direction, seed = NULL) {
     best_value <- init$value
   }
 
-  if ((is.null(warm_starts) || length(warm_starts) == 0L) &&
-      !is.null(elite) && is.finite(best_value)) {
+  if (
+    (is.null(warm_starts) || length(warm_starts) == 0L) &&
+      !is.null(elite) &&
+      is.finite(best_value)
+  ) {
     elite <- elite_add(elite, best_x, best_value)
   }
 

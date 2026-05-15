@@ -3,6 +3,14 @@
 
 const _OBJECTIVE_EXCEPTION_WARNED = Ref(false)
 
+"""
+    givp(func, bounds; kwargs...) -> OptimizeResult
+
+Minimize or maximize a scalar objective with GRASP-ILS-VND-PR.
+
+Supports warm-starting through `initial_guess` and multi-seed
+`initial_guesses`.
+"""
 function givp(
     func::Function,
     bounds;
@@ -65,8 +73,8 @@ function givp(
         iteration_callback,
         lower,
         upper,
-        initial_guess =
-            warm_start_guesses === nothing ? nothing : copy(first(warm_start_guesses)),
+        initial_guess = warm_start_guesses === nothing ? nothing :
+                        copy(first(warm_start_guesses)),
         initial_guesses = warm_start_guesses,
     )
 
@@ -196,7 +204,11 @@ function _normalize_initial_guesses(
         validate_bounds_and_initial!(lower, upper, candidate, num_vars)
         for existing in normalized
             if existing == candidate
-                throw(InvalidInitialGuessError("$label duplicates an existing warm-start candidate"))
+                throw(
+                    InvalidInitialGuessError(
+                        "$label duplicates an existing warm-start candidate",
+                    ),
+                )
             end
         end
         push!(normalized, copy(candidate))

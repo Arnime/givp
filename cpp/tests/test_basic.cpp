@@ -125,8 +125,7 @@ TEST_CASE("initial guess is accepted", "[basic]") {
 TEST_CASE("initial_guesses are accepted", "[basic]") {
     auto bounds = uniform_bounds(3, -5.0, 5.0);
     auto cfg = make_cfg(CfgSeed{6}, CfgMaxIter{30}, CfgIntSplit{3});
-    cfg.initial_guesses = std::vector<std::vector<double>>{{1.5, 1.5, 1.5},
-                                                            {0.2, -0.2, 0.3}};
+    cfg.initial_guesses = std::vector<std::vector<double>>{{1.5, 1.5, 1.5}, {0.2, -0.2, 0.3}};
 
     REQUIRE_NOTHROW(givp::givp(sphere, bounds, cfg));
 }
