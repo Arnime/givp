@@ -165,7 +165,7 @@ jobs:
         if: github.event_name == 'pull_request'
         shell: bash
         run: |
-          python3 .github/scripts/check_patch_coverage.py \
+          node .github/scripts/check_patch_coverage.mjs \
             --base-sha "${{ github.event.pull_request.base.sha }}" \
             --paths "r/R" \
             --report-format cobertura \
