@@ -29,6 +29,7 @@ GIVPConfig <- R6::R6Class(
     integer_split = NULL,
     group_size = NULL,
     initial_guess = NULL,
+    initial_guesses = NULL,
     seed = NULL,
     verbose = FALSE,
     initialize = function(...) {

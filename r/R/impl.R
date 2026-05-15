@@ -28,20 +28,45 @@ run_givp_native <- function(func, bounds, config, direction, seed = NULL) {
     NULL
   }
 
-  if (!is.null(config$initial_guess)) {
-    best_x <- normalize_integer_tail(
-      as.numeric(config$initial_guess),
-      config$integer_split
-    )
+  warm_starts <- config$initial_guesses
+  if (is.null(warm_starts) && !is.null(config$initial_guess)) {
+    warm_starts <- list(config$initial_guess)
+  }
+
+  if (!is.null(warm_starts) && length(warm_starts) > 0L) {
+    best_x <- normalize_integer_tail(as.numeric(warm_starts[[1L]]), config$integer_split)
     best_x <- clamp_to_bounds(best_x, b)
     best_value <- evaluate_candidate(func, best_x, cache, state)
+
+    if (!is.null(elite) && is.finite(best_value)) {
+      elite <- elite_add(elite, best_x, best_value)
+    }
+
+    if (length(warm_starts) > 1L) {
+      for (idx in 2:length(warm_starts)) {
+        warm_x <- normalize_integer_tail(
+          as.numeric(warm_starts[[idx]]),
+          config$integer_split
+        )
+        warm_x <- clamp_to_bounds(warm_x, b)
+        warm_value <- evaluate_candidate(func, warm_x, cache, state)
+        if (!is.null(elite) && is.finite(warm_value)) {
+          elite <- elite_add(elite, warm_x, warm_value)
+        }
+        if (is.finite(warm_value) && is_improvement(warm_value, best_value, direction)) {
+          best_x <- warm_x
+          best_value <- warm_value
+        }
+      }
+    }
   } else {
     init <- grasp_construct(func, b, config, direction, cache, state)
     best_x <- init$x
     best_value <- init$value
   }
 
-  if (!is.null(elite) && is.finite(best_value)) {
+  if ((is.null(warm_starts) || length(warm_starts) == 0L) &&
+      !is.null(elite) && is.finite(best_value)) {
     elite <- elite_add(elite, best_x, best_value)
   }
 

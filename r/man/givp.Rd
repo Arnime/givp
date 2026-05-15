@@ -12,6 +12,7 @@ givp(
   direction = NULL,
   config = NULL,
   initial_guess = NULL,
+  initial_guesses = NULL,
   iteration_callback = NULL,
   seed = NULL,
   verbose = FALSE
@@ -25,6 +26,7 @@ givp(
   \item{direction}{Optional string (\code{"minimize"} or \code{"maximize"}).}
   \item{config}{Optional \code{GIVPConfig} object.}
   \item{initial_guess}{Optional warm-start vector.}
+  \item{initial_guesses}{Optional list of warm-start vectors.}
   \item{iteration_callback}{Optional callback per iteration.}
   \item{seed}{Optional RNG seed.}
   \item{verbose}{Enable verbose output.}
