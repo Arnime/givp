@@ -8,6 +8,7 @@
 #include <utility>
 #include <vector>
 
+#include <givp/config.hpp>
 #include <givp/detail/cache.hpp>
 #include <givp/detail/grasp.hpp>
 #include <givp/detail/helpers.hpp>

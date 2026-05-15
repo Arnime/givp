@@ -99,6 +99,7 @@ where
     path_relinking_best(func, source, target, &diff_indices, cache, half, deadline)
 }
 
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn apply_path_relinking_strategy<F>(
     func: &F,
     sol1: &[f64],
