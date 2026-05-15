@@ -30,6 +30,7 @@ abort_invalid_bounds <- ns_get("abort_invalid_bounds")
 abort_invalid_config <- ns_get("abort_invalid_config")
 abort_invalid_initial_guess <- ns_get("abort_invalid_initial_guess")
 path_relink <- ns_get("path_relink")
+path_relink_run <- ns_get(".path_relink_run")
 
 seed_sweep <- ns_get("seed_sweep")
 sweep_summary <- ns_get("sweep_summary")
@@ -216,4 +217,58 @@ test_that("path_relink supports all configured strategy modes", {
     expect_true(all(c("x", "value") %in% names(out)))
     expect_true(is.finite(out$value))
   }
+})
+
+test_that("path_relink randomized mode covers both directions and invalid strategy", {
+  quad <- function(x) sum(x * x)
+  bounds <- normalize_bounds(list(c(-5, 5), c(-5, 5)))
+  xa <- c(4, 4)
+  xb <- c(-4, -4)
+  cfg <- givp_config(path_relink_frequency = 4L)
+  cache <- make_eval_cache(256L)
+  state <- new.env(parent = emptyenv())
+
+  set.seed(2)
+  out_forward <- path_relink_run(
+    "randomized",
+    quad,
+    xa,
+    xb,
+    bounds,
+    cfg,
+    "minimize",
+    cache,
+    state
+  )
+
+  set.seed(1)
+  out_backward <- path_relink_run(
+    "randomized",
+    quad,
+    xa,
+    xb,
+    bounds,
+    cfg,
+    "minimize",
+    cache,
+    state
+  )
+
+  expect_true(is.finite(out_forward$value))
+  expect_true(is.finite(out_backward$value))
+
+  expect_error(
+    path_relink_run(
+      "invalid",
+      quad,
+      xa,
+      xb,
+      bounds,
+      cfg,
+      "minimize",
+      cache,
+      state
+    ),
+    class = "givp_error_invalid_config"
+  )
 })

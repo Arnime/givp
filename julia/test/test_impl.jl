@@ -129,6 +129,36 @@
         @test length(bwd_sol) == 2
         @test length(bi_sol) == 2
         @test length(rand_sol) == 2
+
+        # Force randomized branch to choose forward path.
+        GIVPOptimizer.set_seed!(2)
+        rand_f_sol, rand_f_cost = GIVPOptimizer._apply_path_relinking_strategy(
+            sphere,
+            source,
+            target,
+            :randomized,
+        )
+        @test isfinite(rand_f_cost)
+        @test length(rand_f_sol) == 2
+
+        # Force randomized branch to choose backward path.
+        GIVPOptimizer.set_seed!(1)
+        rand_b_sol, rand_b_cost = GIVPOptimizer._apply_path_relinking_strategy(
+            sphere,
+            source,
+            target,
+            :randomized,
+        )
+        @test isfinite(rand_b_cost)
+        @test length(rand_b_sol) == 2
+
+        @test_throws InvalidConfigError GIVPOptimizer._apply_path_relinking_strategy(
+            sphere,
+            source,
+            target,
+            :invalid_strategy,
+        )
+        GIVPOptimizer.set_seed!(nothing)
     end
 
     @testset "do_path_relinking! respects expired deadline" begin
