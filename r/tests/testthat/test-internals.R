@@ -219,7 +219,7 @@ test_that("path_relink supports all configured strategy modes", {
   }
 })
 
-test_that("path_relink randomized mode covers both directions and invalid strategy", {
+test_that("path_relink randomized and invalid strategy coverage", {
   quad <- function(x) sum(x * x)
   bounds <- normalize_bounds(list(c(-5, 5), c(-5, 5)))
   xa <- c(4, 4)
@@ -227,6 +227,13 @@ test_that("path_relink randomized mode covers both directions and invalid strate
   cfg <- givp_config(path_relink_frequency = 4L)
   cache <- make_eval_cache(256L)
   state <- new.env(parent = emptyenv())
+  pr_ctx <- list(
+    bounds = bounds,
+    config = cfg,
+    direction = "minimize",
+    cache = cache,
+    state = state
+  )
 
   set.seed(2)
   out_forward <- path_relink_run(
@@ -234,11 +241,7 @@ test_that("path_relink randomized mode covers both directions and invalid strate
     quad,
     xa,
     xb,
-    bounds,
-    cfg,
-    "minimize",
-    cache,
-    state
+    pr_ctx
   )
 
   set.seed(1)
@@ -247,11 +250,7 @@ test_that("path_relink randomized mode covers both directions and invalid strate
     quad,
     xa,
     xb,
-    bounds,
-    cfg,
-    "minimize",
-    cache,
-    state
+    pr_ctx
   )
 
   expect_true(is.finite(out_forward$value))
@@ -263,11 +262,7 @@ test_that("path_relink randomized mode covers both directions and invalid strate
       quad,
       xa,
       xb,
-      bounds,
-      cfg,
-      "minimize",
-      cache,
-      state
+      pr_ctx
     ),
     class = "givp_error_invalid_config"
   )
