@@ -108,6 +108,52 @@
         @test cb_count[] == 5
     end
 
+    @testset "givp with initial_guesses" begin
+        sphere(x) = sum(x .^ 2)
+        bounds = [(-5.0, 5.0), (-5.0, 5.0)]
+        config = GIVPConfig(;
+            max_iterations = 5,
+            vnd_iterations = 10,
+            ils_iterations = 1,
+            integer_split = 2,
+        )
+
+        result = givp(
+            sphere,
+            bounds;
+            config = config,
+            seed = 42,
+            initial_guesses = [[1.5, 1.5], [0.25, -0.25]],
+        )
+        @test result.success
+    end
+
+    @testset "givp rejects invalid initial_guesses" begin
+        sphere(x) = sum(x .^ 2)
+        bounds = [(-5.0, 5.0), (-5.0, 5.0)]
+        config = GIVPConfig(;
+            max_iterations = 3,
+            vnd_iterations = 5,
+            ils_iterations = 1,
+            integer_split = 2,
+        )
+
+        @test_throws InvalidInitialGuessError givp(
+            sphere,
+            bounds;
+            config = config,
+            initial_guesses = Vector{Vector{Float64}}(),
+        )
+
+        @test_throws InvalidInitialGuessError givp(
+            sphere,
+            bounds;
+            config = config,
+            initial_guess = [1.0, 1.0],
+            initial_guesses = [[1.0, 1.0]],
+        )
+    end
+
     @testset "givp verbose mode" begin
         sphere(x) = sum(x .^ 2)
         bounds = [(-5.0, 5.0), (-5.0, 5.0)]
