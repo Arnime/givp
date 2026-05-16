@@ -196,6 +196,17 @@ jobs:
               quit(status = 0)
             }
 
+            normalize_file <- function(path) {
+              p <- gsub('\\\\', '/', path)
+              if (startsWith(p, 'r/R/')) return(p)
+              if (startsWith(p, 'R/')) return(paste0('r/', p))
+              m <- regexpr('/r/R/', p, fixed = TRUE)
+              if (m[1] > 0) return(substring(p, m[1] + 1L))
+              m2 <- regexpr('/R/', p, fixed = TRUE)
+              if (m2[1] > 0) return(paste0('r', substring(p, m2[1])))
+              p
+            }
+
             xml_lines <- readLines('coverage-r.xml', warn = FALSE)
             cov <- new.env(parent = emptyenv())
             file <- NULL
@@ -203,7 +214,7 @@ jobs:
               cm <- regexec('filename=\"([^\"]+)\"', line, perl = TRUE)
               cg <- regmatches(line, cm)[[1]]
               if (length(cg) > 0) {
-                file <- cg[2]
+                file <- normalize_file(cg[2])
               }
               lm <- regexec('number=\"([0-9]+)\"[^>]*hits=\"([0-9.]+)\"', line, perl = TRUE)
               lg <- regmatches(line, lm)[[1]]
@@ -213,14 +224,25 @@ jobs:
               }
             }
 
-            covered <- sum(vapply(keys, function(k) {
+            cov_keys <- ls(cov, all.names = TRUE)
+            coverable_keys <- keys[keys %in% cov_keys]
+            if (length(coverable_keys) == 0) {
+              cat('R patch coverage: N/A (no coverable changed lines in r/R)\n')
+              quit(status = 0)
+            }
+
+            covered <- sum(vapply(coverable_keys, function(k) {
               v <- cov[[k]]
               !is.null(v) && v > 0
             }, logical(1)))
 
-            total <- length(keys)
+            total <- length(coverable_keys)
+            missing <- length(keys) - length(coverable_keys)
             pct <- covered / total * 100.0
-            cat(sprintf('R patch coverage: %.1f%%  (%d / %d changed lines)\\n', pct, covered, total))
+            cat(sprintf('R patch coverage: %.1f%%  (%d / %d coverable changed lines)\n', pct, covered, total))
+            if (missing > 0) {
+              cat(sprintf('::warning::%d changed lines are non-coverable in coverage-r.xml and were excluded\n', missing))
+            }
             if (pct + 1e-9 < threshold) {
               stop(sprintf('::error::R patch coverage below %.1f%% threshold (got %.1f%%)', threshold, pct))
             }

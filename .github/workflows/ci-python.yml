@@ -125,25 +125,37 @@ jobs:
             print("Python patch coverage: N/A (no changed lines in python/src)")
             raise SystemExit(0)
 
+          def normalize_filename(fn: str) -> str:
+            fn = fn.replace("\\", "/")
+            if "/givp/" in fn:
+              return "python/src/givp/" + fn.split("/givp/", 1)[1]
+            if fn.startswith("givp/"):
+              return "python/src/" + fn
+            if fn.startswith("./givp/"):
+              return "python/src/" + fn[2:]
+            return fn
+
           cov = {}
           root = ET.parse("coverage-python.xml").getroot()
           for cls in root.findall(".//class"):
-            fn = cls.attrib.get("filename", "")
-            # Normalize absolute installed paths to repo-relative.
-            # XML stores e.g. /opt/.../site-packages/givp/api.py;
-            # changed_lines keys use python/src/givp/api.py.
-            m = re.search(r"/givp/", fn)
-            if m:
-              fn = "python/src/givp/" + fn[m.end():]
+            fn = normalize_filename(cls.attrib.get("filename", ""))
             for ln in cls.findall(".//line"):
               num = int(ln.attrib.get("number", "0"))
               hits = int(float(ln.attrib.get("hits", "0")))
               cov[(fn, num)] = hits
 
-          total = len(changed_lines)
-          covered = sum(1 for k in changed_lines if cov.get(k, 0) > 0)
+          coverable_lines = {k for k in changed_lines if k in cov}
+          if not coverable_lines:
+            print("Python patch coverage: N/A (no coverable changed lines in python/src)")
+            raise SystemExit(0)
+
+          total = len(coverable_lines)
+          covered = sum(1 for k in coverable_lines if cov.get(k, 0) > 0)
+          missing = len(changed_lines) - len(coverable_lines)
           pct = (covered / total) * 100.0
-          print(f"Python patch coverage: {pct:.1f}%  ({covered} / {total} changed lines)")
+          print(f"Python patch coverage: {pct:.1f}%  ({covered} / {total} coverable changed lines)")
+          if missing > 0:
+            print(f"::warning::{missing} changed lines are non-coverable in coverage-python.xml and were excluded")
           if pct + 1e-9 < threshold:
             print(f"::error::Python patch coverage below {threshold:.1f}% threshold (got {pct:.1f}%)")
             raise SystemExit(1)

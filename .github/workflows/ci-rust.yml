@@ -249,12 +249,17 @@ jobs:
               }
             }
             END {
-              missing = 0
-              for (k in changed) if (!(k in seen)) missing++
-              pct = total > 0 ? (covered / total) * 100.0 : 0.0
-              printf("Rust patch coverage: %.1f%%  (%d / %d changed lines)\n", pct, covered, total)
+              coverable = 0
+              for (k in changed) if (k in seen) coverable++
+              if (coverable == 0) {
+                print "Rust patch coverage: N/A (no coverable changed lines in rust/src)"
+                exit 0
+              }
+              missing = total - coverable
+              pct = (covered / coverable) * 100.0
+              printf("Rust patch coverage: %.1f%%  (%d / %d coverable changed lines)\n", pct, covered, coverable)
               if (missing > 0) {
-                printf("::warning::%d changed lines missing from lcov report (counted as uncovered)\n", missing)
+                printf("::warning::%d changed lines are non-coverable in lcov and were excluded\n", missing)
               }
               if (pct + 1e-9 < threshold) {
                 printf("::error::Rust patch coverage below %.1f%% threshold (got %.1f%%)\n", threshold, pct)

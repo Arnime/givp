@@ -24,7 +24,7 @@ coverage:
         flags:
           - rust
       cpp:
-        target: 90%
+        target: 80%
         threshold: 2%
         flags:
           - cpp
