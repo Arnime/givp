@@ -346,7 +346,7 @@ jobs:
           # Keep secure install flags in pre-release runs while excluding
           # packages currently unavailable for cp315 wheels.
           awk 'BEGIN{skip=0} /^librt==0\.9\.0( |$)/{skip=1; next} /^numpy==2\.3\.5( |$)/{skip=1; next} /^pyyaml==6\.0\.3( |$)/{skip=1; next} /^xxhash==3\.7\.0( |$)/{skip=1; next} skip && /^[[:space:]]+--hash=/{next} {skip=0; print}' python/requirements/ci.txt > /tmp/ci-pre-release.txt
-          pip install --no-deps --only-binary=:all: --require-hashes -r /tmp/ci-pre-release.txt
+          pip install --only-binary=:all: --require-hashes -r /tmp/ci-pre-release.txt
           bash .github/scripts/install-package.sh
       - name: Lint
         run: ruff check python/src python/tests
