@@ -9,6 +9,8 @@
 #include <cstddef>
 #include <limits>
 #include <optional>
+#include <utility>
+#include <vector>
 
 #include <givp/config.hpp>
 #include <givp/detail/cache.hpp>
