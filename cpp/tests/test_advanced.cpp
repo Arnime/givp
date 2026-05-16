@@ -269,6 +269,17 @@ TEST_CASE("invalid path_relink_strategy enum value throws", "[config]") {
     REQUIRE_THROWS_AS(cfg.validate(), InvalidConfig);
 }
 
+TEST_CASE("valid path_relink_strategy enum values pass validation", "[config]") {
+    for (PathRelinkStrategy strategy : {PathRelinkStrategy::Bidirectional,
+                                        PathRelinkStrategy::Forward,
+                                        PathRelinkStrategy::Backward,
+                                        PathRelinkStrategy::Randomized}) {
+        GivpConfig cfg;
+        cfg.path_relink_strategy = strategy;
+        REQUIRE_NOTHROW(cfg.validate());
+    }
+}
+
 // ── pr.hpp: backward path is chosen when cost_bwd < cost_fwd ─────────────────
 
 TEST_CASE("path relinking backward direction selected", "[advanced]") {
@@ -287,6 +298,31 @@ TEST_CASE("path relinking backward direction selected", "[advanced]") {
     cfg.use_convergence_monitor = false;
 
     REQUIRE_NOTHROW(givp::givp(rastrigin, bounds, cfg));
+}
+
+TEST_CASE("path relinking strategies run end to end through impl core", "[advanced]") {
+    std::vector<std::pair<double, double>> bounds(8, {-5.12, 5.12});
+
+    for (PathRelinkStrategy strategy : {PathRelinkStrategy::Bidirectional,
+                                        PathRelinkStrategy::Forward,
+                                        PathRelinkStrategy::Backward,
+                                        PathRelinkStrategy::Randomized}) {
+        GivpConfig cfg;
+        cfg.seed = 321;
+        cfg.max_iterations = 12;
+        cfg.integer_split = 8;
+        cfg.path_relink_frequency = 1;
+        cfg.path_relink_strategy = strategy;
+        cfg.use_elite_pool = true;
+        cfg.elite_size = 4;
+        cfg.use_convergence_monitor = false;
+        cfg.early_stop_threshold = 1000;
+
+        auto result = givp::givp(rastrigin, bounds, cfg);
+        REQUIRE(result.success);
+        REQUIRE(result.x.size() == bounds.size());
+        REQUIRE(std::isfinite(result.fun));
+    }
 }
 
 // ── impl_core.hpp: elite_pool has fewer than 2 solutions (PR guard)

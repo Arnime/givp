@@ -344,8 +344,8 @@ jobs:
       - name: Install
         run: |
           # Keep secure install flags in pre-release runs while excluding
-          # librt==0.9.0, which currently has no cp315 wheel.
-          awk 'BEGIN{skip=0} /^librt==0\.9\.0( |$)/{skip=1; next} skip && /^[[:space:]]+--hash=/{next} {skip=0; print}' python/requirements/ci.txt > /tmp/ci-pre-release.txt
+          # packages currently unavailable for cp315 wheels.
+          awk 'BEGIN{skip=0} /^librt==0\.9\.0( |$)/{skip=1; next} /^numpy==2\.3\.5( |$)/{skip=1; next} skip && /^[[:space:]]+--hash=/{next} {skip=0; print}' python/requirements/ci.txt > /tmp/ci-pre-release.txt
           pip install --only-binary=:all: --require-hashes -r /tmp/ci-pre-release.txt
           bash .github/scripts/install-package.sh
       - name: Lint

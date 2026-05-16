@@ -176,7 +176,7 @@ jobs:
                 current <- substring(line, 7)
                 next
               }
-              m <- regexec('^@@ -[0-9]+(?:,[0-9]+)? \\+([0-9]+)(?:,([0-9]+))? @@', line, perl = TRUE)
+              m <- regexec('^@@ -[0-9]+(?:,[0-9]+)? \\\\+([0-9]+)(?:,([0-9]+))? @@', line, perl = TRUE)
               g <- regmatches(line, m)[[1]]
               if (!is.null(current) && length(g) > 0) {
                 start <- as.integer(g[2])

@@ -367,8 +367,9 @@ TEST_CASE("path relinking strategy randomized can take both directions", "[pr]")
         Rng rng = Rng::from_seed(seed);
         PrApplyContext<Rng> pr_ctx{source.size(), cache, rng, dl};
 
-        auto [sol, cost] = apply_path_relinking_strategy(
-            obj, source, target, PathRelinkStrategy::Randomized, pr_ctx);
+        auto [sol, cost] =
+            apply_path_relinking_strategy(obj, source, target, PathRelinkStrategy::Randomized,
+                                          pr_ctx);
         (void)sol;
 
         // Forward path best cost stays >= 5.0, backward can hit 2.0.
