@@ -23,6 +23,14 @@
 using namespace givp;
 using namespace givp::detail;
 
+namespace {
+struct FixedChoiceRng {
+    std::size_t choice = 0;
+
+    std::size_t uniform_index(std::size_t lo, std::size_t hi) { return (choice == 0) ? lo : hi; }
+};
+} // namespace
+
 // ── EvaluationCache ───────────────────────────────────────────────────────────
 
 TEST_CASE("cache is empty on construction", "[cache]") {
@@ -367,9 +375,8 @@ TEST_CASE("path relinking strategy randomized can take both directions", "[pr]")
         Rng rng = Rng::from_seed(seed);
         PrApplyContext<Rng> pr_ctx{source.size(), cache, rng, dl};
 
-        auto [sol, cost] =
-            apply_path_relinking_strategy(obj, source, target, PathRelinkStrategy::Randomized,
-                                          pr_ctx);
+        auto [sol, cost] = apply_path_relinking_strategy(obj, source, target,
+                                                         PathRelinkStrategy::Randomized, pr_ctx);
         (void)sol;
 
         // Forward path best cost stays >= 5.0, backward can hit 2.0.
@@ -381,6 +388,52 @@ TEST_CASE("path relinking strategy randomized can take both directions", "[pr]")
 
     REQUIRE(saw_forward);
     REQUIRE(saw_backward);
+}
+
+TEST_CASE("path relinking randomized branch can force forward", "[pr]") {
+    auto sphere = [](const std::vector<double> &x) -> double {
+        double s = 0.0;
+        for (double v : x)
+            s += v * v;
+        return s;
+    };
+
+    std::vector<double> source = {1.0, -2.0, 3.0};
+    std::vector<double> target = source;
+
+    std::optional<EvaluationCache> cache = std::nullopt;
+    Deadline dl;
+    FixedChoiceRng rng{0};
+    PrApplyContext<FixedChoiceRng> pr_ctx{source.size(), cache, rng, dl};
+
+    auto [sol, cost] = apply_path_relinking_strategy(sphere, source, target,
+                                                     PathRelinkStrategy::Randomized, pr_ctx);
+
+    REQUIRE(sol == source);
+    REQUIRE(cost == Catch::Approx(sphere(source)));
+}
+
+TEST_CASE("path relinking randomized branch can force backward", "[pr]") {
+    auto sphere = [](const std::vector<double> &x) -> double {
+        double s = 0.0;
+        for (double v : x)
+            s += v * v;
+        return s;
+    };
+
+    std::vector<double> source = {1.0, -2.0, 3.0};
+    std::vector<double> target = source;
+
+    std::optional<EvaluationCache> cache = std::nullopt;
+    Deadline dl;
+    FixedChoiceRng rng{1};
+    PrApplyContext<FixedChoiceRng> pr_ctx{source.size(), cache, rng, dl};
+
+    auto [sol, cost] = apply_path_relinking_strategy(sphere, source, target,
+                                                     PathRelinkStrategy::Randomized, pr_ctx);
+
+    REQUIRE(sol == source);
+    REQUIRE(cost == Catch::Approx(sphere(source)));
 }
 
 // ── vnd.hpp: neighborhood_multiflip finds improvement (any_improved = true) ──

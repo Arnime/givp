@@ -270,10 +270,9 @@ TEST_CASE("invalid path_relink_strategy enum value throws", "[config]") {
 }
 
 TEST_CASE("valid path_relink_strategy enum values pass validation", "[config]") {
-    for (PathRelinkStrategy strategy : {PathRelinkStrategy::Bidirectional,
-                                        PathRelinkStrategy::Forward,
-                                        PathRelinkStrategy::Backward,
-                                        PathRelinkStrategy::Randomized}) {
+    for (PathRelinkStrategy strategy :
+         {PathRelinkStrategy::Bidirectional, PathRelinkStrategy::Forward,
+          PathRelinkStrategy::Backward, PathRelinkStrategy::Randomized}) {
         GivpConfig cfg;
         cfg.path_relink_strategy = strategy;
         REQUIRE_NOTHROW(cfg.validate());
@@ -303,10 +302,9 @@ TEST_CASE("path relinking backward direction selected", "[advanced]") {
 TEST_CASE("path relinking strategies run end to end through impl core", "[advanced]") {
     std::vector<std::pair<double, double>> bounds(8, {-5.12, 5.12});
 
-    for (PathRelinkStrategy strategy : {PathRelinkStrategy::Bidirectional,
-                                        PathRelinkStrategy::Forward,
-                                        PathRelinkStrategy::Backward,
-                                        PathRelinkStrategy::Randomized}) {
+    for (PathRelinkStrategy strategy :
+         {PathRelinkStrategy::Bidirectional, PathRelinkStrategy::Forward,
+          PathRelinkStrategy::Backward, PathRelinkStrategy::Randomized}) {
         GivpConfig cfg;
         cfg.seed = 321;
         cfg.max_iterations = 12;
