@@ -15,6 +15,7 @@ GIVPConfig <- R6::R6Class(
     use_elite_pool = TRUE,
     elite_size = 7L,
     path_relink_frequency = 8L,
+    path_relink_strategy = "bidirectional",
     adaptive_alpha = TRUE,
     alpha_min = 0.08,
     alpha_max = 0.18,
@@ -91,6 +92,22 @@ GIVPConfig <- R6::R6Class(
       }
       if (!self$direction %in% c("minimize", "maximize")) {
         abort_invalid_config("direction must be 'minimize' or 'maximize'")
+      }
+      if (identical(self$path_relink_strategy, "random")) {
+        self$path_relink_strategy <- "randomized"
+      }
+      if (!self$path_relink_strategy %in% c(
+        "bidirectional",
+        "forward",
+        "backward",
+        "randomized"
+      )) {
+        abort_invalid_config(
+          paste(
+            "path_relink_strategy must be one of",
+            "'bidirectional', 'forward', 'backward', 'randomized', or 'random'"
+          )
+        )
       }
       invisible(self)
     }

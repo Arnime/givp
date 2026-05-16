@@ -25,8 +25,9 @@ Available in **Python**, **Julia**, **Rust**, **C++** (header-only), and **R**.
   across Python, Julia, Rust, C++, and R with multi-seed `initial_guesses`
   exposed in public APIs.
 - **Configurable path-relinking strategies — cross-port rollout** (Issue #143):
-  Python slice merged (PR #158); Julia, Rust, and R ports still need
-  `path_relink_strategy` exposed as a user-configurable parameter.
+  completed across Python, Julia, Rust, C++, and R with explicit
+  `path_relink_strategy` (`bidirectional`, `forward`, `backward`,
+  `randomized`; Python/Julia/R keep `random` alias compatibility).
 
 > **Recently completed (v1.0.0 line):**
 > Julia package on General Registry (`Pkg.add("GIVPOptimizer")`),
@@ -57,8 +58,8 @@ Available in **Python**, **Julia**, **Rust**, **C++** (header-only), and **R**.
 - **Optional scikit-learn integration** (Issue #145): expose `givp` as a
   scikit-learn-compatible `BaseEstimator` for hyper-parameter tuning
   workflows.
-- **Type-safe bounds specification** (Issue #146): accept named-parameter bounds via
-  a mapping in addition to the current sequence-of-pairs format.
+- **Type-safe bounds specification** (Issue #146): accept named-parameter bounds
+  via mapping in addition to the current sequence-of-pairs format.
 - **Async support** (Issue #147): explore asyncio-compatible runner for use in
   Jupyter and async frameworks.
 

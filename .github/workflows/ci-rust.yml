@@ -169,6 +169,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
 
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
@@ -200,6 +202,71 @@ jobs:
           pct=$(awk "BEGIN {printf \"%.1f\", $hit / $total * 100}")
           echo "Rust coverage: ${pct}%  ($hit / $total lines)"
           awk "BEGIN { if ($hit / $total * 100 < 90.0) { print \"::error::Coverage below 90% threshold (got ${pct}%)\"; exit 1 } }"
+
+      - name: Check patch coverage on PR (>= 90%)
+        if: github.event_name == 'pull_request'
+        run: |
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          CHANGED_FILE="$(mktemp)"
+
+          git diff --unified=0 "$BASE_SHA...HEAD" -- rust/src | awk '
+            /^\+\+\+ b\// {f=substr($0,7); next}
+            /^@@ / {
+              if (f == "") next
+              if (match($0, /\+([0-9]+)(,([0-9]+))?/, a)) {
+                s = a[1] + 0
+                n = (a[3] == "" ? 1 : a[3] + 0)
+                for (i = 0; i < n; i++) print f ":" (s + i)
+              }
+            }
+          ' | sort -u > "$CHANGED_FILE"
+
+          if [ ! -s "$CHANGED_FILE" ]; then
+            echo "Rust patch coverage: N/A (no changed lines in rust/src)"
+            exit 0
+          fi
+
+          awk -v changed_file="$CHANGED_FILE" -v threshold="90.0" '
+            BEGIN {
+              while ((getline l < changed_file) > 0) {
+                changed[l] = 1
+                total++
+              }
+              close(changed_file)
+            }
+            /^SF:/ {
+              file = substr($0, 4)
+              sub(/^.*\/grasp_ils_vnd_pr\//, "", file)
+              sub(/^\.\//, "", file)
+              next
+            }
+            /^DA:/ {
+              split(substr($0, 4), a, ",")
+              key = file ":" a[1]
+              if (key in changed) {
+                seen[key] = 1
+                if ((a[2] + 0) > 0) covered++
+              }
+            }
+            END {
+              coverable = 0
+              for (k in changed) if (k in seen) coverable++
+              if (coverable == 0) {
+                print "Rust patch coverage: N/A (no coverable changed lines in rust/src)"
+                exit 0
+              }
+              missing = total - coverable
+              pct = (covered / coverable) * 100.0
+              printf("Rust patch coverage: %.1f%%  (%d / %d coverable changed lines)\n", pct, covered, coverable)
+              if (missing > 0) {
+                printf("::warning::%d changed lines are non-coverable in lcov and were excluded\n", missing)
+              }
+              if (pct + 1e-9 < threshold) {
+                printf("::error::Rust patch coverage below %.1f%% threshold (got %.1f%%)\n", threshold, pct)
+                exit 1
+              }
+            }
+          ' rust/lcov.info
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2 # v6

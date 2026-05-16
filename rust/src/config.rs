@@ -12,6 +12,17 @@ pub enum Direction {
     Maximize,
 }
 
+/// Path relinking direction strategy.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub enum PathRelinkStrategy {
+    #[default]
+    Bidirectional,
+    Forward,
+    Backward,
+    Randomized,
+}
+
 /// Algorithm hyper-parameters.
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -24,6 +35,7 @@ pub struct GivpConfig {
     pub use_elite_pool: bool,
     pub elite_size: usize,
     pub path_relink_frequency: usize,
+    pub path_relink_strategy: PathRelinkStrategy,
     pub adaptive_alpha: bool,
     pub alpha_min: f64,
     pub alpha_max: f64,
@@ -54,6 +66,7 @@ impl Default for GivpConfig {
             use_elite_pool: true,
             elite_size: 7,
             path_relink_frequency: 8,
+            path_relink_strategy: PathRelinkStrategy::Bidirectional,
             adaptive_alpha: true,
             alpha_min: 0.08,
             alpha_max: 0.18,

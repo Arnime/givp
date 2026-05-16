@@ -88,17 +88,52 @@ path_relink_bidirectional <- function(
   forward
 }
 
+# nolint start: object_usage_linter
+.path_relink_run <- function(strategy, func, xa, xb, pr_ctx) {
+  bounds <- pr_ctx$bounds
+  config <- pr_ctx$config
+  direction <- pr_ctx$direction
+  cache <- pr_ctx$cache
+  state <- pr_ctx$state
+
+  if (identical(strategy, "bidirectional")) {
+    return(path_relink_bidirectional(func, xa, xb, bounds, config, direction, cache, state))
+  }
+  if (identical(strategy, "forward")) {
+    return(path_relink_forward(func, xa, xb, bounds, config, direction, cache, state))
+  }
+  if (identical(strategy, "backward")) {
+    return(path_relink_backward(func, xa, xb, bounds, config, direction, cache, state))
+  }
+  if (identical(strategy, "randomized")) {
+    pick_forward <- sample.int(2L, 1L) == 1L
+    if (pick_forward) {
+      return(path_relink_forward(func, xa, xb, bounds, config, direction, cache, state))
+    }
+    return(path_relink_backward(func, xa, xb, bounds, config, direction, cache, state))
+  }
+  abort_invalid_config(
+    paste0("unsupported path_relink_strategy: ", strategy)
+  )
+}
+# nolint end
+
 #' Path relinking between two elite solutions
 #' @keywords internal
 path_relink <- function(func, xa, xb, bounds, config, direction, cache, state) {
-  path_relink_bidirectional(
+  pr_ctx <- list(
+    bounds = bounds,
+    config = config,
+    direction = direction,
+    cache = cache,
+    state = state
+  )
+
+  .path_relink_run(
+    config$path_relink_strategy,
     func,
     xa,
     xb,
-    bounds,
-    config,
-    direction,
-    cache,
-    state
+    pr_ctx
   )
 }

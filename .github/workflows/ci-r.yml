@@ -119,6 +119,8 @@ jobs:
     needs: test
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
 
       - name: Install system dependencies
         shell: bash
@@ -158,6 +160,94 @@ jobs:
             covr::to_cobertura(cov, filename = 'coverage-r.xml')
             if (pct < 90) stop(sprintf('Coverage below 90%% threshold (got %.1f%%)', pct))
           "
+
+      - name: Check patch coverage on PR (>= 90%)
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          export PR_BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          Rscript - <<'RS'
+          threshold <- 90.0
+          diff <- system2("git", c("diff", "--unified=0", paste0(Sys.getenv("PR_BASE_SHA"), "...HEAD"), "--", "r/R"), stdout = TRUE)
+
+          changed <- new.env(parent = emptyenv())
+          current <- NULL
+          for (line in diff) {
+            if (startsWith(line, "+++ b/")) {
+              current <- substring(line, 7)
+              next
+            }
+            m <- regexec("^@@ -[0-9]+(?:,[0-9]+)? \\+([0-9]+)(?:,([0-9]+))? @@", line, perl = TRUE)
+            g <- regmatches(line, m)[[1]]
+            if (!is.null(current) && length(g) > 0) {
+              start <- as.integer(g[2])
+              len <- ifelse(length(g) >= 3 && nzchar(g[3]), as.integer(g[3]), 1L)
+              if (len > 0) {
+                for (ln in seq.int(start, start + len - 1L)) {
+                  changed[[paste0(current, ":", ln)]] <- TRUE
+                }
+              }
+            }
+          }
+
+          keys <- ls(changed, all.names = TRUE)
+          keys <- keys[startsWith(keys, "r/R/")]
+          if (length(keys) == 0) {
+            cat("R patch coverage: N/A (no changed lines in r/R)\n")
+            quit(status = 0)
+          }
+
+          normalize_file <- function(path) {
+            p <- gsub("\\\\", "/", path)
+            if (startsWith(p, "r/R/")) return(p)
+            if (startsWith(p, "R/")) return(paste0("r/", p))
+            m <- regexpr("/r/R/", p, fixed = TRUE)
+            if (m[1] > 0) return(substring(p, m[1] + 1L))
+            m2 <- regexpr("/R/", p, fixed = TRUE)
+            if (m2[1] > 0) return(paste0("r", substring(p, m2[1])))
+            p
+          }
+
+          xml_lines <- readLines("coverage-r.xml", warn = FALSE)
+          cov <- new.env(parent = emptyenv())
+          file <- NULL
+          for (line in xml_lines) {
+            cm <- regexec("filename=\"([^\"]+)\"", line, perl = TRUE)
+            cg <- regmatches(line, cm)[[1]]
+            if (length(cg) > 0) {
+              file <- normalize_file(cg[2])
+            }
+            lm <- regexec("number=\"([0-9]+)\"[^>]*hits=\"([0-9.]+)\"", line, perl = TRUE)
+            lg <- regmatches(line, lm)[[1]]
+            if (!is.null(file) && length(lg) > 0) {
+              key <- paste0(file, ":", as.integer(lg[2]))
+              cov[[key]] <- as.integer(floor(as.numeric(lg[3])))
+            }
+          }
+
+          cov_keys <- ls(cov, all.names = TRUE)
+          coverable_keys <- keys[keys %in% cov_keys]
+          if (length(coverable_keys) == 0) {
+            cat("R patch coverage: N/A (no coverable changed lines in r/R)\n")
+            quit(status = 0)
+          }
+
+          covered <- sum(vapply(coverable_keys, function(k) {
+            v <- cov[[k]]
+            !is.null(v) && v > 0
+          }, logical(1)))
+
+          total <- length(coverable_keys)
+          missing <- length(keys) - length(coverable_keys)
+          pct <- covered / total * 100.0
+          cat(sprintf("R patch coverage: %.1f%%  (%d / %d coverable changed lines)\n", pct, covered, total))
+          if (missing > 0) {
+            cat(sprintf("::warning::%d changed lines are non-coverable in coverage-r.xml and were excluded\n", missing))
+          }
+          if (pct + 1e-9 < threshold) {
+            stop(sprintf("::error::R patch coverage below %.1f%% threshold (got %.1f%%)", threshold, pct))
+          }
+          RS
 
       - name: Upload to Codecov
         uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2 # v6

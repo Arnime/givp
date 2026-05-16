@@ -9,7 +9,7 @@ use crate::error::{GivpError, Result};
 use crate::grasp::{construct_grasp, evaluate_with_cache, get_current_alpha};
 use crate::helpers::{child_rng, expired, get_half, new_rng, normalize_integer_tail};
 use crate::ils::ils_search;
-use crate::pr::bidirectional_path_relinking;
+use crate::pr::apply_path_relinking_strategy;
 use crate::result::{OptimizeResult, TerminationReason};
 use crate::vnd::local_search_vnd;
 use std::sync::atomic::{AtomicUsize, Ordering};
@@ -432,6 +432,7 @@ where
             lower,
             upper,
             config.vnd_iterations,
+            config.path_relink_strategy,
             cache,
             &mut child,
             deadline,
@@ -472,6 +473,7 @@ fn do_path_relinking<F>(
     lower: &[f64],
     upper: &[f64],
     vnd_iterations: usize,
+    path_relink_strategy: crate::config::PathRelinkStrategy,
     cache: &mut Option<EvaluationCache>,
     rng: &mut rand_chacha::ChaCha8Rng,
     deadline: Option<Instant>,
@@ -486,8 +488,15 @@ fn do_path_relinking<F>(
             if expired(deadline) {
                 return;
             }
-            let (mut pr_sol, pr_cost) = bidirectional_path_relinking(
-                func, &all[i].0, &all[j].0, half, cache, rng, deadline,
+            let (mut pr_sol, pr_cost) = apply_path_relinking_strategy(
+                func,
+                &all[i].0,
+                &all[j].0,
+                path_relink_strategy,
+                half,
+                cache,
+                rng,
+                deadline,
             );
 
             // VND refinement on PR result
@@ -752,6 +761,7 @@ mod tests {
             &[-5.0, -5.0],
             &[5.0, 5.0],
             10,
+            crate::config::PathRelinkStrategy::Bidirectional,
             &mut None,
             &mut rng,
             deadline,

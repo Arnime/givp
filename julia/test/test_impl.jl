@@ -99,6 +99,68 @@
         GIVPOptimizer.set_integer_split!(nothing)
     end
 
+    @testset "_apply_path_relinking_strategy supports all modes" begin
+        sphere(x) = sum(x .^ 2)
+        source = [2.0, 2.0]
+        target = [0.0, 0.0]
+
+        fwd_sol, fwd_cost =
+            GIVPOptimizer._apply_path_relinking_strategy(sphere, source, target, :forward)
+        bwd_sol, bwd_cost =
+            GIVPOptimizer._apply_path_relinking_strategy(sphere, source, target, :backward)
+        bi_sol, bi_cost = GIVPOptimizer._apply_path_relinking_strategy(
+            sphere,
+            source,
+            target,
+            :bidirectional,
+        )
+        rand_sol, rand_cost = GIVPOptimizer._apply_path_relinking_strategy(
+            sphere,
+            source,
+            target,
+            :randomized,
+        )
+
+        @test isfinite(fwd_cost)
+        @test isfinite(bwd_cost)
+        @test isfinite(bi_cost)
+        @test isfinite(rand_cost)
+        @test length(fwd_sol) == 2
+        @test length(bwd_sol) == 2
+        @test length(bi_sol) == 2
+        @test length(rand_sol) == 2
+
+        # Force randomized branch to choose forward path.
+        GIVPOptimizer.set_seed!(2)
+        rand_f_sol, rand_f_cost = GIVPOptimizer._apply_path_relinking_strategy(
+            sphere,
+            source,
+            target,
+            :randomized,
+        )
+        @test isfinite(rand_f_cost)
+        @test length(rand_f_sol) == 2
+
+        # Force randomized branch to choose backward path.
+        GIVPOptimizer.set_seed!(1)
+        rand_b_sol, rand_b_cost = GIVPOptimizer._apply_path_relinking_strategy(
+            sphere,
+            source,
+            target,
+            :randomized,
+        )
+        @test isfinite(rand_b_cost)
+        @test length(rand_b_sol) == 2
+
+        @test_throws InvalidConfigError GIVPOptimizer._apply_path_relinking_strategy(
+            sphere,
+            source,
+            target,
+            :invalid_strategy,
+        )
+        GIVPOptimizer.set_seed!(nothing)
+    end
+
     @testset "do_path_relinking! respects expired deadline" begin
         GIVPOptimizer.set_integer_split!(2)
         sphere(x) = sum(x .^ 2)

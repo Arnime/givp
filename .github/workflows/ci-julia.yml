@@ -63,6 +63,7 @@ jobs:
           version: ${{ matrix.julia-version }}
 
       - uses: julia-actions/cache@a45e8fa8be21c18a06b7177052533149e61e9b38 # v3.1.0
+        continue-on-error: true
         with:
           delete-old-caches: false
 
@@ -87,6 +88,8 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
 
       - uses: julia-actions/setup-julia@fa02766e078afaaf09b14210362cee14137e6a32 # v3.0.2
         with:
@@ -141,6 +144,68 @@ jobs:
               pct >= 95.0 || (println("::error::Coverage below 95% threshold (got $(round(pct; digits=1))%)"); exit(1))
             end
           '
+
+      - name: Check patch coverage on PR (>= 90%)
+        if: github.event_name == 'pull_request'
+        run: |
+          julia <<'JLEOF'
+            base = ENV["PR_BASE_SHA"]
+            threshold = 90.0
+
+            diff = read(`git diff --unified=0 $(base)...HEAD -- julia/src`, String)
+            changed = Dict{Tuple{String,Int},Bool}()
+            current = nothing
+
+            for line in split(diff, "\n")
+              if startswith(line, "+++ b/")
+                current = line[7:end]
+                continue
+              end
+              m = match(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@", line)
+              if current !== nothing && m !== nothing
+                start = parse(Int, m.captures[1])
+                len = m.captures[2] === nothing ? 1 : parse(Int, m.captures[2])
+                for ln in start:(start + max(len, 0) - 1)
+                  changed[(current, ln)] = true
+                end
+              end
+            end
+
+            changed_lines = [k for k in keys(changed) if startswith(first(k), "julia/src/")]
+            if isempty(changed_lines)
+              println("Julia patch coverage: N/A (no changed lines in julia/src)")
+              exit(0)
+            end
+
+            cov = Dict{Tuple{String,Int},Int}()
+            current_file = nothing
+            for raw in eachline("julia-lcov.info")
+              if startswith(raw, "SF:")
+                f = raw[4:end]
+                marker = "/grasp_ils_vnd_pr/"
+                idx = findfirst(marker, f)
+                current_file = idx === nothing ? lstrip(f, '.') : f[last(idx)+1:end]
+              elseif startswith(raw, "DA:") && current_file !== nothing
+                parts = split(raw[4:end], ",")
+                ln = parse(Int, parts[1])
+                hits = floor(Int, parse(Float64, parts[2]))
+                cov[(current_file, ln)] = hits
+              elseif raw == "end_of_record"
+                current_file = nothing
+              end
+            end
+
+            total = length(changed_lines)
+            covered = count(k -> get(cov, k, 0) > 0, changed_lines)
+            pct = covered / total * 100
+            println("Julia patch coverage: $(round(pct; digits=1))%  ($(covered) / $(total) changed lines)")
+            if pct + 1e-9 < threshold
+              println("::error::Julia patch coverage below $(threshold)% threshold (got $(round(pct; digits=1))%)")
+              exit(1)
+            end
+          JLEOF
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2 # v6

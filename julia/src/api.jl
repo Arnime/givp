@@ -65,16 +65,17 @@ function givp(
         end
     end
 
+    initial_guess_for_core =
+        warm_start_guesses === nothing ? nothing : copy(first(warm_start_guesses))
     sol, core_value, actual_nit, term_msg, meta = grasp_ils_vnd(
         wrapped,
         n,
         cfg;
-        verbose,
-        iteration_callback,
-        lower,
-        upper,
-        initial_guess = warm_start_guesses === nothing ? nothing :
-                        copy(first(warm_start_guesses)),
+        verbose = verbose,
+        iteration_callback = iteration_callback,
+        lower = lower,
+        upper = upper,
+        initial_guess = initial_guess_for_core,
         initial_guesses = warm_start_guesses,
     )
 

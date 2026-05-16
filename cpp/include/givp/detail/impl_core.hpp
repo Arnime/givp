@@ -107,6 +107,7 @@ struct PathRelinkingContext {
     const ElitePool &elite_pool;
     std::vector<double> &best_solution;
     double &best_cost;
+    PathRelinkStrategy strategy;
     std::size_t half;
     const std::vector<double> &lower;
     const std::vector<double> &upper;
@@ -126,8 +127,9 @@ template <typename F> static void do_path_relinking(const F &func, PathRelinking
             if (expired(ctx.deadline))
                 return;
 
-            auto [pr_sol, pr_cost] = bidirectional_path_relinking(
-                func, all[i].first, all[j].first, ctx.half, ctx.cache, ctx.rng, ctx.deadline);
+            PrApplyContext<Rng> pr_ctx{ctx.half, ctx.cache, ctx.rng, ctx.deadline};
+            auto [pr_sol, pr_cost] = apply_path_relinking_strategy(func, all[i].first, all[j].first,
+                                                                   ctx.strategy, pr_ctx);
             VndContext<Rng> vnd_ctx{ctx.lower, ctx.upper, ctx.cache,
                                     ctx.half,  ctx.rng,   ctx.deadline};
             double refined_cost = local_search_vnd(
@@ -402,6 +404,7 @@ run_main_iteration(const CoreContext<WrappedF> &core_ctx, std::optional<Evaluati
         PathRelinkingContext pr_ctx{elite_pool,
                                     state.best_solution,
                                     state.best_cost,
+                                    core_ctx.config.path_relink_strategy,
                                     core_ctx.shape.half,
                                     core_ctx.lower,
                                     core_ctx.upper,

@@ -8,6 +8,7 @@
 #include <utility>
 #include <vector>
 
+#include <givp/config.hpp>
 #include <givp/detail/cache.hpp>
 #include <givp/detail/grasp.hpp>
 #include <givp/detail/helpers.hpp>
@@ -22,6 +23,13 @@ struct PrSource {
 
 struct PrTarget {
     const std::vector<double> &value;
+};
+
+template <typename RngT> struct PrApplyContext {
+    std::size_t half;
+    std::optional<EvaluationCache> &cache;
+    RngT &rng;
+    const Deadline &deadline;
 };
 
 /// Greedy (best-move) path relinking from source toward target.
@@ -106,6 +114,58 @@ std::pair<std::vector<double>, double> bidirectional_path_relinking(
 
     return (cost_fwd <= cost_bwd) ? std::make_pair(std::move(best_fwd), cost_fwd)
                                   : std::make_pair(std::move(best_bwd), cost_bwd);
+}
+
+/// Select and execute path relinking according to the configured strategy.
+template <typename F, typename RngT>
+std::pair<std::vector<double>, double>
+apply_path_relinking_strategy(const F &func, const std::vector<double> &source,
+                              const std::vector<double> &target, PathRelinkStrategy strategy,
+                              PrApplyContext<RngT> ctx) {
+
+    switch (strategy) {
+    case PathRelinkStrategy::Bidirectional:
+        return bidirectional_path_relinking(func, source, target, ctx.half, ctx.cache, ctx.rng,
+                                            ctx.deadline);
+    case PathRelinkStrategy::Forward:
+    case PathRelinkStrategy::Backward: {
+        const auto &src = (strategy == PathRelinkStrategy::Forward) ? source : target;
+        const auto &tgt = (strategy == PathRelinkStrategy::Forward) ? target : source;
+
+        std::vector<std::size_t> diff_indices;
+        for (std::size_t i = 0; i < src.size(); ++i)
+            if (std::abs(src[i] - tgt[i]) > 1e-12)
+                diff_indices.push_back(i);
+
+        if (diff_indices.empty()) {
+            double cost = evaluate_with_cache(src, func, ctx.cache, ctx.half);
+            return {src, cost};
+        }
+
+        if (diff_indices.size() > MAX_PR_VARS) {
+            std::sort(diff_indices.begin(), diff_indices.end(), [&](std::size_t a, std::size_t b) {
+                return std::abs(src[b] - tgt[b]) < std::abs(src[a] - tgt[a]);
+            });
+            diff_indices.resize(MAX_PR_VARS);
+        }
+
+        for (std::size_t i = diff_indices.size() - 1; i > 0; --i) {
+            std::size_t j = ctx.rng.uniform_index(0, i);
+            std::swap(diff_indices[i], diff_indices[j]);
+        }
+
+        return path_relinking_best(func, PrSource{src}, PrTarget{tgt}, std::move(diff_indices),
+                                   ctx.cache, ctx.half, ctx.deadline);
+    }
+    case PathRelinkStrategy::Randomized:
+        if (ctx.rng.uniform_index(0, 1) == 0)
+            return apply_path_relinking_strategy(func, source, target, PathRelinkStrategy::Forward,
+                                                 ctx);
+        return apply_path_relinking_strategy(func, source, target, PathRelinkStrategy::Backward,
+                                             ctx);
+    }
+    return bidirectional_path_relinking(func, source, target, ctx.half, ctx.cache, ctx.rng,
+                                        ctx.deadline);
 }
 
 } // namespace givp::detail

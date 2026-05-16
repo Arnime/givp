@@ -8,6 +8,31 @@ coverage:
       default:
         target: 90%
         threshold: 2%
+      python:
+        target: 90%
+        threshold: 2%
+        flags:
+          - python
+      julia:
+        target: 90%
+        threshold: 2%
+        flags:
+          - julia
+      rust:
+        target: 90%
+        threshold: 2%
+        flags:
+          - rust
+      cpp:
+        target: 90%
+        threshold: 2%
+        flags:
+          - cpp
+      r:
+        target: 90%
+        threshold: 2%
+        flags:
+          - r
 
 flags:
   python:
