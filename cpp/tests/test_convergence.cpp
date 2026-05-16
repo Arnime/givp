@@ -287,6 +287,101 @@ TEST_CASE("path relinking strategy helper supports all modes", "[pr]") {
     REQUIRE(std::isfinite(rand_cost));
 }
 
+TEST_CASE("path relinking strategy forward with identical endpoints returns source", "[pr]") {
+    auto sphere = [](const std::vector<double> &x) -> double {
+        double s = 0.0;
+        for (double v : x)
+            s += v * v;
+        return s;
+    };
+
+    std::vector<double> source = {1.0, -2.0, 3.0};
+    std::vector<double> target = source;
+
+    std::optional<EvaluationCache> cache = std::nullopt;
+    Deadline dl;
+    Rng rng = Rng::from_seed(101);
+    PrApplyContext<Rng> pr_ctx{source.size(), cache, rng, dl};
+
+    auto [sol, cost] =
+        apply_path_relinking_strategy(sphere, source, target, PathRelinkStrategy::Forward, pr_ctx);
+
+    REQUIRE(sol == source);
+    REQUIRE(cost == Catch::Approx(sphere(source)));
+}
+
+TEST_CASE("path relinking strategy forward handles diff cap through strategy helper", "[pr]") {
+    auto sphere = [](const std::vector<double> &x) -> double {
+        double s = 0.0;
+        for (double v : x)
+            s += v * v;
+        return s;
+    };
+
+    std::vector<double> source(40, 0.0);
+    std::vector<double> target(40, 1.0);
+
+    std::optional<EvaluationCache> cache = std::nullopt;
+    Deadline dl;
+    Rng rng = Rng::from_seed(202);
+    PrApplyContext<Rng> pr_ctx{source.size(), cache, rng, dl};
+
+    auto [sol, cost] =
+        apply_path_relinking_strategy(sphere, source, target, PathRelinkStrategy::Forward, pr_ctx);
+
+    REQUIRE(sol.size() == source.size());
+    REQUIRE(std::isfinite(cost));
+}
+
+TEST_CASE("path relinking strategy randomized can take both directions", "[pr]") {
+    auto obj = [](const std::vector<double> &x) -> double {
+        bool a = x[0] >= 0.5;
+        bool b = x[1] >= 0.5;
+        bool c = x[2] >= 0.5;
+        if (!a && !b && !c)
+            return 10.0;
+        if (a && !b && !c)
+            return 8.0;
+        if (!a && b && !c)
+            return 9.0;
+        if (!a && !b && c)
+            return 11.0;
+        if (a && b && !c)
+            return 6.0;
+        if (a && !b && c)
+            return 7.0;
+        if (!a && b && c)
+            return 2.0;
+        return 5.0;
+    };
+
+    std::vector<double> source = {2.0, 2.0, 2.0};
+    std::vector<double> target = {0.0, 0.0, 0.0};
+
+    bool saw_forward = false;
+    bool saw_backward = false;
+
+    for (unsigned seed = 0; seed < 2048 && !(saw_forward && saw_backward); ++seed) {
+        std::optional<EvaluationCache> cache = std::nullopt;
+        Deadline dl;
+        Rng rng = Rng::from_seed(seed);
+        PrApplyContext<Rng> pr_ctx{source.size(), cache, rng, dl};
+
+        auto [sol, cost] = apply_path_relinking_strategy(
+            obj, source, target, PathRelinkStrategy::Randomized, pr_ctx);
+        (void)sol;
+
+        // Forward path best cost stays >= 5.0, backward can hit 2.0.
+        if (cost <= 2.0)
+            saw_backward = true;
+        else
+            saw_forward = true;
+    }
+
+    REQUIRE(saw_forward);
+    REQUIRE(saw_backward);
+}
+
 // ── vnd.hpp: neighborhood_multiflip finds improvement (any_improved = true) ──
 
 TEST_CASE("vnd multiflip branch improves negative product objective", "[vnd]") {

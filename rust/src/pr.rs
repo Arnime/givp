@@ -297,4 +297,57 @@ mod tests {
         assert!(bi_cost.is_finite());
         assert!(rand_cost.is_finite());
     }
+
+    #[test]
+    fn test_randomized_strategy_exercises_both_branches() {
+        let func = |x: &[f64]| {
+            let a = x[0] >= 0.5;
+            let b = x[1] >= 0.5;
+            let c = x[2] >= 0.5;
+            match (a, b, c) {
+                (false, false, false) => 10.0_f64,
+                (true, false, false) => 8.0,
+                (false, true, false) => 9.0,
+                (false, false, true) => 11.0,
+                (true, true, false) => 6.0,
+                (true, false, true) => 7.0,
+                (false, true, true) => 2.0,
+                (true, true, true) => 5.0,
+            }
+        };
+
+        let sol1 = vec![0.0, 0.0, 0.0];
+        let sol2 = vec![1.0, 1.0, 1.0];
+
+        let mut saw_forward = false;
+        let mut saw_backward = false;
+
+        for seed in 0..1024_u64 {
+            if saw_forward && saw_backward {
+                break;
+            }
+            let mut rng = ChaCha8Rng::seed_from_u64(seed);
+            let mut cache = None;
+            let (_res, cost) = apply_path_relinking_strategy(
+                &func,
+                &sol1,
+                &sol2,
+                PathRelinkStrategy::Randomized,
+                3,
+                &mut cache,
+                &mut rng,
+                None,
+            );
+
+            // Forward path best cost is >= 5.0, backward can hit 2.0.
+            if cost <= 2.0 + 1e-10 {
+                saw_backward = true;
+            } else {
+                saw_forward = true;
+            }
+        }
+
+        assert!(saw_forward);
+        assert!(saw_backward);
+    }
 }
