@@ -286,6 +286,46 @@ jobs:
             --seed 1337 \
             --timeout 90
 
+  benchmark_smoke:
+    name: Benchmark smoke (Julia)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - uses: julia-actions/setup-julia@fa02766e078afaaf09b14210362cee14137e6a32 # v3.0.2
+        with:
+          version: "1"
+
+      - uses: julia-actions/cache@a45e8fa8be21c18a06b7177052533149e61e9b38 # v3.1.0
+
+      - name: Install benchmark dependencies
+        run: |
+          julia --project=julia/benchmarks -e '
+            using Pkg
+            Pkg.Registry.update()
+            Pkg.instantiate()
+          '
+
+      - name: Run literature comparison smoke test
+        run: |
+          julia --project=julia/benchmarks julia/benchmarks/run_literature_comparison.jl \
+            --n-runs 2 \
+            --dims 3 \
+            --max-iter 10 \
+            --time-limit 2 \
+            --algorithms GIVP-full DE PSO GA CMA-ES SA \
+            --output julia/benchmarks/ci_smoke_results.json
+
+      - name: Generate literature comparison smoke report
+        run: |
+          julia --project=julia/benchmarks julia/benchmarks/generate_report.jl \
+            --input julia/benchmarks/ci_smoke_results.json \
+            --format both
+
   lint:
     runs-on: ubuntu-latest
     permissions:

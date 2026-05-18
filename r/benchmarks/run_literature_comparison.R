@@ -84,8 +84,9 @@ parse_args <- function() {
   params <- list(
     n_runs    = 30L,
     dims      = 10L,
+    max_iter  = 100L,
     output    = file.path("r", "benchmarks", "literature_comparison.json"),
-    algorithms = c("GIVP-full", "GRASP-only"),
+    algorithms = c("GIVP-full", "DE", "PSO", "GA", "CMA-ES", "SA"),
     verbose   = FALSE
   )
   i <- 1L
@@ -93,6 +94,7 @@ parse_args <- function() {
     switch(args[[i]],
       "--n-runs"     = { params$n_runs    <- as.integer(args[[i + 1L]]); i <- i + 2L },
       "--dims"       = { params$dims      <- as.integer(args[[i + 1L]]); i <- i + 2L },
+      "--max-iter"   = { params$max_iter  <- as.integer(args[[i + 1L]]); i <- i + 2L },
       "--output"     = { params$output    <- args[[i + 1L]];             i <- i + 2L },
       "--algorithms" = {
         algs <- character(0L)
@@ -117,6 +119,8 @@ DIMS       <- cli$dims
 OUTPUT     <- cli$output
 ALGORITHMS <- cli$algorithms
 VERBOSE    <- cli$verbose
+MAX_ITER   <- cli$max_iter
+ACTIVE_ALGORITHMS <- character(0L)
 
 cat(sprintf(
   "[benchmark] R port | %d runs × %d-D × %s\n",
@@ -237,6 +241,205 @@ ALGO_CONFIGS <- list(
   "GRASP-only" = make_config_grasp_only
 )
 
+ALGO_DESCRIPTIONS <- list(
+  "GIVP-full"  = "GRASP-ILS-VND-PR -- full hybrid pipeline (this work)",
+  "GRASP-only" = "GRASP-only baseline (Feo & Resende 1995)",
+  "DE"         = "Differential Evolution -- DEoptim (Storn & Price 1997)",
+  "PSO"        = "Particle Swarm Optimization -- pso::psoptim (Kennedy & Eberhart 1995)",
+  "GA"         = "Genetic Algorithm -- GA package (Holland 1975)",
+  "CMA-ES"     = "Covariance Matrix Adaptation Evolution Strategy -- cmaes package (Hansen & Ostermeier 2001)",
+  "SA"         = "Simulated Annealing -- stats::optim(method='SANN') (Kirkpatrick et al. 1983)"
+)
+
+OPTIONAL_PACKAGES <- list(
+  "DE" = "DEoptim",
+  "PSO" = "pso",
+  "GA" = "GA",
+  "CMA-ES" = "cmaes"
+)
+
+is_algo_available <- function(algo_name) {
+  pkg <- OPTIONAL_PACKAGES[[algo_name]]
+  if (is.null(pkg)) return(TRUE)
+  requireNamespace(pkg, quietly = TRUE)
+}
+
+bounds_to_vectors <- function(bounds) {
+  list(
+    lower = vapply(bounds, function(b) b[[1L]], numeric(1L)),
+    upper = vapply(bounds, function(b) b[[2L]], numeric(1L))
+  )
+}
+
+run_givp_baseline <- function(prob_fn, bounds, seed, max_iter, cfg_fn) {
+  cfg <- cfg_fn(max_iter)
+  t0 <- proc.time()[[3L]]
+  r <- tryCatch(
+    givp(prob_fn, bounds, direction = "minimize", config = cfg, seed = seed),
+    error = function(e) {
+      list(fun = Inf, nit = 0L, nfev = 0L, success = FALSE, message = conditionMessage(e))
+    }
+  )
+  elapsed <- proc.time()[[3L]] - t0
+  list(
+    fun = if (is.null(r$fun)) Inf else r$fun,
+    nit = if (is.null(r$nit)) 0L else r$nit,
+    nfev = if (is.null(r$nfev)) 0L else r$nfev,
+    time_s = elapsed,
+    success = if (is.null(r$success)) FALSE else r$success
+  )
+}
+
+run_de <- function(prob_fn, bounds, seed, max_iter) {
+  bv <- bounds_to_vectors(bounds)
+  eval_count <- 0L
+  wrapped <- function(x) {
+    eval_count <<- eval_count + 1L
+    prob_fn(x)
+  }
+  set.seed(seed)
+  t0 <- proc.time()[[3L]]
+  out <- tryCatch({
+    res <- DEoptim::DEoptim(
+      fn = wrapped,
+      lower = bv$lower,
+      upper = bv$upper,
+      control = DEoptim::DEoptim.control(itermax = max_iter, trace = FALSE)
+    )
+    list(fun = res$optim$bestval, nit = max_iter, nfev = eval_count, success = TRUE)
+  }, error = function(e) {
+    warning(sprintf("DE run failed (seed=%d): %s", seed, conditionMessage(e)))
+    list(fun = Inf, nit = 0L, nfev = eval_count, success = FALSE)
+  })
+  out$time_s <- proc.time()[[3L]] - t0
+  out
+}
+
+run_pso <- function(prob_fn, bounds, seed, max_iter) {
+  bv <- bounds_to_vectors(bounds)
+  eval_count <- 0L
+  wrapped <- function(x) {
+    eval_count <<- eval_count + 1L
+    prob_fn(x)
+  }
+  set.seed(seed)
+  x0 <- runif(length(bv$lower), min = bv$lower, max = bv$upper)
+  t0 <- proc.time()[[3L]]
+  out <- tryCatch({
+    res <- pso::psoptim(
+      par = x0,
+      fn = wrapped,
+      lower = bv$lower,
+      upper = bv$upper,
+      control = list(maxit = max_iter, trace = 0)
+    )
+    list(fun = res$value, nit = max_iter, nfev = eval_count, success = TRUE)
+  }, error = function(e) {
+    warning(sprintf("PSO run failed (seed=%d): %s", seed, conditionMessage(e)))
+    list(fun = Inf, nit = 0L, nfev = eval_count, success = FALSE)
+  })
+  out$time_s <- proc.time()[[3L]] - t0
+  out
+}
+
+run_ga <- function(prob_fn, bounds, seed, max_iter) {
+  bv <- bounds_to_vectors(bounds)
+  eval_count <- 0L
+  fitness <- function(x) {
+    eval_count <<- eval_count + 1L
+    -prob_fn(x)
+  }
+  set.seed(seed)
+  t0 <- proc.time()[[3L]]
+  out <- tryCatch({
+    ga_res <- GA::ga(
+      type = "real-valued",
+      fitness = fitness,
+      lower = bv$lower,
+      upper = bv$upper,
+      popSize = max(20L, 10L * length(bv$lower)),
+      maxiter = max_iter,
+      run = max_iter,
+      monitor = FALSE,
+      seed = seed
+    )
+    list(fun = -ga_res@fitnessValue, nit = ga_res@iter, nfev = eval_count, success = TRUE)
+  }, error = function(e) {
+    warning(sprintf("GA run failed (seed=%d): %s", seed, conditionMessage(e)))
+    list(fun = Inf, nit = 0L, nfev = eval_count, success = FALSE)
+  })
+  out$time_s <- proc.time()[[3L]] - t0
+  out
+}
+
+run_cmaes <- function(prob_fn, bounds, seed, max_iter) {
+  bv <- bounds_to_vectors(bounds)
+  eval_count <- 0L
+  wrapped <- function(x) {
+    eval_count <<- eval_count + 1L
+    prob_fn(x)
+  }
+  set.seed(seed)
+  x0 <- runif(length(bv$lower), min = bv$lower, max = bv$upper)
+  t0 <- proc.time()[[3L]]
+  out <- tryCatch({
+    cma_fun <- getExportedValue("cmaes", "cma_es")
+    res <- cma_fun(
+      par = x0,
+      fn = wrapped,
+      lower = bv$lower,
+      upper = bv$upper,
+      control = list(maxit = max_iter)
+    )
+    best_val <- if (!is.null(res$value)) res$value else wrapped(res$par)
+    nit <- if (!is.null(res$iter)) as.integer(res$iter) else max_iter
+    list(fun = best_val, nit = nit, nfev = eval_count, success = TRUE)
+  }, error = function(e) {
+    warning(sprintf("CMA-ES run failed (seed=%d): %s", seed, conditionMessage(e)))
+    list(fun = Inf, nit = 0L, nfev = eval_count, success = FALSE)
+  })
+  out$time_s <- proc.time()[[3L]] - t0
+  out
+}
+
+run_sa <- function(prob_fn, bounds, seed, max_iter) {
+  bv <- bounds_to_vectors(bounds)
+  eval_count <- 0L
+  wrapped <- function(x) {
+    eval_count <<- eval_count + 1L
+    x_clipped <- pmin(pmax(x, bv$lower), bv$upper)
+    penalty <- sum((x - x_clipped)^2) * 1e6
+    prob_fn(x_clipped) + penalty
+  }
+  set.seed(seed)
+  x0 <- runif(length(bv$lower), min = bv$lower, max = bv$upper)
+  t0 <- proc.time()[[3L]]
+  out <- tryCatch({
+    res <- stats::optim(
+      par = x0,
+      fn = wrapped,
+      method = "SANN",
+      control = list(maxit = max_iter, trace = 0)
+    )
+    final_x <- pmin(pmax(res$par, bv$lower), bv$upper)
+    list(fun = prob_fn(final_x), nit = max_iter, nfev = eval_count, success = TRUE)
+  }, error = function(e) {
+    warning(sprintf("SA run failed (seed=%d): %s", seed, conditionMessage(e)))
+    list(fun = Inf, nit = 0L, nfev = eval_count, success = FALSE)
+  })
+  out$time_s <- proc.time()[[3L]] - t0
+  out
+}
+
+run_external_baseline <- function(algo_name, prob_fn, bounds, seed, max_iter) {
+  if (algo_name == "DE") return(run_de(prob_fn, bounds, seed, max_iter))
+  if (algo_name == "PSO") return(run_pso(prob_fn, bounds, seed, max_iter))
+  if (algo_name == "GA") return(run_ga(prob_fn, bounds, seed, max_iter))
+  if (algo_name == "CMA-ES") return(run_cmaes(prob_fn, bounds, seed, max_iter))
+  if (algo_name == "SA") return(run_sa(prob_fn, bounds, seed, max_iter))
+  stop(sprintf("Unknown baseline algorithm: %s", algo_name))
+}
+
 # ── Wilcoxon signed-rank test (base R) ─────────────────────────────────────────
 wilcoxon_test <- function(x, y, alpha = 0.05) {
   tryCatch({
@@ -257,16 +460,23 @@ cat(sprintf("[benchmark] Running %d × %d × %d cells...\n",
 all_runs <- list()
 
 for (algo_name in ALGORITHMS) {
-  if (!algo_name %in% names(ALGO_CONFIGS)) {
+  if (!algo_name %in% names(ALGO_DESCRIPTIONS)) {
     warning(sprintf("Unknown algorithm '%s' — skipping", algo_name))
     next
   }
+  if (!is_algo_available(algo_name)) {
+    pkg <- OPTIONAL_PACKAGES[[algo_name]]
+    warning(sprintf("Skipping %s: optional package '%s' is not installed", algo_name, pkg))
+    next
+  }
+
+  ACTIVE_ALGORITHMS <- c(ACTIVE_ALGORITHMS, algo_name)
+
   cfg_fn <- ALGO_CONFIGS[[algo_name]]
 
   for (fn_name in FUNC_ORDER) {
     prob   <- PROBLEMS[[fn_name]]
     bounds <- prob$bounds_fn(DIMS)
-    cfg    <- cfg_fn()
 
     fun_vals <- numeric(N_RUNS)
     nit_vals <- integer(N_RUNS)
@@ -275,28 +485,24 @@ for (algo_name in ALGORITHMS) {
 
     for (run_i in seq_len(N_RUNS)) {
       seed <- run_i - 1L
-      t0   <- proc.time()[[3L]]
-      r    <- tryCatch(
-        givp(prob$fn, bounds, direction = "minimize", config = cfg, seed = seed),
-        error = function(e) {
-          list(fun = Inf, nit = 0L, nfev = 0L, success = FALSE,
-               message = conditionMessage(e))
-        }
-      )
-      elapsed       <- proc.time()[[3L]] - t0
+      r <- if (!is.null(cfg_fn)) {
+        run_givp_baseline(prob$fn, bounds, seed, MAX_ITER, cfg_fn)
+      } else {
+        run_external_baseline(algo_name, prob$fn, bounds, seed, MAX_ITER)
+      }
       fun_vals[[run_i]]  <- if (is.null(r$fun))  Inf else r$fun
       nit_vals[[run_i]]  <- if (is.null(r$nit))  0L  else r$nit
       nfev_vals[[run_i]] <- if (is.null(r$nfev)) 0L  else r$nfev
-      time_vals[[run_i]] <- elapsed
+      time_vals[[run_i]] <- if (is.null(r$time_s)) 0 else r$time_s
 
       all_runs <- c(all_runs, list(list(
         algorithm  = algo_name,
-        func       = fn_name,
+        `function` = fn_name,
         seed       = seed,
         fun        = fun_vals[[run_i]],
         nit        = nit_vals[[run_i]],
         nfev       = nfev_vals[[run_i]],
-        time_s     = elapsed,
+        time_s     = time_vals[[run_i]],
         success    = if (is.null(r$success)) FALSE else r$success
       )))
     }
@@ -319,35 +525,46 @@ wilcoxon_rows <- list()
 for (fn_name in FUNC_ORDER) {
   # collect per-algo vectors
   algo_vals <- list()
-  for (algo_name in ALGORITHMS) {
+  for (algo_name in ACTIVE_ALGORITHMS) {
     vals <- vapply(
-      Filter(function(r) r$algorithm == algo_name && r$func == fn_name, all_runs),
+      Filter(function(r) r$algorithm == algo_name && r[["function"]] == fn_name, all_runs),
       function(r) r$fun,
       numeric(1L)
     )
     algo_vals[[algo_name]] <- vals
+    nfev_vals <- vapply(
+      Filter(function(r) r$algorithm == algo_name && r[["function"]] == fn_name, all_runs),
+      function(r) r$nfev,
+      numeric(1L)
+    )
+    mean_val <- if (length(vals) > 0L) mean(vals) else NaN
+    std_val <- if (length(vals) > 1L) sd(vals) else 0.0
+    best_val <- if (length(vals) > 0L) min(vals) else NaN
+    median_val <- if (length(vals) > 0L) median(vals) else NaN
+    worst_val <- if (length(vals) > 0L) max(vals) else NaN
+    nfev_mean <- if (length(nfev_vals) > 0L) mean(nfev_vals) else NaN
     summary_rows <- c(summary_rows, list(list(
-      func       = fn_name,
-      algorithm  = algo_name,
-      mean_val   = mean(vals),
-      std_val    = sd(vals),
-      best       = min(vals),
-      median_val = median(vals),
-      n          = N_RUNS,
-      reference  = PROBLEMS[[fn_name]]$reference,
-      optimum    = PROBLEMS[[fn_name]]$optimum
+      `function` = fn_name,
+      algorithm = algo_name,
+      n_runs    = length(vals),
+      mean      = mean_val,
+      std       = std_val,
+      best      = best_val,
+      median    = median_val,
+      worst     = worst_val,
+      nfev_mean = nfev_mean
     )))
   }
 
   # Wilcoxon: compare each non-reference algo vs first algo
-  if (length(ALGORITHMS) >= 2L) {
-    ref_vals <- algo_vals[[ALGORITHMS[[1L]]]]
-    for (algo_name in ALGORITHMS[-1L]) {
+  if (length(ACTIVE_ALGORITHMS) >= 2L) {
+    ref_vals <- algo_vals[[ACTIVE_ALGORITHMS[[1L]]]]
+    for (algo_name in ACTIVE_ALGORITHMS[-1L]) {
       chal_vals <- algo_vals[[algo_name]]
       wt <- wilcoxon_test(ref_vals, chal_vals)
       wilcoxon_rows <- c(wilcoxon_rows, list(list(
         func        = fn_name,
-        reference   = ALGORITHMS[[1L]],
+        reference   = ACTIVE_ALGORITHMS[[1L]],
         challenger  = algo_name,
         stat        = wt$stat,
         pvalue      = wt$pvalue,
@@ -360,19 +577,38 @@ for (fn_name in FUNC_ORDER) {
 
 # ── Build output JSON ──────────────────────────────────────────────────────────
 output_obj <- list(
-  meta = list(
-    port            = "R",
+  metadata = list(
+    schema_version   = "benchmark-schema-v1",
+    port             = "R",
     givp_version    = as.character(packageVersion("givp")),
     dims            = DIMS,
     n_runs          = N_RUNS,
-    algorithms      = ALGORITHMS,
+    algorithms      = ACTIVE_ALGORITHMS,
     functions       = FUNC_ORDER,
-    timestamp       = format(Sys.time(), "%Y-%m-%dT%H:%M:%S")
+    timestamp       = format(Sys.time(), "%Y-%m-%dT%H:%M:%S"),
+    problem_references = lapply(PROBLEMS[FUNC_ORDER], function(p) p$reference),
+    algo_descriptions = ALGO_DESCRIPTIONS[ACTIVE_ALGORITHMS]
   ),
   runs     = all_runs,
+  records  = lapply(FUNC_ORDER, function(fn_name) {
+    fn_rows <- Filter(function(r) r[["function"]] == fn_name, all_runs)
+    lapply(fn_rows, function(r) {
+      list(
+        algorithm = r$algorithm,
+        seed = r$seed,
+        fun = r$fun,
+        nit = r$nit,
+        nfev = r$nfev,
+        time_s = r$time_s,
+        trace = NULL
+      )
+    })
+  }),
   summary  = summary_rows,
+  stats    = summary_rows,
   wilcoxon = wilcoxon_rows
 )
+names(output_obj$records) <- FUNC_ORDER
 
 # Ensure output directory exists
 out_dir <- dirname(OUTPUT)
@@ -384,18 +620,22 @@ cat(sprintf("\n[benchmark] Results saved to %s\n", OUTPUT))
 # ── Console summary ────────────────────────────────────────────────────────────
 cat("\n=== Summary (mean objective value) ===\n")
 cat(sprintf("%-14s", "Function"))
-for (algo in ALGORITHMS) cat(sprintf("  %-14s", algo))
+for (algo in ACTIVE_ALGORITHMS) cat(sprintf("  %-14s", algo))
 cat("\n")
-cat(strrep("-", 14L + 16L * length(ALGORITHMS)), "\n")
+cat(strrep("-", 14L + 16L * length(ACTIVE_ALGORITHMS)), "\n")
 
 for (fn_name in FUNC_ORDER) {
   cat(sprintf("%-14s", fn_name))
-  for (algo in ALGORITHMS) {
-    row <- Filter(
-      function(r) r$func == fn_name && r$algorithm == algo,
+  for (algo in ACTIVE_ALGORITHMS) {
+    rows <- Filter(
+      function(r) r[["function"]] == fn_name && r$algorithm == algo,
       summary_rows
-    )[[1L]]
-    cat(sprintf("  %14.4e", row$mean_val))
+    )
+    if (length(rows) == 0L) {
+      cat(sprintf("  %14s", "NA"))
+    } else {
+      cat(sprintf("  %14.4e", rows[[1L]]$mean))
+    }
   }
   cat("\n")
 }

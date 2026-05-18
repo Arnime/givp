@@ -14,7 +14,7 @@ Usage
     # Default: 30 runs × 10-D × GIVP-full + GRASP-only on all 6 functions
     python run_literature_comparison.py
 
-    # Wider comparison including scipy baselines (requires: pip install scipy)
+    # Wider comparison including scipy baselines (requires Poetry dependency)
     python run_literature_comparison.py --algorithms GIVP-full GRASP-only DE SA
 
     # Higher dimensionality, fewer runs, custom output
@@ -42,6 +42,7 @@ References
 from __future__ import annotations
 
 import argparse
+import importlib
 import json
 import logging
 import sys
@@ -60,6 +61,23 @@ except ImportError:
     _scipy_optimize = None  # type: ignore[assignment]
     _SCIPY_OPTIMIZE_OK = False
 
+try:
+    _PYMOO_CMAES = importlib.import_module("pymoo.algorithms.soo.nonconvex.cmaes").CMAES
+    _PYMOO_GA = importlib.import_module("pymoo.algorithms.soo.nonconvex.ga").GA
+    _PYMOO_PSO = importlib.import_module("pymoo.algorithms.soo.nonconvex.pso").PSO
+    _PYMOO_MINIMIZE = importlib.import_module("pymoo.optimize").minimize
+    _PYMOO_FUNCTIONAL_PROBLEM = importlib.import_module(
+        "pymoo.problems.functional"
+    ).FunctionalProblem
+    _PYMOO_OK = True
+except ImportError:
+    _PYMOO_CMAES = None  # type: ignore[assignment]
+    _PYMOO_GA = None  # type: ignore[assignment]
+    _PYMOO_PSO = None  # type: ignore[assignment]
+    _PYMOO_MINIMIZE = None  # type: ignore[assignment]
+    _PYMOO_FUNCTIONAL_PROBLEM = None  # type: ignore[assignment]
+    _PYMOO_OK = False
+
 if TYPE_CHECKING:
     from numpy.typing import NDArray
 
@@ -76,7 +94,7 @@ try:
 except ImportError as exc:  # pragma: no cover
     sys.exit(
         f"[error] givp not installed: {exc}\n"
-        "  From the python/ directory run:  pip install -e .[dev]"
+        "  From the python/ directory run:  poetry install"
     )
 
 _GIVP_VERSION: str = getattr(_givp_mod, "__version__", "unknown")
@@ -140,6 +158,9 @@ ALGO_DESCRIPTIONS: dict[str, str] = {
     "GIVP-tuned": "GRASP-ILS-VND-PR -- Optuna-tuned hyperparameters (tune_hyperparams.py)",
     "GRASP-only": "GRASP-only baseline (Feo & Resende 1995)",
     "DE": "Differential Evolution -- scipy.optimize (Storn & Price 1997)",
+    "PSO": "Particle Swarm Optimization -- pymoo (Kennedy & Eberhart 1995)",
+    "GA": "Genetic Algorithm -- pymoo (Holland 1975)",
+    "CMA-ES": "Covariance Matrix Adaptation Evolution Strategy -- pymoo (Hansen & Ostermeier 2001)",
     "SA": "Dual Annealing -- scipy.optimize (Xiang et al. 1997)",
 }
 
@@ -212,7 +233,10 @@ def _scipy_de(
 ) -> tuple[float, int, int]:
     """Run scipy.optimize.differential_evolution. Returns (fun, nit, nfev)."""
     if not _SCIPY_OPTIMIZE_OK or _scipy_optimize is None:  # pragma: no cover
-        raise RuntimeError("scipy is not installed.  Run:  pip install scipy")
+        raise RuntimeError(
+            "scipy is not installed. Install dependencies with Poetry in "
+            "python/: poetry add scipy"
+        )
     np.random.seed(seed)
     res = _scipy_optimize.differential_evolution(
         func,
@@ -233,7 +257,10 @@ def _scipy_sa(
 ) -> tuple[float, int, int]:
     """Run scipy.optimize.dual_annealing. Returns (fun, nit, nfev)."""
     if not _SCIPY_OPTIMIZE_OK or _scipy_optimize is None:  # pragma: no cover
-        raise RuntimeError("scipy is not installed.  Run:  pip install scipy")
+        raise RuntimeError(
+            "scipy is not installed. Install dependencies with Poetry in "
+            "python/: poetry add scipy"
+        )
     rng = np.random.default_rng(seed)
     np.random.seed(seed)
     x0 = np.array([lo + rng.random() * (hi - lo) for lo, hi in bounds])
@@ -244,6 +271,55 @@ def _scipy_sa(
         x0=x0,  # type: ignore[call-arg]  # scipy stubs unavailable
     )
     return float(res.fun), int(res.nit), int(res.nfev)
+
+
+def _pymoo_run(
+    algo_name: str,
+    func: Callable,
+    bounds: list[tuple[float, float]],
+    seed: int,
+    max_iter: int,
+) -> tuple[float, int, int]:
+    """Run a pymoo single-objective optimizer and return (fun, nit, nfev)."""
+    if (
+        not _PYMOO_OK
+        or _PYMOO_MINIMIZE is None
+        or _PYMOO_FUNCTIONAL_PROBLEM is None
+    ):
+        raise RuntimeError(
+            "pymoo is not installed. Install dependencies with Poetry in python/: "
+            "poetry add pymoo"
+        )
+
+    xl = np.asarray([lo for lo, _ in bounds], dtype=float)
+    xu = np.asarray([hi for _, hi in bounds], dtype=float)
+    problem = _PYMOO_FUNCTIONAL_PROBLEM(
+        n_var=len(bounds),
+        objs=lambda x: float(func(np.asarray(x, dtype=float))),
+        xl=xl,
+        xu=xu,
+    )
+
+    if algo_name == "PSO":
+        algorithm = _PYMOO_PSO()  # type: ignore[operator]
+    elif algo_name == "GA":
+        algorithm = _PYMOO_GA()  # type: ignore[operator]
+    elif algo_name == "CMA-ES":
+        x0 = np.random.default_rng(seed).uniform(xl, xu)
+        algorithm = _PYMOO_CMAES(x0=x0)  # type: ignore[operator]
+    else:  # pragma: no cover
+        raise ValueError(f"Unknown pymoo algorithm: {algo_name!r}")
+
+    res = _PYMOO_MINIMIZE(
+        problem,
+        algorithm,
+        ("n_gen", max_iter),
+        seed=seed,
+        verbose=False,
+    )
+    fun = float(np.asarray(res.F, dtype=float).reshape(-1)[0])
+    nfev = int(getattr(getattr(res.algorithm, "evaluator", None), "n_eval", 0))
+    return fun, max_iter, nfev
 
 
 # ----------------------------------------------------------------
@@ -308,6 +384,8 @@ def _run_single(
 
     elif algo == "DE":
         fun, nit, nfev = _scipy_de(func, bounds, seed, max_iter)
+    elif algo in ("PSO", "GA", "CMA-ES"):
+        fun, nit, nfev = _pymoo_run(algo, func, bounds, seed, max_iter)
     elif algo == "SA":
         fun, nit, nfev = _scipy_sa(func, bounds, seed, max_iter)
     else:
@@ -667,14 +745,14 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument(
         "--algorithms",
         nargs="+",
-        default=["GIVP-full", "GRASP-only"],
+        default=["GIVP-full", "DE", "PSO", "GA", "CMA-ES", "SA"],
         choices=list(ALGO_DESCRIPTIONS),
         metavar="ALGO",
         help=(
             "Algorithms to include.  Choices: "
             f"{list(ALGO_DESCRIPTIONS)}.  "
-            "DE and SA require scipy (pip install scipy).  "
-            "Default: GIVP-full GRASP-only."
+            "DE and SA require scipy. PSO/GA/CMA-ES require pymoo.  "
+            "Default: GIVP-full DE PSO GA CMA-ES SA."
         ),
     )
     p.add_argument(
@@ -750,6 +828,27 @@ def main(argv: list[str] | None = None) -> int:
         tune_data = json.loads(args.tune_config.read_text(encoding="utf-8"))
         params = tune_data.get("best_params", tune_data)
         givp_tuned_config = GIVPConfig(**params)
+
+    scipy_algos = {"DE", "SA"}
+    pymoo_algos = {"PSO", "GA", "CMA-ES"}
+    if any(algo in scipy_algos for algo in args.algorithms) and not _SCIPY_OPTIMIZE_OK:
+        _log.error(
+            "[error] scipy-based algorithms requested (%s) but scipy is not installed.",
+            ", ".join(sorted(scipy_algos & set(args.algorithms))),
+        )
+        _log.error(
+            "        Install dependencies with Poetry in python/: poetry add scipy"
+        )
+        return 1
+    if any(algo in pymoo_algos for algo in args.algorithms) and not _PYMOO_OK:
+        _log.error(
+            "[error] pymoo-based algorithms requested (%s) but pymoo is not installed.",
+            ", ".join(sorted(pymoo_algos & set(args.algorithms))),
+        )
+        _log.error(
+            "        Install dependencies with Poetry in python/: poetry add pymoo"
+        )
+        return 1
 
     n_total = len(args.algorithms) * len(args.functions) * args.n_runs
     est_min = n_total * 0.5 / 60  # rough estimate assuming ~0.5s per run

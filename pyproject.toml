@@ -49,7 +49,13 @@ dev = [
     "pytest-benchmark>=4.0",
     "tqdm>=4.66",
 ]
-benchmarks = ["optuna>=3.0", "scipy>=1.13", "matplotlib>=3.8", "pandas>=2.2"]
+benchmarks = [
+    "optuna>=3.0",
+    "scipy>=1.13",
+    "pymoo>=0.6.1",
+    "matplotlib>=3.8",
+    "pandas>=2.2",
+]
 fuzz = ["atheris>=2.3.0; sys_platform == 'linux'"]
 docs = ["mkdocs>=1.6", "mkdocs-material>=9.5", "mkdocstrings[python]>=0.26"]
 notebooks = [
@@ -199,3 +205,10 @@ mkdocs = ">=1.6"
 mkdocs-material = ">=9.5"
 mkdocstrings = { version = ">=0.26", extras = ["python"] }
 ruff = ">=0.15.12"
+
+[tool.poetry.group.benchmarks.dependencies]
+optuna = ">=3.0"
+scipy = ">=1.13"
+pymoo = ">=0.6.1"
+matplotlib = ">=3.8"
+pandas = ">=2.2"

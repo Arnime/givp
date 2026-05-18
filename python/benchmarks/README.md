@@ -14,35 +14,70 @@ This directory contains two kinds of benchmarks:
 ## 1. Microbenchmarks (pytest-benchmark)
 
 ```bash
-pip install -e .[dev]
-pytest benchmarks/ --benchmark-only --benchmark-autosave
+cd python/
+poetry install --with dev,benchmarks
+poetry run pytest benchmarks/ --benchmark-only --benchmark-autosave
 ```
 
 Results are stored under `.benchmarks/`.  Compare against a saved baseline:
 
 ```bash
-pytest benchmarks/ --benchmark-compare=0001 --benchmark-only
+poetry run pytest benchmarks/ --benchmark-compare=0001 --benchmark-only
 ```
 
 ---
 
 ## 2. Literature comparison (`run_literature_comparison.py`)
 
+### Latest quick snapshot (2026-05-18)
+
+Executed in this repository with:
+
+```bash
+cd python/
+poetry run python benchmarks/run_literature_comparison.py \
+    --dims 10 --n-runs 2 --max-iter 20 --time-limit 5 \
+    --algorithms GIVP-full DE PSO GA CMA-ES SA \
+    --output benchmarks/reference_results_quick.json
+
+poetry run python benchmarks/generate_report.py \
+    --input benchmarks/reference_results_quick.json \
+    --format both --output-dir benchmarks/
+```
+
+Artifacts:
+
+- `python/benchmarks/reference_results_quick.json`
+- `python/benchmarks/reference_results_quick_report.md`
+- `python/benchmarks/reference_results_quick_report.tex`
+- `python/benchmarks/reference_results_quick_boxplot.png`
+
+Mean objective value (lower is better):
+
+| Function | GIVP-full | DE | PSO | GA | CMA-ES | SA |
+|---|---:|---:|---:|---:|---:|---:|
+| Sphere | 3.9947e-04 | 2.2680e-16 | 2.1758e-01 | 3.3073e-01 | 3.1402e+00 | 1.1483e-16 |
+| Rosenbrock | 3.8670e+00 | 8.8226e-10 | 9.7634e+01 | 2.7370e+02 | 1.2180e+04 | 1.8086e-11 |
+| Rastrigin | 4.0987e+00 | 1.9402e+01 | 3.1272e+01 | 1.0634e+01 | 1.1306e+02 | 7.1054e-15 |
+| Ackley | 2.5727e-01 | 4.8165e+00 | 5.1259e+00 | 4.7871e+00 | 1.4550e+01 | 1.5884e-08 |
+| Griewank | 3.0773e-01 | 5.1732e-02 | 1.7419e+00 | 2.4009e+00 | 2.0254e+01 | 1.1063e-02 |
+| Schwefel | 1.0218e+03 | 1.1450e+03 | 1.9300e+03 | 2.7745e+02 | 2.2649e+03 | 1.2728e-04 |
+
 ### Quick start
 
 ```bash
 cd python/
-pip install -e .[dev]
+poetry install --with dev,benchmarks
 
-# Default: 30 runs × 10-D × GIVP-full + GRASP-only on all 6 functions
-python benchmarks/run_literature_comparison.py
+# Default: 30 runs × 10-D × GIVP-full + DE + PSO + GA + CMA-ES + SA
+poetry run python benchmarks/run_literature_comparison.py
 
-# Include scipy baselines (requires: pip install scipy)
-python benchmarks/run_literature_comparison.py \
-    --algorithms GIVP-full GRASP-only DE SA
+# Explicit algorithm subset
+poetry run python benchmarks/run_literature_comparison.py \
+    --algorithms GIVP-full DE PSO GA CMA-ES SA
 
 # Higher dimensionality, capture convergence traces
-python benchmarks/run_literature_comparison.py \
+poetry run python benchmarks/run_literature_comparison.py \
     --dims 30 --n-runs 30 --traces \
     --output results_30d.json
 ```
@@ -65,7 +100,7 @@ usage: run_literature_comparison [-h]
 | `--seed-start` | 0 | First seed; uses `[N, N+n_runs)` |
 | `--max-iter` | 200 | Max GIVP iterations (or equivalent budget) |
 | `--time-limit` | 30.0 | Per-run wall-clock cap (seconds) |
-| `--algorithms` | GIVP-full GRASP-only | Any subset of `GIVP-full GRASP-only DE SA` |
+| `--algorithms` | GIVP-full DE PSO GA CMA-ES SA | Any subset of `GIVP-full GIVP-tuned GRASP-only DE PSO GA CMA-ES SA` |
 | `--functions` | all 6 | Any subset of `Sphere Rosenbrock Rastrigin Ackley Griewank Schwefel` |
 | `--traces` | off | Capture per-iteration best-value history (GIVP only) |
 | `--verbose` | off | Print one line per run |
@@ -87,15 +122,15 @@ Reads the JSON produced by `run_literature_comparison.py` and emits:
 
 ```bash
 # After running the experiment above:
-python benchmarks/generate_report.py --input experiment_results.json
+poetry run python benchmarks/generate_report.py --input experiment_results.json
 
 # LaTeX only, no plots
-python benchmarks/generate_report.py \
+poetry run python benchmarks/generate_report.py \
     --input results_30d.json \
     --format latex --no-plots
 
 # Save outputs to a paper directory
-python benchmarks/generate_report.py \
+poetry run python benchmarks/generate_report.py \
     --input experiment_results.json \
     --output-dir paper/tables/
 ```
@@ -119,14 +154,14 @@ usage: generate_report [-h]
 
 ```bash
 # Step 1 — run experiment (≈ 30 min on a laptop)
-python benchmarks/run_literature_comparison.py \
+poetry run python benchmarks/run_literature_comparison.py \
     --dims 10 --n-runs 30 \
-    --algorithms GIVP-full GRASP-only DE SA \
+    --algorithms GIVP-full DE PSO GA CMA-ES SA \
     --traces --verbose \
     --output results/comparison_10d_30runs.json
 
 # Step 2 — generate all outputs
-python benchmarks/generate_report.py \
+poetry run python benchmarks/generate_report.py \
     --input results/comparison_10d_30runs.json \
     --format both \
     --output-dir paper/tables/

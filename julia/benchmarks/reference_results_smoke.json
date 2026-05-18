@@ -1,0 +1,2138 @@
+{
+  "summary": [
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Ackley",
+      "algorithm": "CMA-ES",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Ackley",
+      "algorithm": "DE",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Ackley",
+      "algorithm": "GA",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": 0.13328504816600395,
+      "nfev_mean": 196719.5,
+      "function": "Ackley",
+      "algorithm": "GIVP-full",
+      "worst": 0.14806224820633718,
+      "mean": 0.13328504816600395,
+      "best": 0.11850784812567072,
+      "std": 0.020898116710939496
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Ackley",
+      "algorithm": "PSO",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Ackley",
+      "algorithm": "SA",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Griewank",
+      "algorithm": "CMA-ES",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Griewank",
+      "algorithm": "DE",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Griewank",
+      "algorithm": "GA",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": 0.19481514785235043,
+      "nfev_mean": 204413.5,
+      "function": "Griewank",
+      "algorithm": "GIVP-full",
+      "worst": 0.2171180278017376,
+      "mean": 0.19481514785235043,
+      "best": 0.17251226790296326,
+      "std": 0.03154103530440232
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Griewank",
+      "algorithm": "PSO",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Griewank",
+      "algorithm": "SA",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Rastrigin",
+      "algorithm": "CMA-ES",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Rastrigin",
+      "algorithm": "DE",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Rastrigin",
+      "algorithm": "GA",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": 2.2212812956594234,
+      "nfev_mean": 173934.0,
+      "function": "Rastrigin",
+      "algorithm": "GIVP-full",
+      "worst": 2.2411400131319397,
+      "mean": 2.2212812956594234,
+      "best": 2.2014225781869072,
+      "std": 0.028084467580967987
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Rastrigin",
+      "algorithm": "PSO",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Rastrigin",
+      "algorithm": "SA",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Rosenbrock",
+      "algorithm": "CMA-ES",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Rosenbrock",
+      "algorithm": "DE",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Rosenbrock",
+      "algorithm": "GA",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": 1.0786173229381113,
+      "nfev_mean": 267660.5,
+      "function": "Rosenbrock",
+      "algorithm": "GIVP-full",
+      "worst": 1.2576491952699254,
+      "mean": 1.0786173229381113,
+      "best": 0.8995854506062974,
+      "std": 0.2531893019486998
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Rosenbrock",
+      "algorithm": "PSO",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Rosenbrock",
+      "algorithm": "SA",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Schwefel",
+      "algorithm": "CMA-ES",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Schwefel",
+      "algorithm": "DE",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Schwefel",
+      "algorithm": "GA",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": 120.04962753844939,
+      "nfev_mean": 166310.0,
+      "function": "Schwefel",
+      "algorithm": "GIVP-full",
+      "worst": 239.43293234660996,
+      "mean": 120.04962753844939,
+      "best": 0.6663227302888117,
+      "std": 168.83348878062182
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Schwefel",
+      "algorithm": "PSO",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Schwefel",
+      "algorithm": "SA",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Sphere",
+      "algorithm": "CMA-ES",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Sphere",
+      "algorithm": "DE",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Sphere",
+      "algorithm": "GA",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": 0.00033941105881031346,
+      "nfev_mean": 196179.5,
+      "function": "Sphere",
+      "algorithm": "GIVP-full",
+      "worst": 0.00038514585481526776,
+      "mean": 0.00033941105881031346,
+      "best": 0.00029367626280535917,
+      "std": 6.467876878257321e-5
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Sphere",
+      "algorithm": "PSO",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Sphere",
+      "algorithm": "SA",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    }
+  ],
+  "records": [
+    {
+      "time_s": 11.01800012588501,
+      "fun": 0.00038514585481526776,
+      "nit": 30,
+      "nfev": 202032,
+      "algorithm": "GIVP-full",
+      "function": "Sphere",
+      "seed": 0
+    },
+    {
+      "time_s": 0.807999849319458,
+      "fun": 0.00029367626280535917,
+      "nit": 30,
+      "nfev": 190327,
+      "algorithm": "GIVP-full",
+      "function": "Sphere",
+      "seed": 1
+    },
+    {
+      "time_s": 6.581000089645386,
+      "fun": 0.8995854506062974,
+      "nit": 30,
+      "nfev": 269627,
+      "algorithm": "GIVP-full",
+      "function": "Rosenbrock",
+      "seed": 0
+    },
+    {
+      "time_s": 1.0220000743865967,
+      "fun": 1.2576491952699254,
+      "nit": 30,
+      "nfev": 265694,
+      "algorithm": "GIVP-full",
+      "function": "Rosenbrock",
+      "seed": 1
+    },
+    {
+      "time_s": 5.697999954223633,
+      "fun": 2.2014225781869072,
+      "nit": 30,
+      "nfev": 178105,
+      "algorithm": "GIVP-full",
+      "function": "Rastrigin",
+      "seed": 0
+    },
+    {
+      "time_s": 0.7639999389648438,
+      "fun": 2.2411400131319397,
+      "nit": 30,
+      "nfev": 169763,
+      "algorithm": "GIVP-full",
+      "function": "Rastrigin",
+      "seed": 1
+    },
+    {
+      "time_s": 5.627999782562256,
+      "fun": 0.14806224820633718,
+      "nit": 30,
+      "nfev": 203059,
+      "algorithm": "GIVP-full",
+      "function": "Ackley",
+      "seed": 0
+    },
+    {
+      "time_s": 0.7649998664855957,
+      "fun": 0.11850784812567072,
+      "nit": 30,
+      "nfev": 190380,
+      "algorithm": "GIVP-full",
+      "function": "Ackley",
+      "seed": 1
+    },
+    {
+      "time_s": 6.128000020980835,
+      "fun": 0.2171180278017376,
+      "nit": 30,
+      "nfev": 203959,
+      "algorithm": "GIVP-full",
+      "function": "Griewank",
+      "seed": 0
+    },
+    {
+      "time_s": 0.809999942779541,
+      "fun": 0.17251226790296326,
+      "nit": 30,
+      "nfev": 204868,
+      "algorithm": "GIVP-full",
+      "function": "Griewank",
+      "seed": 1
+    },
+    {
+      "time_s": 5.5960001945495605,
+      "fun": 0.6663227302888117,
+      "nit": 30,
+      "nfev": 168457,
+      "algorithm": "GIVP-full",
+      "function": "Schwefel",
+      "seed": 0
+    },
+    {
+      "time_s": 0.6500000953674316,
+      "fun": 239.43293234660996,
+      "nit": 30,
+      "nfev": 164163,
+      "algorithm": "GIVP-full",
+      "function": "Schwefel",
+      "seed": 1
+    },
+    {
+      "time_s": 0.19499993324279785,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "DE",
+      "function": "Sphere",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "DE",
+      "function": "Sphere",
+      "seed": 1
+    },
+    {
+      "time_s": 0.06599998474121094,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "DE",
+      "function": "Rosenbrock",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "DE",
+      "function": "Rosenbrock",
+      "seed": 1
+    },
+    {
+      "time_s": 0.06800007820129395,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "DE",
+      "function": "Rastrigin",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "DE",
+      "function": "Rastrigin",
+      "seed": 1
+    },
+    {
+      "time_s": 0.06000018119812012,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "DE",
+      "function": "Ackley",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "DE",
+      "function": "Ackley",
+      "seed": 1
+    },
+    {
+      "time_s": 0.059999942779541016,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "DE",
+      "function": "Griewank",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "DE",
+      "function": "Griewank",
+      "seed": 1
+    },
+    {
+      "time_s": 0.06800007820129395,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "DE",
+      "function": "Schwefel",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "DE",
+      "function": "Schwefel",
+      "seed": 1
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "PSO",
+      "function": "Sphere",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "PSO",
+      "function": "Sphere",
+      "seed": 1
+    },
+    {
+      "time_s": 0.0009999275207519531,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "PSO",
+      "function": "Rosenbrock",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "PSO",
+      "function": "Rosenbrock",
+      "seed": 1
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "PSO",
+      "function": "Rastrigin",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "PSO",
+      "function": "Rastrigin",
+      "seed": 1
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "PSO",
+      "function": "Ackley",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "PSO",
+      "function": "Ackley",
+      "seed": 1
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "PSO",
+      "function": "Griewank",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "PSO",
+      "function": "Griewank",
+      "seed": 1
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "PSO",
+      "function": "Schwefel",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0009999275207519531,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "PSO",
+      "function": "Schwefel",
+      "seed": 1
+    },
+    {
+      "time_s": 0.06200003623962402,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "GA",
+      "function": "Sphere",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "GA",
+      "function": "Sphere",
+      "seed": 1
+    },
+    {
+      "time_s": 0.03699994087219238,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "GA",
+      "function": "Rosenbrock",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "GA",
+      "function": "Rosenbrock",
+      "seed": 1
+    },
+    {
+      "time_s": 0.04200005531311035,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "GA",
+      "function": "Rastrigin",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "GA",
+      "function": "Rastrigin",
+      "seed": 1
+    },
+    {
+      "time_s": 0.042999982833862305,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "GA",
+      "function": "Ackley",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "GA",
+      "function": "Ackley",
+      "seed": 1
+    },
+    {
+      "time_s": 0.039999961853027344,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "GA",
+      "function": "Griewank",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "GA",
+      "function": "Griewank",
+      "seed": 1
+    },
+    {
+      "time_s": 0.04500007629394531,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "GA",
+      "function": "Schwefel",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0009999275207519531,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "GA",
+      "function": "Schwefel",
+      "seed": 1
+    },
+    {
+      "time_s": 0.4550001621246338,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "CMA-ES",
+      "function": "Sphere",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "CMA-ES",
+      "function": "Sphere",
+      "seed": 1
+    },
+    {
+      "time_s": 0.12999987602233887,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "CMA-ES",
+      "function": "Rosenbrock",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "CMA-ES",
+      "function": "Rosenbrock",
+      "seed": 1
+    },
+    {
+      "time_s": 0.11899995803833008,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "CMA-ES",
+      "function": "Rastrigin",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "CMA-ES",
+      "function": "Rastrigin",
+      "seed": 1
+    },
+    {
+      "time_s": 0.10400009155273438,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "CMA-ES",
+      "function": "Ackley",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "CMA-ES",
+      "function": "Ackley",
+      "seed": 1
+    },
+    {
+      "time_s": 0.13399982452392578,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "CMA-ES",
+      "function": "Griewank",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0010001659393310547,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "CMA-ES",
+      "function": "Griewank",
+      "seed": 1
+    },
+    {
+      "time_s": 0.11599993705749512,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "CMA-ES",
+      "function": "Schwefel",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0010001659393310547,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "CMA-ES",
+      "function": "Schwefel",
+      "seed": 1
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "SA",
+      "function": "Sphere",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "SA",
+      "function": "Sphere",
+      "seed": 1
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "SA",
+      "function": "Rosenbrock",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "SA",
+      "function": "Rosenbrock",
+      "seed": 1
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "SA",
+      "function": "Rastrigin",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "SA",
+      "function": "Rastrigin",
+      "seed": 1
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "SA",
+      "function": "Ackley",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "SA",
+      "function": "Ackley",
+      "seed": 1
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "SA",
+      "function": "Griewank",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "SA",
+      "function": "Griewank",
+      "seed": 1
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "SA",
+      "function": "Schwefel",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0010001659393310547,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "SA",
+      "function": "Schwefel",
+      "seed": 1
+    }
+  ],
+  "runs": [
+    {
+      "time_s": 11.01800012588501,
+      "fun": 0.00038514585481526776,
+      "nit": 30,
+      "nfev": 202032,
+      "algorithm": "GIVP-full",
+      "function": "Sphere",
+      "seed": 0
+    },
+    {
+      "time_s": 0.807999849319458,
+      "fun": 0.00029367626280535917,
+      "nit": 30,
+      "nfev": 190327,
+      "algorithm": "GIVP-full",
+      "function": "Sphere",
+      "seed": 1
+    },
+    {
+      "time_s": 6.581000089645386,
+      "fun": 0.8995854506062974,
+      "nit": 30,
+      "nfev": 269627,
+      "algorithm": "GIVP-full",
+      "function": "Rosenbrock",
+      "seed": 0
+    },
+    {
+      "time_s": 1.0220000743865967,
+      "fun": 1.2576491952699254,
+      "nit": 30,
+      "nfev": 265694,
+      "algorithm": "GIVP-full",
+      "function": "Rosenbrock",
+      "seed": 1
+    },
+    {
+      "time_s": 5.697999954223633,
+      "fun": 2.2014225781869072,
+      "nit": 30,
+      "nfev": 178105,
+      "algorithm": "GIVP-full",
+      "function": "Rastrigin",
+      "seed": 0
+    },
+    {
+      "time_s": 0.7639999389648438,
+      "fun": 2.2411400131319397,
+      "nit": 30,
+      "nfev": 169763,
+      "algorithm": "GIVP-full",
+      "function": "Rastrigin",
+      "seed": 1
+    },
+    {
+      "time_s": 5.627999782562256,
+      "fun": 0.14806224820633718,
+      "nit": 30,
+      "nfev": 203059,
+      "algorithm": "GIVP-full",
+      "function": "Ackley",
+      "seed": 0
+    },
+    {
+      "time_s": 0.7649998664855957,
+      "fun": 0.11850784812567072,
+      "nit": 30,
+      "nfev": 190380,
+      "algorithm": "GIVP-full",
+      "function": "Ackley",
+      "seed": 1
+    },
+    {
+      "time_s": 6.128000020980835,
+      "fun": 0.2171180278017376,
+      "nit": 30,
+      "nfev": 203959,
+      "algorithm": "GIVP-full",
+      "function": "Griewank",
+      "seed": 0
+    },
+    {
+      "time_s": 0.809999942779541,
+      "fun": 0.17251226790296326,
+      "nit": 30,
+      "nfev": 204868,
+      "algorithm": "GIVP-full",
+      "function": "Griewank",
+      "seed": 1
+    },
+    {
+      "time_s": 5.5960001945495605,
+      "fun": 0.6663227302888117,
+      "nit": 30,
+      "nfev": 168457,
+      "algorithm": "GIVP-full",
+      "function": "Schwefel",
+      "seed": 0
+    },
+    {
+      "time_s": 0.6500000953674316,
+      "fun": 239.43293234660996,
+      "nit": 30,
+      "nfev": 164163,
+      "algorithm": "GIVP-full",
+      "function": "Schwefel",
+      "seed": 1
+    },
+    {
+      "time_s": 0.19499993324279785,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "DE",
+      "function": "Sphere",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "DE",
+      "function": "Sphere",
+      "seed": 1
+    },
+    {
+      "time_s": 0.06599998474121094,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "DE",
+      "function": "Rosenbrock",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "DE",
+      "function": "Rosenbrock",
+      "seed": 1
+    },
+    {
+      "time_s": 0.06800007820129395,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "DE",
+      "function": "Rastrigin",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "DE",
+      "function": "Rastrigin",
+      "seed": 1
+    },
+    {
+      "time_s": 0.06000018119812012,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "DE",
+      "function": "Ackley",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "DE",
+      "function": "Ackley",
+      "seed": 1
+    },
+    {
+      "time_s": 0.059999942779541016,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "DE",
+      "function": "Griewank",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "DE",
+      "function": "Griewank",
+      "seed": 1
+    },
+    {
+      "time_s": 0.06800007820129395,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "DE",
+      "function": "Schwefel",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "DE",
+      "function": "Schwefel",
+      "seed": 1
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "PSO",
+      "function": "Sphere",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "PSO",
+      "function": "Sphere",
+      "seed": 1
+    },
+    {
+      "time_s": 0.0009999275207519531,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "PSO",
+      "function": "Rosenbrock",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "PSO",
+      "function": "Rosenbrock",
+      "seed": 1
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "PSO",
+      "function": "Rastrigin",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "PSO",
+      "function": "Rastrigin",
+      "seed": 1
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "PSO",
+      "function": "Ackley",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "PSO",
+      "function": "Ackley",
+      "seed": 1
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "PSO",
+      "function": "Griewank",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "PSO",
+      "function": "Griewank",
+      "seed": 1
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "PSO",
+      "function": "Schwefel",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0009999275207519531,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "PSO",
+      "function": "Schwefel",
+      "seed": 1
+    },
+    {
+      "time_s": 0.06200003623962402,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "GA",
+      "function": "Sphere",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "GA",
+      "function": "Sphere",
+      "seed": 1
+    },
+    {
+      "time_s": 0.03699994087219238,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "GA",
+      "function": "Rosenbrock",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "GA",
+      "function": "Rosenbrock",
+      "seed": 1
+    },
+    {
+      "time_s": 0.04200005531311035,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "GA",
+      "function": "Rastrigin",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "GA",
+      "function": "Rastrigin",
+      "seed": 1
+    },
+    {
+      "time_s": 0.042999982833862305,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "GA",
+      "function": "Ackley",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "GA",
+      "function": "Ackley",
+      "seed": 1
+    },
+    {
+      "time_s": 0.039999961853027344,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "GA",
+      "function": "Griewank",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "GA",
+      "function": "Griewank",
+      "seed": 1
+    },
+    {
+      "time_s": 0.04500007629394531,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "GA",
+      "function": "Schwefel",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0009999275207519531,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "GA",
+      "function": "Schwefel",
+      "seed": 1
+    },
+    {
+      "time_s": 0.4550001621246338,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "CMA-ES",
+      "function": "Sphere",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "CMA-ES",
+      "function": "Sphere",
+      "seed": 1
+    },
+    {
+      "time_s": 0.12999987602233887,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "CMA-ES",
+      "function": "Rosenbrock",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "CMA-ES",
+      "function": "Rosenbrock",
+      "seed": 1
+    },
+    {
+      "time_s": 0.11899995803833008,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "CMA-ES",
+      "function": "Rastrigin",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "CMA-ES",
+      "function": "Rastrigin",
+      "seed": 1
+    },
+    {
+      "time_s": 0.10400009155273438,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "CMA-ES",
+      "function": "Ackley",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "CMA-ES",
+      "function": "Ackley",
+      "seed": 1
+    },
+    {
+      "time_s": 0.13399982452392578,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "CMA-ES",
+      "function": "Griewank",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0010001659393310547,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "CMA-ES",
+      "function": "Griewank",
+      "seed": 1
+    },
+    {
+      "time_s": 0.11599993705749512,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "CMA-ES",
+      "function": "Schwefel",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0010001659393310547,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "CMA-ES",
+      "function": "Schwefel",
+      "seed": 1
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "SA",
+      "function": "Sphere",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "SA",
+      "function": "Sphere",
+      "seed": 1
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "SA",
+      "function": "Rosenbrock",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "SA",
+      "function": "Rosenbrock",
+      "seed": 1
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "SA",
+      "function": "Rastrigin",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "SA",
+      "function": "Rastrigin",
+      "seed": 1
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "SA",
+      "function": "Ackley",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "SA",
+      "function": "Ackley",
+      "seed": 1
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "SA",
+      "function": "Griewank",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "SA",
+      "function": "Griewank",
+      "seed": 1
+    },
+    {
+      "time_s": 0.0,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "SA",
+      "function": "Schwefel",
+      "seed": 0
+    },
+    {
+      "time_s": 0.0010001659393310547,
+      "fun": null,
+      "nit": 0,
+      "nfev": 0,
+      "algorithm": "SA",
+      "function": "Schwefel",
+      "seed": 1
+    }
+  ],
+  "metadata": {
+    "n_runs": 2,
+    "algorithms": [
+      "GIVP-full",
+      "DE",
+      "PSO",
+      "GA",
+      "CMA-ES",
+      "SA"
+    ],
+    "julia_version": "1.12.6",
+    "algo_descriptions": {
+      "CMA-ES": "Covariance Matrix Adaptation Evolution Strategy — Evolutionary.jl (Hansen & Ostermeier 2001)",
+      "GIVP-full": "GRASP-ILS-VND-PR — full hybrid pipeline (this work)",
+      "DE": "Differential Evolution — Evolutionary.jl (Storn & Price 1997)",
+      "PSO": "Particle Swarm Optimization — Optim.jl (Kennedy & Eberhart 1995)",
+      "GA": "Genetic Algorithm — Evolutionary.jl (Holland 1975)",
+      "SA": "Simulated Annealing — Optim.jl (Kirkpatrick et al. 1983)"
+    },
+    "problem_references": {
+      "Griewank": "Griewank (1981)",
+      "Ackley": "Ackley (1987)",
+      "Sphere": "De Jong (1975)",
+      "Rosenbrock": "Rosenbrock (1960)",
+      "Schwefel": "Schwefel (1981)",
+      "Rastrigin": "Rastrigin (1974)"
+    },
+    "dims": 10,
+    "schema_version": "benchmark-schema-v1",
+    "functions": [
+      "Sphere",
+      "Rosenbrock",
+      "Rastrigin",
+      "Ackley",
+      "Griewank",
+      "Schwefel"
+    ],
+    "givp_version": "1.0.0",
+    "generated_at": "2026-05-18T10:43:09.634"
+  },
+  "stats": [
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Ackley",
+      "algorithm": "CMA-ES",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Ackley",
+      "algorithm": "DE",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Ackley",
+      "algorithm": "GA",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": 0.13328504816600395,
+      "nfev_mean": 196719.5,
+      "function": "Ackley",
+      "algorithm": "GIVP-full",
+      "worst": 0.14806224820633718,
+      "mean": 0.13328504816600395,
+      "best": 0.11850784812567072,
+      "std": 0.020898116710939496
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Ackley",
+      "algorithm": "PSO",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Ackley",
+      "algorithm": "SA",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Griewank",
+      "algorithm": "CMA-ES",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Griewank",
+      "algorithm": "DE",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Griewank",
+      "algorithm": "GA",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": 0.19481514785235043,
+      "nfev_mean": 204413.5,
+      "function": "Griewank",
+      "algorithm": "GIVP-full",
+      "worst": 0.2171180278017376,
+      "mean": 0.19481514785235043,
+      "best": 0.17251226790296326,
+      "std": 0.03154103530440232
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Griewank",
+      "algorithm": "PSO",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Griewank",
+      "algorithm": "SA",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Rastrigin",
+      "algorithm": "CMA-ES",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Rastrigin",
+      "algorithm": "DE",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Rastrigin",
+      "algorithm": "GA",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": 2.2212812956594234,
+      "nfev_mean": 173934.0,
+      "function": "Rastrigin",
+      "algorithm": "GIVP-full",
+      "worst": 2.2411400131319397,
+      "mean": 2.2212812956594234,
+      "best": 2.2014225781869072,
+      "std": 0.028084467580967987
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Rastrigin",
+      "algorithm": "PSO",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Rastrigin",
+      "algorithm": "SA",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Rosenbrock",
+      "algorithm": "CMA-ES",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Rosenbrock",
+      "algorithm": "DE",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Rosenbrock",
+      "algorithm": "GA",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": 1.0786173229381113,
+      "nfev_mean": 267660.5,
+      "function": "Rosenbrock",
+      "algorithm": "GIVP-full",
+      "worst": 1.2576491952699254,
+      "mean": 1.0786173229381113,
+      "best": 0.8995854506062974,
+      "std": 0.2531893019486998
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Rosenbrock",
+      "algorithm": "PSO",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Rosenbrock",
+      "algorithm": "SA",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Schwefel",
+      "algorithm": "CMA-ES",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Schwefel",
+      "algorithm": "DE",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Schwefel",
+      "algorithm": "GA",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": 120.04962753844939,
+      "nfev_mean": 166310.0,
+      "function": "Schwefel",
+      "algorithm": "GIVP-full",
+      "worst": 239.43293234660996,
+      "mean": 120.04962753844939,
+      "best": 0.6663227302888117,
+      "std": 168.83348878062182
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Schwefel",
+      "algorithm": "PSO",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Schwefel",
+      "algorithm": "SA",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Sphere",
+      "algorithm": "CMA-ES",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Sphere",
+      "algorithm": "DE",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Sphere",
+      "algorithm": "GA",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": 0.00033941105881031346,
+      "nfev_mean": 196179.5,
+      "function": "Sphere",
+      "algorithm": "GIVP-full",
+      "worst": 0.00038514585481526776,
+      "mean": 0.00033941105881031346,
+      "best": 0.00029367626280535917,
+      "std": 6.467876878257321e-5
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Sphere",
+      "algorithm": "PSO",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    },
+    {
+      "n_runs": 2,
+      "median": null,
+      "nfev_mean": 0.0,
+      "function": "Sphere",
+      "algorithm": "SA",
+      "worst": null,
+      "mean": null,
+      "best": null,
+      "std": null
+    }
+  ]
+}

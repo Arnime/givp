@@ -171,15 +171,15 @@ two-stage pipeline in `python/benchmarks/`:
 
 ```bash
 cd python/
-pip install -e .[dev]
+poetry install --with dev,benchmarks
 
 # 30 independent runs × 10-D on all 6 benchmark functions (default)
-python benchmarks/run_literature_comparison.py \
+poetry run python benchmarks/run_literature_comparison.py \
     --n-runs 30 --output results.json
 
-# Include scipy baselines (Differential Evolution + Dual Annealing)
-python benchmarks/run_literature_comparison.py \
-    --algorithms GIVP-full GRASP-only DE SA \
+# Include external baselines
+poetry run python benchmarks/run_literature_comparison.py \
+    --algorithms GIVP-full DE PSO GA CMA-ES SA \
     --dims 30 --n-runs 30 --output results_30d.json
 ```
 
@@ -191,16 +191,48 @@ run via `np.random.default_rng(seed_start + k)`.
 
 ```bash
 # Console + Markdown tables + boxplot PNG
-python benchmarks/generate_report.py --input results.json
+poetry run python benchmarks/generate_report.py --input results.json
 
 # LaTeX tables only (booktabs, ready for SBPO / BRACIS)
-python benchmarks/generate_report.py \
+poetry run python benchmarks/generate_report.py \
     --input results.json --format latex --no-plots
 
 # Compare all algorithms against Differential Evolution as the reference
-python benchmarks/generate_report.py \
+poetry run python benchmarks/generate_report.py \
     --input results.json --reference DE --output-dir paper/tables/
 ```
+
+### Latest quick comparative snapshot (2026-05-18)
+
+Command used:
+
+```bash
+cd python/
+poetry run python benchmarks/run_literature_comparison.py \
+    --dims 10 --n-runs 2 --max-iter 20 --time-limit 5 \
+    --algorithms GIVP-full DE PSO GA CMA-ES SA \
+    --output benchmarks/reference_results_quick.json
+poetry run python benchmarks/generate_report.py \
+    --input benchmarks/reference_results_quick.json --format both --output-dir benchmarks/
+```
+
+Artifacts:
+
+- `python/benchmarks/reference_results_quick.json`
+- `python/benchmarks/reference_results_quick_report.md`
+- `python/benchmarks/reference_results_quick_report.tex`
+- `python/benchmarks/reference_results_quick_boxplot.png`
+
+Mean objective value (lower is better):
+
+| Function | GIVP-full | DE | PSO | GA | CMA-ES | SA |
+|---|---:|---:|---:|---:|---:|---:|
+| Sphere | 3.9947e-04 | 2.2680e-16 | 2.1758e-01 | 3.3073e-01 | 3.1402e+00 | 1.1483e-16 |
+| Rosenbrock | 3.8670e+00 | 8.8226e-10 | 9.7634e+01 | 2.7370e+02 | 1.2180e+04 | 1.8086e-11 |
+| Rastrigin | 4.0987e+00 | 1.9402e+01 | 3.1272e+01 | 1.0634e+01 | 1.1306e+02 | 7.1054e-15 |
+| Ackley | 2.5727e-01 | 4.8165e+00 | 5.1259e+00 | 4.7871e+00 | 1.4550e+01 | 1.5884e-08 |
+| Griewank | 3.0773e-01 | 5.1732e-02 | 1.7419e+00 | 2.4009e+00 | 2.0254e+01 | 1.1063e-02 |
+| Schwefel | 1.0218e+03 | 1.1450e+03 | 1.9300e+03 | 2.7745e+02 | 2.2649e+03 | 1.2728e-04 |
 
 `generate_report.py` applies the **Wilcoxon signed-rank test** (α = 0.05) on
 matched pairs from the 30 seeds and reports rank-biserial correlation as effect

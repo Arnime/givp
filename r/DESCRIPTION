@@ -17,5 +17,9 @@ Suggests:
     testthat (>= 3.0.0),
     covr,
     lintr,
-    parallel
+    parallel,
+    DEoptim,
+    pso,
+    GA,
+    cmaes
 Config/testthat/edition: 3
