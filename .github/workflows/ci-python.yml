@@ -216,7 +216,7 @@ jobs:
 
       - name: Run literature comparison smoke test
         run: |
-          poetry run python python/benchmarks/run_literature_comparison.py \
+          python python/benchmarks/run_literature_comparison.py \
             --n-runs 2 \
             --dims 3 \
             --max-iter 10 \
@@ -226,7 +226,7 @@ jobs:
 
       - name: Generate literature comparison smoke report
         run: |
-          poetry run python python/benchmarks/generate_report.py \
+          python python/benchmarks/generate_report.py \
             --input python/benchmarks/ci_smoke_results.json \
             --format markdown \
             --no-plots \

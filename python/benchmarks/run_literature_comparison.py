@@ -62,20 +62,20 @@ except ImportError:
     _SCIPY_OPTIMIZE_OK = False
 
 try:
-    _PymooCMAES = importlib.import_module("pymoo.algorithms.soo.nonconvex.cmaes").CMAES
-    _PymooGA = importlib.import_module("pymoo.algorithms.soo.nonconvex.ga").GA
-    _PymooPSO = importlib.import_module("pymoo.algorithms.soo.nonconvex.pso").PSO
-    _pymoo_minimize = importlib.import_module("pymoo.optimize").minimize
-    _FunctionalProblem = importlib.import_module(
+    _PYMOO_CMAES = importlib.import_module("pymoo.algorithms.soo.nonconvex.cmaes").CMAES
+    _PYMOO_GA = importlib.import_module("pymoo.algorithms.soo.nonconvex.ga").GA
+    _PYMOO_PSO = importlib.import_module("pymoo.algorithms.soo.nonconvex.pso").PSO
+    _PYMOO_MINIMIZE = importlib.import_module("pymoo.optimize").minimize
+    _PYMOO_FUNCTIONAL_PROBLEM = importlib.import_module(
         "pymoo.problems.functional"
     ).FunctionalProblem
     _PYMOO_OK = True
 except ImportError:
-    _PymooCMAES = None  # type: ignore[assignment]
-    _PymooGA = None  # type: ignore[assignment]
-    _PymooPSO = None  # type: ignore[assignment]
-    _pymoo_minimize = None  # type: ignore[assignment]
-    _FunctionalProblem = None  # type: ignore[assignment]
+    _PYMOO_CMAES = None  # type: ignore[assignment]
+    _PYMOO_GA = None  # type: ignore[assignment]
+    _PYMOO_PSO = None  # type: ignore[assignment]
+    _PYMOO_MINIMIZE = None  # type: ignore[assignment]
+    _PYMOO_FUNCTIONAL_PROBLEM = None  # type: ignore[assignment]
     _PYMOO_OK = False
 
 if TYPE_CHECKING:
@@ -281,7 +281,11 @@ def _pymoo_run(
     max_iter: int,
 ) -> tuple[float, int, int]:
     """Run a pymoo single-objective optimizer and return (fun, nit, nfev)."""
-    if not _PYMOO_OK or _pymoo_minimize is None or _FunctionalProblem is None:
+    if (
+        not _PYMOO_OK
+        or _PYMOO_MINIMIZE is None
+        or _PYMOO_FUNCTIONAL_PROBLEM is None
+    ):
         raise RuntimeError(
             "pymoo is not installed. Install dependencies with Poetry in python/: "
             "poetry add pymoo"
@@ -289,7 +293,7 @@ def _pymoo_run(
 
     xl = np.asarray([lo for lo, _ in bounds], dtype=float)
     xu = np.asarray([hi for _, hi in bounds], dtype=float)
-    problem = _FunctionalProblem(
+    problem = _PYMOO_FUNCTIONAL_PROBLEM(
         n_var=len(bounds),
         objs=lambda x: float(func(np.asarray(x, dtype=float))),
         xl=xl,
@@ -297,16 +301,16 @@ def _pymoo_run(
     )
 
     if algo_name == "PSO":
-        algorithm = _PymooPSO()  # type: ignore[operator]
+        algorithm = _PYMOO_PSO()  # type: ignore[operator]
     elif algo_name == "GA":
-        algorithm = _PymooGA()  # type: ignore[operator]
+        algorithm = _PYMOO_GA()  # type: ignore[operator]
     elif algo_name == "CMA-ES":
         x0 = np.random.default_rng(seed).uniform(xl, xu)
-        algorithm = _PymooCMAES(x0=x0)  # type: ignore[operator]
+        algorithm = _PYMOO_CMAES(x0=x0)  # type: ignore[operator]
     else:  # pragma: no cover
         raise ValueError(f"Unknown pymoo algorithm: {algo_name!r}")
 
-    res = _pymoo_minimize(
+    res = _PYMOO_MINIMIZE(
         problem,
         algorithm,
         ("n_gen", max_iter),
