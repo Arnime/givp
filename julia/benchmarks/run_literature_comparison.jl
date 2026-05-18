@@ -46,9 +46,33 @@ catch
     false
 end
 
+const _OPTIM_AVAILABLE = try
+    @eval using Optim
+    true
+catch
+    false
+end
+
+const _EVOLUTIONARY_AVAILABLE = try
+    @eval using Evolutionary
+    true
+catch
+    false
+end
+
 _BBO_AVAILABLE || @info(
     "BlackBoxOptim.jl not installed — BBO-* algorithms unavailable. " *
     "Install with: julia -e 'using Pkg; Pkg.add(\"BlackBoxOptim\")'"
+)
+
+_OPTIM_AVAILABLE || @info(
+    "Optim.jl not installed — PSO/SA algorithms unavailable. " *
+    "Install with: julia -e 'using Pkg; Pkg.add(\"Optim\")'"
+)
+
+_EVOLUTIONARY_AVAILABLE || @info(
+    "Evolutionary.jl not installed — DE/GA/CMA-ES algorithms unavailable. " *
+    "Install with: julia -e 'using Pkg; Pkg.add(\"Evolutionary\")'"
 )
 
 # ── Benchmark functions ───────────────────────────────────────────────────────
@@ -135,12 +159,19 @@ const FUNCTION_ORDER =
 const ALGO_DESCRIPTIONS = Dict(
     "GIVP-full" => "GRASP-ILS-VND-PR — full hybrid pipeline (this work)",
     "GRASP-only" => "GRASP-only baseline (Feo & Resende 1995)",
+    "DE" => "Differential Evolution — Evolutionary.jl (Storn & Price 1997)",
+    "PSO" => "Particle Swarm Optimization — Optim.jl (Kennedy & Eberhart 1995)",
+    "GA" => "Genetic Algorithm — Evolutionary.jl (Holland 1975)",
+    "CMA-ES" => "Covariance Matrix Adaptation Evolution Strategy — Evolutionary.jl (Hansen & Ostermeier 2001)",
+    "SA" => "Simulated Annealing — Optim.jl (Kirkpatrick et al. 1983)",
     "BBO-DE" => "BlackBoxOptim.jl — Differential Evolution de_rand_1_bin (Price et al. 1997)",
     "BBO-XNES" => "BlackBoxOptim.jl — Exp. Natural Evo. Strategies (Glasmachers et al. 2010)",
 )
 
 const _GIVP_ALGORITHMS = Set(["GIVP-full", "GRASP-only"])
 const _BBO_METHOD_MAP = Dict("BBO-DE" => :de_rand_1_bin, "BBO-XNES" => :xnes)
+const _EVOLUTIONARY_ALGO_MAP = Dict("DE" => :DE, "GA" => :GA, "CMA-ES" => :CMAES)
+const _OPTIM_ALGO_SET = Set(["PSO", "SA"])
 
 # ── Config builders ───────────────────────────────────────────────────────────
 
@@ -260,6 +291,160 @@ function run_single_bbo(
     )
 end
 
+function run_single_optim(
+    algo::String,
+    func::Function,
+    bounds::Vector{Tuple{Float64, Float64}},
+    seed::Int,
+    max_iter::Int,
+    _time_limit::Float64;
+    verbose::Bool = false,
+)::Dict{String, Any}
+    _OPTIM_AVAILABLE || error(
+        "Optim.jl is not installed. Install with: julia -e 'using Pkg; Pkg.add(\"Optim\")'",
+    )
+    lower = [b[1] for b in bounds]
+    upper = [b[2] for b in bounds]
+    rng = MersenneTwister(seed)
+    x0 = [rand(rng) * (u - l) + l for (l, u) in zip(lower, upper)]
+
+    nfev = Ref(0)
+    wrapped = x -> begin
+        nfev[] += 1
+        vecx = clamp.(collect(Float64, x), lower, upper)
+        func(vecx)
+    end
+
+    t0 = time()
+    best = try
+        if algo == "PSO"
+            Optim.optimize(
+                wrapped,
+                x0,
+                Optim.ParticleSwarm(
+                    lower = lower,
+                    upper = upper,
+                    n_particles = max(20, 5 * length(lower)),
+                ),
+                Optim.Options(iterations = max_iter, show_trace = false),
+            )
+        else
+            Optim.optimize(
+                wrapped,
+                x0,
+                Optim.SimulatedAnnealing(),
+                Optim.Options(iterations = max_iter, show_trace = false),
+            )
+        end
+    catch e
+        elapsed = time() - t0
+        @warn "Optim $(algo) run failed (seed=$seed): $e"
+        return Dict{String, Any}(
+            "seed" => seed,
+            "fun" => Inf,
+            "nit" => 0,
+            "nfev" => nfev[],
+            "time_s" => elapsed,
+        )
+    end
+    elapsed = time() - t0
+
+    fun = try
+        Optim.minimum(best)
+    catch
+        Inf
+    end
+
+    verbose && @info @sprintf(
+        "  %-10s seed=%2d → fun=%12.6f  nfev=%6d  t=%.2fs",
+        algo,
+        seed,
+        fun,
+        nfev[],
+        elapsed,
+    )
+
+    return Dict{String, Any}(
+        "seed" => seed,
+        "fun" => fun,
+        "nit" => max_iter,
+        "nfev" => nfev[],
+        "time_s" => elapsed,
+    )
+end
+
+function run_single_evolutionary(
+    algo::String,
+    func::Function,
+    bounds::Vector{Tuple{Float64, Float64}},
+    seed::Int,
+    max_iter::Int,
+    _time_limit::Float64;
+    verbose::Bool = false,
+)::Dict{String, Any}
+    _EVOLUTIONARY_AVAILABLE || error(
+        "Evolutionary.jl is not installed. Install with: julia -e 'using Pkg; Pkg.add(\"Evolutionary\")'",
+    )
+
+    lower = [b[1] for b in bounds]
+    upper = [b[2] for b in bounds]
+    nfev = Ref(0)
+    wrapped = x -> begin
+        nfev[] += 1
+        vecx = clamp.(collect(Float64, x), lower, upper)
+        func(vecx)
+    end
+
+    method_sym = _EVOLUTIONARY_ALGO_MAP[algo]
+    method_ctor = getproperty(Evolutionary, method_sym)
+    method = method_ctor()
+    options = Evolutionary.Options(
+        iterations = max_iter,
+        show_trace = false,
+        rng = MersenneTwister(seed),
+    )
+    box = Evolutionary.BoxConstraints(lower, upper)
+
+    t0 = time()
+    result = try
+        Evolutionary.optimize(wrapped, box, method, options)
+    catch e
+        elapsed = time() - t0
+        @warn "Evolutionary $(algo) run failed (seed=$seed): $e"
+        return Dict{String, Any}(
+            "seed" => seed,
+            "fun" => Inf,
+            "nit" => 0,
+            "nfev" => nfev[],
+            "time_s" => elapsed,
+        )
+    end
+    elapsed = time() - t0
+
+    fun = try
+        Evolutionary.minimum(result)
+    catch
+        Inf
+    end
+
+    verbose && @info @sprintf(
+        "  %-10s seed=%2d → fun=%12.6f  nfev=%6d  t=%.2fs",
+        algo,
+        seed,
+        fun,
+        nfev[],
+        elapsed,
+    )
+
+    return Dict{String, Any}(
+        "seed" => seed,
+        "fun" => fun,
+        "nit" => max_iter,
+        "nfev" => nfev[],
+        "time_s" => elapsed,
+    )
+end
+
 # ── Single run ────────────────────────────────────────────────────────────────
 
 function run_single(
@@ -276,6 +461,19 @@ function run_single(
     if algo ∈ keys(_BBO_METHOD_MAP)
         method = _BBO_METHOD_MAP[algo]
         rec = run_single_bbo(method, func, bounds, seed, max_iter, time_limit; verbose)
+        rec["algorithm"] = algo
+        return rec
+    end
+
+    if algo ∈ _OPTIM_ALGO_SET
+        rec = run_single_optim(algo, func, bounds, seed, max_iter, time_limit; verbose)
+        rec["algorithm"] = algo
+        return rec
+    end
+
+    if algo ∈ keys(_EVOLUTIONARY_ALGO_MAP)
+        rec =
+            run_single_evolutionary(algo, func, bounds, seed, max_iter, time_limit; verbose)
         rec["algorithm"] = algo
         return rec
     end
@@ -360,6 +558,21 @@ function save_results(
     n_runs::Int,
     dims::Int,
 )
+    records_by_function = Dict{String, Any}(
+        fname => [
+            Dict{String, Any}(
+                "algorithm" => r["algorithm"],
+                "seed" => r["seed"],
+                "fun" => r["fun"],
+                "nit" => r["nit"],
+                "nfev" => r["nfev"],
+                "time_s" => r["time_s"],
+                "trace" => get(r, "convergence_trace", nothing),
+            ) for r in records if r["function"] == fname
+        ] for fname in functions
+    )
+
+    summary_rows = build_summary(records)
     data = Dict{String, Any}(
         "metadata" => Dict{String, Any}(
             "schema_version" => "benchmark-schema-v1",
@@ -377,9 +590,9 @@ function save_results(
                 Dict(algo => ALGO_DESCRIPTIONS[algo] for algo in algorithms),
         ),
         "runs" => records,
-        "summary" => build_summary(records),
-        "stats" => build_summary(records),
-        "records" => records,
+        "summary" => summary_rows,
+        "stats" => summary_rows,
+        "records" => records_by_function,
     )
     open(output, "w") do io
         JSON.print(io, data, 2)
@@ -389,7 +602,7 @@ end
 # ── Experiment ────────────────────────────────────────────────────────────────
 
 function run_experiment(;
-    algorithms::Vector{String} = ["GIVP-full", "GRASP-only"],
+    algorithms::Vector{String} = ["GIVP-full", "DE", "PSO", "GA", "CMA-ES", "SA"],
     functions::Vector{String} = FUNCTION_ORDER,
     n_runs::Int = 30,
     dims::Int = 10,
@@ -405,7 +618,22 @@ function run_experiment(;
     existing_records = Dict{String, Any}[]
     if resume && isfile(output)
         data = JSON.parsefile(output)
-        existing_records = get(Vector{Dict{String, Any}}, data, "records")
+        if haskey(data, "runs")
+            existing_records =
+                [Dict{String, Any}(pairs(r)) for r in get(data, "runs", Any[])]
+        elseif haskey(data, "records")
+            rec_map = get(data, "records", Dict{String, Any}())
+            existing_records = Dict{String, Any}[]
+            for (fname, recs_any) in rec_map
+                for rec_any in recs_any
+                    r = Dict{String, Any}(pairs(rec_any))
+                    r["function"] = fname
+                    push!(existing_records, r)
+                end
+            end
+        else
+            existing_records = Dict{String, Any}[]
+        end
         for r in existing_records
             push!(completed, (r["algorithm"], r["function"], r["seed"]))
         end
@@ -481,7 +709,7 @@ function parse_cli_args()
         "max-iter" => 100,
         "time-limit" => 0.0,
         "output" => "results_julia.json",
-        "algorithms" => ["GIVP-full", "GRASP-only"],
+        "algorithms" => ["GIVP-full", "DE", "PSO", "GA", "CMA-ES", "SA"],
         "functions" => copy(FUNCTION_ORDER),
         "resume" => false,
         "verbose" => false,
@@ -492,7 +720,8 @@ function parse_cli_args()
     while i <= length(args)
         arg = args[i]
         if arg in ("--help", "-h")
-            println("""
+            println(
+                """
 Usage: julia --project=julia julia/benchmarks/run_literature_comparison.jl [OPTIONS]
 
 Options:
@@ -503,16 +732,22 @@ Options:
   --algorithms LIST   Space-separated list; available:
                         GIVP-full   — full GRASP-ILS-VND-PR pipeline (this work)
                         GRASP-only  — GRASP construction baseline
+                                                DE          — Evolutionary.jl Differential Evolution
+                                                PSO         — Optim.jl Particle Swarm
+                                                GA          — Evolutionary.jl Genetic Algorithm
+                                                CMA-ES      — Evolutionary.jl CMA-ES
+                                                SA          — Optim.jl Simulated Annealing
                         BBO-DE      — BlackBoxOptim.jl Differential Evolution
                         BBO-XNES    — BlackBoxOptim.jl Natural Evo. Strategies
-                      (default: GIVP-full GRASP-only)
+                                            (default: GIVP-full DE PSO GA CMA-ES SA)
   --functions LIST    Space-separated subset of: $(join(FUNCTION_ORDER, " "))
   --output PATH       Output JSON file (default: results_julia.json)
   --resume            Resume from existing output, skipping completed runs
   --traces            Record per-iteration convergence trace (GIVP only)
   --verbose           Show per-run progress
   --help              Show this message
-""")
+""",
+            )
             exit(0)
         elseif arg == "--n-runs" && i < length(args)
             params["n-runs"] = parse(Int, args[i + 1])

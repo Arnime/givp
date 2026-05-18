@@ -116,42 +116,42 @@ This limitation is inherent to R's `parallel` package on Windows and cannot
 be worked around without additional infrastructure (e.g. `doParallel` +
 `foreach`). A future version may add Windows-compatible parallelism.
 
-## Literature Comparison Results (Notebook)
+## Literature Comparison Results
 
-R benchmark results are currently tracked from
-`Notebooks/R/benchmark_literature_comparison_r.ipynb` in two execution levels.
+The R port now supports CLI literature comparison with external baselines
+(DE, PSO, GA, CMA-ES, SA) in `r/benchmarks/run_literature_comparison.R`.
 
-### Medium run
+### Latest quick comparative snapshot (2026-05-18)
 
-- Metadata: `n_runs=5`, `n_dims=10`
-- Artifact: `Notebooks/R/benchmark_literature_comparison_r_results.json`
+Command used:
 
-| Function | GIVP-full mean +- std | GRASP-only mean +- std | GIVP-full mean time (s) | GRASP-only mean time (s) |
-|---|---|---|---|---|
-| Sphere | 4.03e-02 +- 1.78e-02 | 2.691e+01 +- 7.1326e+00 | 8.8650 | 0.4568 |
-| Rosenbrock | 3.0751e+01 +- 1.2204e+01 | 5.3734e+04 +- 2.2511e+04 | 13.3699 | 0.4136 |
-| Rastrigin | 4.8871e+01 +- 6.7673e+00 | 8.5181e+01 +- 1.3954e+01 | 6.6203 | 0.4065 |
-| Ackley | 3.7770e+00 +- 4.828e-01 | 1.9383e+01 +- 3.657e-01 | 8.9671 | 0.3784 |
+```bash
+Rscript r/benchmarks/run_literature_comparison.R \
+  --n-runs 2 --dims 10 --max-iter 20 \
+  --algorithms GIVP-full DE PSO GA CMA-ES SA \
+  --output r/benchmarks/reference_results_quick.json
+python python/benchmarks/generate_report.py \
+  --input r/benchmarks/reference_results_quick.json \
+  --format both --output-dir r/benchmarks
+```
 
-### Robust run (checkpoint)
+Artifacts:
 
-- Metadata: `n_runs=10`, `n_dims=10`, `max_iterations=80`,
-  `vnd_iterations=150`, `ils_iterations=8`
-- Artifact: `Notebooks/R/benchmark_literature_comparison_r_partial.csv`
+- `r/benchmarks/reference_results_quick.json`
+- `r/benchmarks/reference_results_quick_report.md`
+- `r/benchmarks/reference_results_quick_report.tex`
+- `r/benchmarks/reference_results_quick_boxplot.png`
 
-| Function | GIVP-full mean +- std | GRASP-only mean +- std | GIVP-full mean time (s) | GRASP-only mean time (s) |
-|---|---|---|---|---|
-| Sphere | 2.1223e-02 +- 6.985e-03 | 2.3234e+01 +- 4.7093e+00 | 226.7211 | 1.0279 |
-| Rosenbrock | 1.6037e+01 +- 3.6345e+00 | 3.1382e+04 +- 1.6223e+04 | 223.8017 | 0.9973 |
-| Rastrigin | 3.6156e+01 +- 4.5694e+00 | 8.3601e+01 +- 1.0687e+01 | 162.9951 | 1.0632 |
-| Ackley | 2.8140e+00 +- 3.4762e-01 | 1.8177e+01 +- 9.6254e-01 | 199.8611 | 1.3010 |
+Mean objective value (lower is better):
 
-Checkpoint total runtime (observed):
+| Function | GIVP-full | DE | PSO | GA | CMA-ES | SA |
+|---|---:|---:|---:|---:|---:|---:|
+| Sphere | 3.2618e-02 | 2.8878e+00 | 1.9852e+00 | 2.2568e-01 | 3.9992e+00 | 3.4896e+01 |
+| Rosenbrock | 1.8084e+01 | 2.6546e+03 | 8.4086e+02 | 3.1931e+02 | 2.3069e+04 | 6.9496e+05 |
+| Rastrigin | 4.1953e+01 | 4.5983e+01 | 5.5135e+01 | 2.0323e+01 | 8.8092e+01 | 1.3487e+02 |
+| Ackley | 3.1125e+00 | 1.2169e+01 | 1.1900e+01 | 3.8547e+00 | 2.0482e+01 | 2.0804e+01 |
+| Griewank | 1.0497e+00 | 1.0912e+01 | 7.8113e+00 | 2.4559e+00 | 2.9779e+02 | 3.2607e+02 |
+| Schwefel | 1.0807e+03 | 1.6935e+03 | 2.3635e+03 | 1.9654e+03 | 2.1905e+03 | 2.7752e+03 |
 
-- GIVP-full: `8123.83 s` (~2.26 h)
-- GRASP-only: `43.90 s`
-- Total: `8167.73 s` (~2.27 h)
-
-These runs are suitable for development and release-note documentation.
 For publication-level parity with other ports, prefer the full protocol
-(`n_runs=30`).
+(`n_runs=30`) and fixed execution environments.

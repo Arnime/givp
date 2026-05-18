@@ -196,6 +196,7 @@ jobs:
   benchmark-smoke:
     name: Benchmark smoke tests
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     # Informational job: does not block merges, but surfaces regressions
     continue-on-error: true
     steps:
@@ -209,8 +210,27 @@ jobs:
           pip install --only-binary=:all: --require-hashes -r python/requirements/benchmarks.txt
           bash .github/scripts/install-package.sh
       - name: Benchmark smoke tests
-        run: pytest -m slow python/tests/test_benchmark_scripts.py -v
-          --override-ini="addopts="
+        run: |
+          pytest -m slow python/tests/test_benchmark_scripts.py -v \
+            --override-ini="addopts="
+
+      - name: Run literature comparison smoke test
+        run: |
+          poetry run python python/benchmarks/run_literature_comparison.py \
+            --n-runs 2 \
+            --dims 3 \
+            --max-iter 10 \
+            --time-limit 2 \
+            --algorithms GIVP-full DE PSO GA CMA-ES SA \
+            --output python/benchmarks/ci_smoke_results.json
+
+      - name: Generate literature comparison smoke report
+        run: |
+          poetry run python python/benchmarks/generate_report.py \
+            --input python/benchmarks/ci_smoke_results.json \
+            --format markdown \
+            --no-plots \
+            --output-dir python/benchmarks
 
   algorithm-quality-gate:
     name: Algorithm quality gate (convergence assertions)
