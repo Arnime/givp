@@ -67,9 +67,11 @@ std::vector<AlgoSpec> get_algorithms() {
         {"GIVP-full", "GRASP-ILS-VND-PR -- full hybrid pipeline (this work)"},
         {"GRASP-only", "GRASP-only baseline (Feo & Resende 1995)"},
         {"DE", "Differential Evolution -- native benchmark implementation (Storn & Price 1997)"},
-        {"PSO", "Particle Swarm Optimization -- native benchmark implementation (Kennedy & Eberhart 1995)"},
+        {"PSO", "Particle Swarm Optimization -- native benchmark implementation (Kennedy & "
+                "Eberhart 1995)"},
         {"GA", "Genetic Algorithm -- native benchmark implementation (Holland 1975)"},
-        {"CMA-ES", "CMA-ES style evolution strategy -- native benchmark implementation (Hansen & Ostermeier 2001)"},
+        {"CMA-ES", "CMA-ES style evolution strategy -- native benchmark implementation (Hansen & "
+                   "Ostermeier 2001)"},
         {"SA", "Simulated Annealing -- native benchmark implementation (Kirkpatrick et al. 1983)"},
     };
 }
@@ -284,8 +286,8 @@ TrialResult run_pso(const std::string &algorithm, const BenchFunc &bf, const Bou
     }
 
     const auto t1 = std::chrono::steady_clock::now();
-    return {algorithm, bf.name, seed, gbest_fit, nfev,
-            std::chrono::duration<double>(t1 - t0).count()};
+    return {algorithm, bf.name, seed,
+            gbest_fit, nfev,    std::chrono::duration<double>(t1 - t0).count()};
 }
 
 TrialResult run_ga(const std::string &algorithm, const BenchFunc &bf, const Bounds &bounds,
@@ -358,12 +360,12 @@ TrialResult run_ga(const std::string &algorithm, const BenchFunc &bf, const Boun
     return {algorithm, bf.name, seed, best, nfev, std::chrono::duration<double>(t1 - t0).count()};
 }
 
-TrialResult run_cmaes_style(const std::string &algorithm, const BenchFunc &bf,
-                            const Bounds &bounds, std::uint64_t seed,
-                            std::size_t max_iter) {
+TrialResult run_cmaes_style(const std::string &algorithm, const BenchFunc &bf, const Bounds &bounds,
+                            std::uint64_t seed, std::size_t max_iter) {
     const auto t0 = std::chrono::steady_clock::now();
     const std::size_t dim = bounds.size();
-    const std::size_t lambda = std::max<std::size_t>(6, 4 + static_cast<std::size_t>(3.0 * std::log(static_cast<double>(dim))));
+    const std::size_t lambda = std::max<std::size_t>(
+        6, 4 + static_cast<std::size_t>(3.0 * std::log(static_cast<double>(dim))));
     const std::size_t mu = std::max<std::size_t>(2, lambda / 2);
     std::mt19937_64 rng(seed);
 
@@ -397,7 +399,8 @@ TrialResult run_cmaes_style(const std::string &algorithm, const BenchFunc &bf,
         Vec new_mean(dim, 0.0);
         double wsum = 0.0;
         for (std::size_t r = 0; r < mu; ++r) {
-            const double w = std::log(static_cast<double>(mu) + 0.5) - std::log(static_cast<double>(r + 1));
+            const double w =
+                std::log(static_cast<double>(mu) + 0.5) - std::log(static_cast<double>(r + 1));
             wsum += w;
             for (std::size_t d = 0; d < dim; ++d) {
                 new_mean[d] += w * pop[r].first[d];
@@ -527,8 +530,8 @@ std::vector<SummaryRow> build_summary(const std::vector<TrialResult> &rows,
                 values.size() % 2 == 0 ? (values[mid - 1] + values[mid]) / 2.0 : values[mid];
             const double nfev_mean = std::accumulate(nfevs.begin(), nfevs.end(), 0.0) /
                                      static_cast<double>(nfevs.size());
-            summary.push_back(
-                {bf.name, algorithm, values.size(), mean, std, values.front(), median, values.back(), nfev_mean});
+            summary.push_back({bf.name, algorithm, values.size(), mean, std, values.front(), median,
+                               values.back(), nfev_mean});
         }
     }
     return summary;
@@ -687,13 +690,12 @@ int main(int argc, char **argv) try {
                 if (algorithm == "DE") {
                     trial = run_de(algorithm, bf, bounds, static_cast<std::uint64_t>(s), max_iter);
                 } else if (algorithm == "PSO") {
-                    trial =
-                        run_pso(algorithm, bf, bounds, static_cast<std::uint64_t>(s), max_iter);
+                    trial = run_pso(algorithm, bf, bounds, static_cast<std::uint64_t>(s), max_iter);
                 } else if (algorithm == "GA") {
                     trial = run_ga(algorithm, bf, bounds, static_cast<std::uint64_t>(s), max_iter);
                 } else if (algorithm == "CMA-ES") {
-                    trial = run_cmaes_style(algorithm, bf, bounds,
-                                            static_cast<std::uint64_t>(s), max_iter);
+                    trial = run_cmaes_style(algorithm, bf, bounds, static_cast<std::uint64_t>(s),
+                                            max_iter);
                 } else if (algorithm == "SA") {
                     trial = run_sa(algorithm, bf, bounds, static_cast<std::uint64_t>(s), max_iter);
                 } else {
@@ -716,8 +718,9 @@ int main(int argc, char **argv) try {
                     const auto t0 = std::chrono::steady_clock::now();
                     const auto result = givp::givp(bf.func, bounds, cfg);
                     const auto t1 = std::chrono::steady_clock::now();
-                    trial = {algorithm, bf.name, static_cast<std::uint64_t>(s), result.fun,
-                             result.nfev, std::chrono::duration<double>(t1 - t0).count()};
+                    trial = {
+                        algorithm,  bf.name,     static_cast<std::uint64_t>(s),
+                        result.fun, result.nfev, std::chrono::duration<double>(t1 - t0).count()};
                 }
 
                 rows.push_back(trial);
@@ -725,9 +728,9 @@ int main(int argc, char **argv) try {
 
                 if (verbose) {
                     std::cout << "  " << algorithm << " " << bf.name << " seed=" << s
-                              << " best=" << std::scientific << trial.fun << " nfev="
-                              << trial.nfev << " " << std::fixed << std::setprecision(2)
-                              << trial.elapsed_s << "s\n";
+                              << " best=" << std::scientific << trial.fun << " nfev=" << trial.nfev
+                              << " " << std::fixed << std::setprecision(2) << trial.elapsed_s
+                              << "s\n";
                 }
             }
 
@@ -748,8 +751,8 @@ int main(int argc, char **argv) try {
             for (double v : best_values)
                 best = std::min(best, v);
 
-            std::cout << "  " << algorithm << " " << bf.name << " mean=" << std::scientific
-                      << mean << " std=" << stddev << " best=" << best
+            std::cout << "  " << algorithm << " " << bf.name << " mean=" << std::scientific << mean
+                      << " std=" << stddev << " best=" << best
                       << " gap=" << std::abs(best - bf.optimum) << "\n";
         }
     }
