@@ -224,12 +224,19 @@ fn normal01(rng: &mut StdRng) -> f64 {
     (-2.0 * u1.ln()).sqrt() * (2.0 * std::f64::consts::PI * u2).cos()
 }
 
-fn run_de(func: ObjectiveFn, bounds: &[(f64, f64)], seed: u64, max_iter: usize) -> (f64, usize, f64) {
+fn run_de(
+    func: ObjectiveFn,
+    bounds: &[(f64, f64)],
+    seed: u64,
+    max_iter: usize,
+) -> (f64, usize, f64) {
     let start = Instant::now();
     let dim = bounds.len();
     let pop_size = (10 * dim).max(20);
     let mut rng = StdRng::seed_from_u64(seed);
-    let mut pop: Vec<Vec<f64>> = (0..pop_size).map(|_| sample_uniform(bounds, &mut rng)).collect();
+    let mut pop: Vec<Vec<f64>> = (0..pop_size)
+        .map(|_| sample_uniform(bounds, &mut rng))
+        .collect();
     let mut fit: Vec<f64> = pop.iter().map(|x| func(x)).collect();
     let mut nfev = fit.len();
     let mut best = fit.iter().copied().fold(f64::INFINITY, f64::min);
@@ -281,7 +288,12 @@ fn run_de(func: ObjectiveFn, bounds: &[(f64, f64)], seed: u64, max_iter: usize) 
     (best, nfev, start.elapsed().as_secs_f64())
 }
 
-fn run_pso(func: ObjectiveFn, bounds: &[(f64, f64)], seed: u64, max_iter: usize) -> (f64, usize, f64) {
+fn run_pso(
+    func: ObjectiveFn,
+    bounds: &[(f64, f64)],
+    seed: u64,
+    max_iter: usize,
+) -> (f64, usize, f64) {
     let start = Instant::now();
     let dim = bounds.len();
     let swarm_size = (10 * dim).max(20);
@@ -334,12 +346,19 @@ fn run_pso(func: ObjectiveFn, bounds: &[(f64, f64)], seed: u64, max_iter: usize)
     (gbest_fit, nfev, start.elapsed().as_secs_f64())
 }
 
-fn run_ga(func: ObjectiveFn, bounds: &[(f64, f64)], seed: u64, max_iter: usize) -> (f64, usize, f64) {
+fn run_ga(
+    func: ObjectiveFn,
+    bounds: &[(f64, f64)],
+    seed: u64,
+    max_iter: usize,
+) -> (f64, usize, f64) {
     let start = Instant::now();
     let dim = bounds.len();
     let pop_size = (12 * dim).max(30);
     let mut rng = StdRng::seed_from_u64(seed);
-    let mut pop: Vec<Vec<f64>> = (0..pop_size).map(|_| sample_uniform(bounds, &mut rng)).collect();
+    let mut pop: Vec<Vec<f64>> = (0..pop_size)
+        .map(|_| sample_uniform(bounds, &mut rng))
+        .collect();
     let mut fit: Vec<f64> = pop.iter().map(|x| func(x)).collect();
     let mut nfev = fit.len();
 
@@ -359,7 +378,11 @@ fn run_ga(func: ObjectiveFn, bounds: &[(f64, f64)], seed: u64, max_iter: usize) 
 
     for _ in 0..max_iter {
         let mut order: Vec<usize> = (0..pop_size).collect();
-        order.sort_by(|a, b| fit[*a].partial_cmp(&fit[*b]).unwrap_or(std::cmp::Ordering::Equal));
+        order.sort_by(|a, b| {
+            fit[*a]
+                .partial_cmp(&fit[*b])
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
 
         let mut new_pop: Vec<Vec<f64>> = Vec::with_capacity(pop_size);
         new_pop.push(pop[order[0]].clone());
@@ -389,7 +412,12 @@ fn run_ga(func: ObjectiveFn, bounds: &[(f64, f64)], seed: u64, max_iter: usize) 
     (best, nfev, start.elapsed().as_secs_f64())
 }
 
-fn run_cmaes_style(func: ObjectiveFn, bounds: &[(f64, f64)], seed: u64, max_iter: usize) -> (f64, usize, f64) {
+fn run_cmaes_style(
+    func: ObjectiveFn,
+    bounds: &[(f64, f64)],
+    seed: u64,
+    max_iter: usize,
+) -> (f64, usize, f64) {
     let start = Instant::now();
     let dim = bounds.len();
     let lambda = (4 + (3.0 * (dim as f64).ln()) as usize).max(6);
@@ -438,7 +466,12 @@ fn run_cmaes_style(func: ObjectiveFn, bounds: &[(f64, f64)], seed: u64, max_iter
     (best, nfev, start.elapsed().as_secs_f64())
 }
 
-fn run_sa(func: ObjectiveFn, bounds: &[(f64, f64)], seed: u64, max_iter: usize) -> (f64, usize, f64) {
+fn run_sa(
+    func: ObjectiveFn,
+    bounds: &[(f64, f64)],
+    seed: u64,
+    max_iter: usize,
+) -> (f64, usize, f64) {
     let start = Instant::now();
     let dim = bounds.len();
     let mut rng = StdRng::seed_from_u64(seed);
@@ -474,7 +507,11 @@ fn run_sa(func: ObjectiveFn, bounds: &[(f64, f64)], seed: u64, max_iter: usize) 
     (best, nfev, start.elapsed().as_secs_f64())
 }
 
-fn run_trial_with_config(func: ObjectiveFn, bounds: &[(f64, f64)], cfg: GivpConfig) -> (f64, usize, f64) {
+fn run_trial_with_config(
+    func: ObjectiveFn,
+    bounds: &[(f64, f64)],
+    cfg: GivpConfig,
+) -> (f64, usize, f64) {
     let start = Instant::now();
     match givp(func, bounds, cfg) {
         Ok(r) => (r.fun, r.nfev, start.elapsed().as_secs_f64()),
@@ -793,7 +830,11 @@ fn main() {
     let known_algorithms = args
         .algorithms
         .iter()
-        .filter(|algorithm| algorithm_specs().iter().any(|spec| spec.name == algorithm.as_str()))
+        .filter(|algorithm| {
+            algorithm_specs()
+                .iter()
+                .any(|spec| spec.name == algorithm.as_str())
+        })
         .cloned()
         .collect::<Vec<_>>();
     let total = functions.len() * known_algorithms.len() * args.n_runs;
@@ -841,7 +882,10 @@ fn main() {
                 });
                 done += 1;
                 if !args.verbose && done % 30 == 0 {
-                    println!("  [{}/{}] last: {} {} seed={}", done, total, algorithm, bf.name, seed);
+                    println!(
+                        "  [{}/{}] last: {} {} seed={}",
+                        done, total, algorithm, bf.name, seed
+                    );
                 }
             }
 
@@ -849,7 +893,8 @@ fn main() {
                 continue;
             }
             let mean = bests.iter().sum::<f64>() / bests.len() as f64;
-            let variance = bests.iter().map(|v| (v - mean).powi(2)).sum::<f64>() / bests.len() as f64;
+            let variance =
+                bests.iter().map(|v| (v - mean).powi(2)).sum::<f64>() / bests.len() as f64;
             let std = variance.sqrt();
             let min = bests.iter().cloned().fold(f64::INFINITY, f64::min);
             println!(
