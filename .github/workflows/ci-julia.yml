@@ -310,6 +310,14 @@ jobs:
             Pkg.instantiate()
           '
 
+      - name: Verify baseline algorithm imports
+        run: |
+          julia --project=julia/benchmarks -e '
+            using Optim
+            using Evolutionary
+            println("Benchmark baseline packages loaded: Optim, Evolutionary")
+          '
+
       - name: Run literature comparison smoke test
         run: |
           julia --project=julia/benchmarks julia/benchmarks/run_literature_comparison.jl \
