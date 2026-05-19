@@ -45,6 +45,11 @@ struct TrialResult {
     double elapsed_s;
 };
 
+struct BaselineRunConfig {
+    std::uint64_t seed;
+    std::size_t max_iter;
+};
+
 struct SummaryRow {
     std::string function;
     std::string algorithm;
@@ -176,11 +181,11 @@ double normal01(std::mt19937_64 &rng) {
 }
 
 TrialResult run_de(const std::string &algorithm, const BenchFunc &bf, const Bounds &bounds,
-                   std::uint64_t seed, std::size_t max_iter) {
+                   const BaselineRunConfig &cfg) {
     const auto t0 = std::chrono::steady_clock::now();
     const std::size_t dim = bounds.size();
     const std::size_t pop_size = std::max<std::size_t>(20, 10 * dim);
-    std::mt19937_64 rng(seed);
+    std::mt19937_64 rng(cfg.seed);
     std::uniform_real_distribution<double> unit(0.0, 1.0);
 
     std::vector<Vec> pop(pop_size);
@@ -194,7 +199,7 @@ TrialResult run_de(const std::string &algorithm, const BenchFunc &bf, const Boun
         ++nfev;
     }
 
-    for (std::size_t it = 0; it < max_iter; ++it) {
+    for (std::size_t it = 0; it < cfg.max_iter; ++it) {
         for (std::size_t i = 0; i < pop_size; ++i) {
             std::size_t r1, r2, r3;
             do {
@@ -228,15 +233,16 @@ TrialResult run_de(const std::string &algorithm, const BenchFunc &bf, const Boun
 
     const double best = *std::min_element(fit.begin(), fit.end());
     const auto t1 = std::chrono::steady_clock::now();
-    return {algorithm, bf.name, seed, best, nfev, std::chrono::duration<double>(t1 - t0).count()};
+    return {algorithm, bf.name, cfg.seed,
+            best,      nfev,    std::chrono::duration<double>(t1 - t0).count()};
 }
 
 TrialResult run_pso(const std::string &algorithm, const BenchFunc &bf, const Bounds &bounds,
-                    std::uint64_t seed, std::size_t max_iter) {
+                    const BaselineRunConfig &cfg) {
     const auto t0 = std::chrono::steady_clock::now();
     const std::size_t dim = bounds.size();
     const std::size_t swarm_size = std::max<std::size_t>(20, 10 * dim);
-    std::mt19937_64 rng(seed);
+    std::mt19937_64 rng(cfg.seed);
     std::uniform_real_distribution<double> unit(0.0, 1.0);
 
     std::vector<Vec> pos(swarm_size), vel(swarm_size, Vec(dim, 0.0)), pbest(swarm_size);
@@ -262,7 +268,7 @@ TrialResult run_pso(const std::string &algorithm, const BenchFunc &bf, const Bou
     const double w = 0.729;
     const double c1 = 1.494;
     const double c2 = 1.494;
-    for (std::size_t it = 0; it < max_iter; ++it) {
+    for (std::size_t it = 0; it < cfg.max_iter; ++it) {
         for (std::size_t i = 0; i < swarm_size; ++i) {
             for (std::size_t d = 0; d < dim; ++d) {
                 const double r1 = unit(rng);
@@ -286,16 +292,16 @@ TrialResult run_pso(const std::string &algorithm, const BenchFunc &bf, const Bou
     }
 
     const auto t1 = std::chrono::steady_clock::now();
-    return {algorithm, bf.name, seed,
+    return {algorithm, bf.name, cfg.seed,
             gbest_fit, nfev,    std::chrono::duration<double>(t1 - t0).count()};
 }
 
 TrialResult run_ga(const std::string &algorithm, const BenchFunc &bf, const Bounds &bounds,
-                   std::uint64_t seed, std::size_t max_iter) {
+                   const BaselineRunConfig &cfg) {
     const auto t0 = std::chrono::steady_clock::now();
     const std::size_t dim = bounds.size();
     const std::size_t pop_size = std::max<std::size_t>(30, 12 * dim);
-    std::mt19937_64 rng(seed);
+    std::mt19937_64 rng(cfg.seed);
     std::uniform_real_distribution<double> unit(0.0, 1.0);
 
     auto tournament = [&](const std::vector<double> &fit) {
@@ -323,7 +329,7 @@ TrialResult run_ga(const std::string &algorithm, const BenchFunc &bf, const Boun
         ++nfev;
     }
 
-    for (std::size_t it = 0; it < max_iter; ++it) {
+    for (std::size_t it = 0; it < cfg.max_iter; ++it) {
         std::vector<std::size_t> order(pop_size);
         std::iota(order.begin(), order.end(), 0);
         std::sort(order.begin(), order.end(),
@@ -357,17 +363,18 @@ TrialResult run_ga(const std::string &algorithm, const BenchFunc &bf, const Boun
 
     const double best = *std::min_element(fit.begin(), fit.end());
     const auto t1 = std::chrono::steady_clock::now();
-    return {algorithm, bf.name, seed, best, nfev, std::chrono::duration<double>(t1 - t0).count()};
+    return {algorithm, bf.name, cfg.seed,
+            best,      nfev,    std::chrono::duration<double>(t1 - t0).count()};
 }
 
 TrialResult run_cmaes_style(const std::string &algorithm, const BenchFunc &bf, const Bounds &bounds,
-                            std::uint64_t seed, std::size_t max_iter) {
+                            const BaselineRunConfig &cfg) {
     const auto t0 = std::chrono::steady_clock::now();
     const std::size_t dim = bounds.size();
     const std::size_t lambda = std::max<std::size_t>(
         6, 4 + static_cast<std::size_t>(3.0 * std::log(static_cast<double>(dim))));
     const std::size_t mu = std::max<std::size_t>(2, lambda / 2);
-    std::mt19937_64 rng(seed);
+    std::mt19937_64 rng(cfg.seed);
 
     Vec mean = sample_uniform(bounds, rng);
     double avg_range = 0.0;
@@ -379,7 +386,7 @@ TrialResult run_cmaes_style(const std::string &algorithm, const BenchFunc &bf, c
     std::size_t nfev = 0;
     double best = std::numeric_limits<double>::infinity();
 
-    for (std::size_t it = 0; it < max_iter; ++it) {
+    for (std::size_t it = 0; it < cfg.max_iter; ++it) {
         std::vector<std::pair<Vec, double>> pop;
         pop.reserve(lambda);
         for (std::size_t k = 0; k < lambda; ++k) {
@@ -415,21 +422,22 @@ TrialResult run_cmaes_style(const std::string &algorithm, const BenchFunc &bf, c
     }
 
     const auto t1 = std::chrono::steady_clock::now();
-    return {algorithm, bf.name, seed, best, nfev, std::chrono::duration<double>(t1 - t0).count()};
+    return {algorithm, bf.name, cfg.seed,
+            best,      nfev,    std::chrono::duration<double>(t1 - t0).count()};
 }
 
 TrialResult run_sa(const std::string &algorithm, const BenchFunc &bf, const Bounds &bounds,
-                   std::uint64_t seed, std::size_t max_iter) {
+                   const BaselineRunConfig &cfg) {
     const auto t0 = std::chrono::steady_clock::now();
     const std::size_t dim = bounds.size();
-    std::mt19937_64 rng(seed);
+    std::mt19937_64 rng(cfg.seed);
     std::uniform_real_distribution<double> unit(0.0, 1.0);
 
     Vec x = sample_uniform(bounds, rng);
     double fx = bf.func(x);
     double best = fx;
     std::size_t nfev = 1;
-    const std::size_t steps = std::max<std::size_t>(100, max_iter * 30);
+    const std::size_t steps = std::max<std::size_t>(100, cfg.max_iter * 30);
     const double t_init = 1.0;
     const double t_final = 1e-3;
 
@@ -453,7 +461,8 @@ TrialResult run_sa(const std::string &algorithm, const BenchFunc &bf, const Boun
     }
 
     const auto t1 = std::chrono::steady_clock::now();
-    return {algorithm, bf.name, seed, best, nfev, std::chrono::duration<double>(t1 - t0).count()};
+    return {algorithm, bf.name, cfg.seed,
+            best,      nfev,    std::chrono::duration<double>(t1 - t0).count()};
 }
 
 std::string json_escape(const std::string &input) {
@@ -687,17 +696,17 @@ int main(int argc, char **argv) try {
 
             for (std::size_t s = 0; s < n_runs; ++s) {
                 TrialResult trial;
+                const BaselineRunConfig baseline_cfg{static_cast<std::uint64_t>(s), max_iter};
                 if (algorithm == "DE") {
-                    trial = run_de(algorithm, bf, bounds, static_cast<std::uint64_t>(s), max_iter);
+                    trial = run_de(algorithm, bf, bounds, baseline_cfg);
                 } else if (algorithm == "PSO") {
-                    trial = run_pso(algorithm, bf, bounds, static_cast<std::uint64_t>(s), max_iter);
+                    trial = run_pso(algorithm, bf, bounds, baseline_cfg);
                 } else if (algorithm == "GA") {
-                    trial = run_ga(algorithm, bf, bounds, static_cast<std::uint64_t>(s), max_iter);
+                    trial = run_ga(algorithm, bf, bounds, baseline_cfg);
                 } else if (algorithm == "CMA-ES") {
-                    trial = run_cmaes_style(algorithm, bf, bounds, static_cast<std::uint64_t>(s),
-                                            max_iter);
+                    trial = run_cmaes_style(algorithm, bf, bounds, baseline_cfg);
                 } else if (algorithm == "SA") {
-                    trial = run_sa(algorithm, bf, bounds, static_cast<std::uint64_t>(s), max_iter);
+                    trial = run_sa(algorithm, bf, bounds, baseline_cfg);
                 } else {
                     givp::GivpConfig cfg;
                     cfg.max_iterations = max_iter;
