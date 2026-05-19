@@ -28,6 +28,11 @@ Available in **Python**, **Julia**, **Rust**, **C++** (header-only), and **R**.
   completed across Python, Julia, Rust, C++, and R with explicit
   `path_relink_strategy` (`bidirectional`, `forward`, `backward`,
   `randomized`; Python/Julia/R keep `random` alias compatibility).
+- **Multilingual benchmark protocol parity for dissertation workflow**
+  (Issue #172): completed protocol freeze for literature-comparison runners
+  with aligned defaults (`n_runs=30`, `dims=10`, `max_iter=200`,
+  `time_limit=30.0`, canonical baseline set), including R CLI `--time-limit`
+  support and parity documentation updates.
 
 > **Recently completed (v1.0.0 line):**
 > Julia package on General Registry (`Pkg.add("GIVPOptimizer")`),

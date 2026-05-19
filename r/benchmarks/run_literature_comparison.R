@@ -3,14 +3,16 @@
 #
 # Reproducible multi-run literature comparison for the R GIVP port.
 #
-# Runs N independent seeds for 6 standard benchmark functions and two
-# algorithm configurations (GIVP-full vs GRASP-only), then writes a
+# Runs N independent seeds for 6 standard benchmark functions and configurable
+# algorithms (GIVP-full and/or external baselines), then writes a
 # JSON file compatible with python/benchmarks/generate_report.py.
 #
 # Usage (from repo root):
 #   Rscript r/benchmarks/run_literature_comparison.R
 #   Rscript r/benchmarks/run_literature_comparison.R \
-#       --n-runs 30 --dims 10 --output results_r.json --verbose
+#       --n-runs 30 --dims 10 --max-iter 200 --time-limit 30 \
+#       --algorithms GIVP-full DE PSO GA CMA-ES SA \
+#       --output results_r.json --verbose
 #
 # References:
 #   De Jong (1975) — Sphere
@@ -84,7 +86,8 @@ parse_args <- function() {
   params <- list(
     n_runs    = 30L,
     dims      = 10L,
-    max_iter  = 100L,
+    max_iter  = 200L,
+    time_limit = 30.0,
     output    = file.path("r", "benchmarks", "literature_comparison.json"),
     algorithms = c("GIVP-full", "DE", "PSO", "GA", "CMA-ES", "SA"),
     verbose   = FALSE
@@ -95,6 +98,7 @@ parse_args <- function() {
       "--n-runs"     = { params$n_runs    <- as.integer(args[[i + 1L]]); i <- i + 2L },
       "--dims"       = { params$dims      <- as.integer(args[[i + 1L]]); i <- i + 2L },
       "--max-iter"   = { params$max_iter  <- as.integer(args[[i + 1L]]); i <- i + 2L },
+      "--time-limit" = { params$time_limit <- as.numeric(args[[i + 1L]]); i <- i + 2L },
       "--output"     = { params$output    <- args[[i + 1L]];             i <- i + 2L },
       "--algorithms" = {
         algs <- character(0L)
@@ -120,6 +124,7 @@ OUTPUT     <- cli$output
 ALGORITHMS <- cli$algorithms
 VERBOSE    <- cli$verbose
 MAX_ITER   <- cli$max_iter
+TIME_LIMIT <- cli$time_limit
 ACTIVE_ALGORITHMS <- character(0L)
 
 cat(sprintf(
@@ -198,7 +203,7 @@ PROBLEMS <- list(
 FUNC_ORDER <- c("Sphere", "Rosenbrock", "Rastrigin", "Ackley", "Griewank", "Schwefel")
 
 # ── Algorithm config builders ──────────────────────────────────────────────────
-make_config_givp_full <- function(max_iter = 100L) {
+make_config_givp_full <- function(max_iter = 200L, time_limit = 30.0) {
   givp_config(
     max_iterations          = max_iter,
     alpha                   = 0.12,
@@ -215,11 +220,11 @@ make_config_givp_full <- function(max_iter = 100L) {
     cache_size              = 10000L,
     early_stop_threshold    = 80L,
     use_convergence_monitor = TRUE,
-    time_limit              = 0
+    time_limit              = time_limit
   )
 }
 
-make_config_grasp_only <- function(max_iter = 100L) {
+make_config_grasp_only <- function(max_iter = 200L, time_limit = 30.0) {
   givp_config(
     max_iterations          = max_iter,
     alpha                   = 0.12,
@@ -232,7 +237,7 @@ make_config_grasp_only <- function(max_iter = 100L) {
     use_cache               = TRUE,
     cache_size              = 10000L,
     early_stop_threshold    = max_iter,
-    time_limit              = 0
+    time_limit              = time_limit
   )
 }
 
@@ -271,8 +276,8 @@ bounds_to_vectors <- function(bounds) {
   )
 }
 
-run_givp_baseline <- function(prob_fn, bounds, seed, max_iter, cfg_fn) {
-  cfg <- cfg_fn(max_iter)
+run_givp_baseline <- function(prob_fn, bounds, seed, max_iter, time_limit, cfg_fn) {
+  cfg <- cfg_fn(max_iter, time_limit)
   t0 <- proc.time()[[3L]]
   r <- tryCatch(
     givp(prob_fn, bounds, direction = "minimize", config = cfg, seed = seed),
@@ -486,7 +491,7 @@ for (algo_name in ALGORITHMS) {
     for (run_i in seq_len(N_RUNS)) {
       seed <- run_i - 1L
       r <- if (!is.null(cfg_fn)) {
-        run_givp_baseline(prob$fn, bounds, seed, MAX_ITER, cfg_fn)
+        run_givp_baseline(prob$fn, bounds, seed, MAX_ITER, TIME_LIMIT, cfg_fn)
       } else {
         run_external_baseline(algo_name, prob$fn, bounds, seed, MAX_ITER)
       }
