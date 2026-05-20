@@ -22,7 +22,7 @@
 #   Griewank (1981) — Griewank
 #   Schwefel (1981) — Schwefel
 
-# ── Bootstrap ──────────────────────────────────────────────────────────────────
+# ── Bootstrap ─────────────────────────────────────────────────────────────
 if (!requireNamespace("givp", quietly = TRUE)) {
   if (file.exists("r/DESCRIPTION")) {
     message("[benchmark] Installing givp from r/")
