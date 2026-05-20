@@ -5,7 +5,7 @@ name: CI C++
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
     paths:
       - "cpp/**"
@@ -104,7 +104,8 @@ jobs:
           -DGIVP_BUILD_BENCHMARKS=OFF
 
       - name: Build
-        run: cmake --build cpp/build/default ${{ matrix.compiler == 'msvc' && '--config Release' ||
+        run:
+          cmake --build cpp/build/default ${{ matrix.compiler == 'msvc' && '--config Release' ||
           '' }}
 
       - name: Test
@@ -135,7 +136,8 @@ jobs:
           -DGIVP_BUILD_BENCHMARKS=OFF -DGIVP_BUILD_FUZZ=OFF
 
       - name: Build package
-        run: cmake --build cpp/build/package ${{ matrix.compiler == 'msvc' && '--config Release' ||
+        run:
+          cmake --build cpp/build/package ${{ matrix.compiler == 'msvc' && '--config Release' ||
           '' }}
 
       - name: Install package
@@ -191,7 +193,8 @@ jobs:
           '-DCMAKE_BUILD_TYPE=Release' }} -DCMAKE_PREFIX_PATH=${{ github.workspace }}/cpp/build/install
 
       - name: Build consumer
-        run: cmake --build cpp/build/consumer ${{ matrix.compiler == 'msvc' && '--config Release' ||
+        run:
+          cmake --build cpp/build/consumer ${{ matrix.compiler == 'msvc' && '--config Release' ||
           '' }}
 
       - name: Run consumer
@@ -289,7 +292,7 @@ jobs:
             }
             /^SF:/ {
               file = substr($0, 4)
-              sub(/^.*\/grasp_ils_vnd_pr\//, "", file)
+              sub(/^.*\/givp\//, "", file)
               sub(/^\.\//, "", file)
               next
             }
