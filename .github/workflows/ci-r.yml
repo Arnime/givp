@@ -5,7 +5,7 @@ name: CI R
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
     paths:
       - "r/**"
@@ -20,7 +20,6 @@ permissions:
   contents: read
 
 jobs:
-
   # ─── 1. Cross-platform unit tests (3 OS × 3 R versions = 9 runs) ──────────
   test:
     name: Test (${{ matrix.os }} / R ${{ matrix.r-version }})
@@ -33,6 +32,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Sanitize Ubuntu apt sources (avoid flaky Chrome mirror)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          sudo rm -f /etc/apt/sources.list.d/google-chrome.list
 
       - name: Install Linux system dependencies
         if: runner.os == 'Linux'
@@ -74,6 +79,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Sanitize Ubuntu apt sources (avoid flaky Chrome mirror)
+        shell: bash
+        run: |
+          sudo rm -f /etc/apt/sources.list.d/google-chrome.list
 
       - name: Install system dependencies
         shell: bash
@@ -122,6 +132,11 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
+
+      - name: Sanitize Ubuntu apt sources (avoid flaky Chrome mirror)
+        shell: bash
+        run: |
+          sudo rm -f /etc/apt/sources.list.d/google-chrome.list
 
       - name: Install system dependencies
         shell: bash
