@@ -98,6 +98,12 @@ workflow runs in addition (CI SonarQube).
     - [Rust installation](#rust-installation)
     - [C++ installation](#c-installation)
     - [R installation](#r-installation)
+    - [Development setup (all languages)](#development-setup-all-languages)
+      - [Python development (Poetry)](#python-development-poetry)
+      - [Julia development](#julia-development)
+      - [Rust development](#rust-development)
+      - [C++ development](#c-development)
+      - [R development](#r-development)
   - [Python](#python)
     - [Quick start](#quick-start)
     - [Choosing the optimization sense](#choosing-the-optimization-sense)
@@ -340,6 +346,86 @@ R CMD INSTALL r
 ```
 
 Requires R 4.1+.
+
+### Development setup (all languages)
+
+Use this section if you want to contribute to the project (not only consume the
+published packages).
+
+#### Python development (Poetry)
+
+```bash
+git clone https://github.com/Arnime/grasp_ils_vnd_pr.git
+cd grasp_ils_vnd_pr
+```
+
+Create the Poetry environment with the exact Python you want to use:
+
+```bash
+# Option A: choose a Python version available on PATH
+poetry env use 3.11
+
+# Option B: choose an explicit Python executable path
+# Windows example:
+poetry env use "C:/Users/<you>/AppData/Local/Programs/Python/Python311/python.exe"
+# Linux/macOS example:
+# poetry env use /usr/bin/python3.11
+```
+
+Install project dependencies for development:
+
+```bash
+poetry install --with dev,docs,benchmarks
+poetry run pre-commit install
+```
+
+Quick checks:
+
+```bash
+poetry run ruff check python/src python/tests
+poetry run mypy
+poetry run pytest
+```
+
+#### Julia development
+
+```bash
+cd julia
+julia --project=. -e 'using Pkg; Pkg.instantiate(); Pkg.precompile()'
+julia --project=. -e 'using Pkg; Pkg.test()'
+```
+
+#### Rust development
+
+```bash
+cd rust
+rustup toolchain install stable
+cargo build
+cargo test
+cargo clippy --all-targets --all-features -- -D warnings
+```
+
+#### C++ development
+
+```bash
+cmake -S cpp -B cpp/build/default -DCMAKE_BUILD_TYPE=Release -DGIVP_BUILD_TESTS=ON -DGIVP_BUILD_BENCHMARKS=OFF
+cmake --build cpp/build/default --parallel
+ctest --test-dir cpp/build/default --output-on-failure
+```
+
+On Windows, if you use WSL for C++ toolchains, run the same commands through
+`wsl bash -lc "..."`.
+
+#### R development
+
+```bash
+cd r
+Rscript -e "install.packages(c('devtools','testthat','lintr','covr'), repos='https://cloud.r-project.org')"
+Rscript -e "devtools::install_deps(dependencies = TRUE)"
+R CMD INSTALL .
+Rscript -e "testthat::test_dir('tests/testthat')"
+Rscript -e "lintr::lint_package()"
+```
 
 ---
 

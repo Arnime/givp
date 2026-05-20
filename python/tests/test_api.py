@@ -553,6 +553,21 @@ def test_sklearn_grid_search_cv_integration() -> None:
     assert isinstance(grid, GridSearchCV)
 
 
+def test_fit_full_signature_coverage() -> None:
+    """fit() called with and without arguments covers all code paths."""
+    opt = GIVPOptimizer(sphere, [(-1.0, 1.0)] * 2, config=GIVPConfig(max_iterations=2))
+    # Call with no arguments
+    result1 = opt.fit()
+    assert result1 is opt
+    # Call with explicit None arguments
+    result2 = opt.fit(_x=None, _y=None)
+    assert result2 is opt
+    # Call with dummy arrays
+    dummy_x = np.array([[0.0, 0.0], [1.0, 1.0]])
+    dummy_y = np.array([0.0, 1.0])
+    result3 = opt.fit(_x=dummy_x, _y=dummy_y)
+    assert result3 is opt
+
 
 def test_long_run_triggers_path_relinking_and_restart() -> None:
     cfg = GIVPConfig(
