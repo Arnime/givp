@@ -2,7 +2,7 @@ name: CI Julia
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
     paths:
       - "julia/**"
@@ -15,8 +15,7 @@ on:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
-permissions:
-  {}
+permissions: {}
 
 jobs:
   setup:
@@ -53,7 +52,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, windows-latest, macos-latest ]
+        os: [ubuntu-latest, windows-latest, macos-latest]
         julia-version: ${{ fromJson(needs.setup.outputs.versions) }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -182,7 +181,7 @@ jobs:
             for raw in eachline("julia-lcov.info")
               if startswith(raw, "SF:")
                 f = raw[4:end]
-                marker = "/grasp_ils_vnd_pr/"
+                marker = "/givp/"
                 idx = findfirst(marker, f)
                 current_file = idx === nothing ? lstrip(f, '.') : f[last(idx)+1:end]
               elseif startswith(raw, "DA:") && current_file !== nothing
@@ -609,5 +608,3 @@ jobs:
       - name: Run convergence quality gate
         run: |
           julia --project=julia julia/test/test_quality_gate.jl
-
-

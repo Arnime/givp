@@ -2,7 +2,7 @@ name: CI Rust
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
     paths:
       - "rust/**"
@@ -50,7 +50,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, windows-latest, macos-latest ]
+        os: [ubuntu-latest, windows-latest, macos-latest]
         rust: ${{ fromJson(needs.setup.outputs.toolchains) }}
         exclude:
           - rust: beta
@@ -236,7 +236,7 @@ jobs:
             }
             /^SF:/ {
               file = substr($0, 4)
-              sub(/^.*\/grasp_ils_vnd_pr\//, "", file)
+              sub(/^.*\/givp\//, "", file)
               sub(/^\.\//, "", file)
               next
             }
@@ -319,4 +319,3 @@ jobs:
             --format markdown \
             --no-plots \
             --output-dir rust/benchmarks
-

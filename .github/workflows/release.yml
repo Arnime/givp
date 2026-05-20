@@ -31,7 +31,8 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          ref: ${{ github.event_name == 'workflow_dispatch' && format('refs/tags/{0}',
+          ref:
+            ${{ github.event_name == 'workflow_dispatch' && format('refs/tags/{0}',
             inputs.tag) || github.ref }}
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
@@ -71,8 +72,8 @@ jobs:
           urls=(
             "https://img.shields.io/pypi/v/givp?cacheSeconds=300"
             "https://img.shields.io/pypi/pyversions/givp?cacheSeconds=300"
-            "https://img.shields.io/codecov/c/github/Arnime/grasp_ils_vnd_pr?cacheSeconds=300"
-            "https://img.shields.io/ossf-scorecard/github.com/Arnime/grasp_ils_vnd_pr?cacheSeconds=300"
+            "https://img.shields.io/codecov/c/github/Arnime/givp?cacheSeconds=300"
+            "https://img.shields.io/ossf-scorecard/github.com/Arnime/givp?cacheSeconds=300"
             "https://www.bestpractices.dev/projects/12627/badge?cacheSeconds=300"
           )
           failed=0
@@ -97,7 +98,7 @@ jobs:
           attestations: true
 
   provenance:
-    needs: [ build-and-publish ]
+    needs: [build-and-publish]
     permissions:
       actions: read
       id-token: write
@@ -110,7 +111,7 @@ jobs:
       upload-tag-name: ${{ inputs.tag || github.ref_name }}
 
   publish-rust:
-    needs: [ build-and-publish ]
+    needs: [build-and-publish]
     runs-on: ubuntu-latest
     environment:
       name: crates-io
@@ -120,7 +121,8 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          ref: ${{ github.event_name == 'workflow_dispatch' && format('refs/tags/{0}',
+          ref:
+            ${{ github.event_name == 'workflow_dispatch' && format('refs/tags/{0}',
             inputs.tag) || github.ref }}
 
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
@@ -155,9 +157,8 @@ jobs:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
         run: cargo publish --locked
 
-
   publish-r:
-    needs: [ build-and-publish ]
+    needs: [build-and-publish]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -193,5 +194,3 @@ jobs:
         with:
           tag_name: ${{ inputs.tag || github.ref_name }}
           files: ${{ steps.r_build.outputs.tarball }}
-
-

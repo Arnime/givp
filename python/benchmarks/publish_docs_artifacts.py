@@ -29,7 +29,7 @@ from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_OUTPUT_DIR = REPO_ROOT / "docs" / "examples" / "benchmark-reports"
-DEFAULT_REPO_URL_BASE = "https://github.com/Arnime/grasp_ils_vnd_pr/blob/main"
+DEFAULT_REPO_URL_BASE = "https://github.com/Arnime/givp/blob/main"
 REGEN_COMMAND = "python benchmarks/publish_docs_artifacts.py"
 DEFAULT_ARTIFACTS: tuple[tuple[str, str], ...] = (
     ("Python", "Notebooks/Python/benchmark_literature_comparison_results.json"),
