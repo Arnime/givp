@@ -19,7 +19,7 @@ from collections.abc import Callable, Iterable, Sequence
 
 import numpy as np
 from numpy.typing import NDArray
-from sklearn.base import BaseEstimator  # type: ignore[import-not-found]
+from sklearn.base import BaseEstimator  # type: ignore[import-untyped]
 
 from givp import core
 from givp.config import GIVPConfig
