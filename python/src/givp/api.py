@@ -7,6 +7,10 @@ Exposes a SciPy-style functional entry point ``givp`` and an
 sklearn-style class ``GIVPOptimizer``. Both wrap the internal minimizer in
 ``givp.core`` and add direction-agnostic objective handling
 (``direction='minimize' | 'maximize'``).
+
+``GIVPOptimizer`` inherits from ``sklearn.base.BaseEstimator``, enabling
+direct use in scikit-learn's cross-validation and hyperparameter tuning
+pipelines.
 """
 
 from __future__ import annotations
@@ -15,6 +19,7 @@ from collections.abc import Callable, Iterable, Sequence
 
 import numpy as np
 from numpy.typing import NDArray
+from sklearn.base import BaseEstimator  # type: ignore[import-not-found]
 
 from givp import core
 from givp.config import GIVPConfig
@@ -267,13 +272,29 @@ def givp(
     )
 
 
-class GIVPOptimizer:
+class GIVPOptimizer(BaseEstimator):
     """
     Object-oriented wrapper around :func:`givp`.
 
     Holds configuration and bounds, exposes a ``run()`` method that returns an
     :class:`OptimizeResult`. The instance also caches the best solution across
     repeated ``run()`` calls (useful for multi-start strategies).
+
+    This class inherits from ``sklearn.base.BaseEstimator``, enabling seamless
+    integration with scikit-learn's cross-validation and hyperparameter tuning
+    tools such as ``GridSearchCV`` and ``RandomizedSearchCV``.
+
+    Example (sklearn integration):
+        >>> from sklearn.model_selection import GridSearchCV
+        >>> from givp import GIVPOptimizer
+        >>> def objective(x):
+        ...     return (x[0] - 1)**2 + (x[1] - 2)**2
+        >>> opt = GIVPOptimizer(objective, [(-5, 5), (-5, 5)])
+        >>> grid = GridSearchCV(
+        ...     opt,
+        ...     param_grid={"config__alpha": [0.1, 0.5]},
+        ...     cv=3
+        ... )
     """
 
     def __init__(
@@ -315,7 +336,13 @@ class GIVPOptimizer:
         return candidate < self.best_fun
 
     def run(self) -> OptimizeResult:
-        """Execute one optimization round and update the historical best."""
+        """Execute one optimization round and update the historical best.
+
+        Returns:
+            OptimizeResult: Result of one optimization run, including ``x``,
+            ``fun``, and metadata. Also updates internal ``best_x``,
+            ``best_fun``, and ``history``.
+        """
         result = givp(
             self.func,
             self.bounds,
@@ -333,3 +360,25 @@ class GIVPOptimizer:
             self.best_x = result.x
             self.best_fun = result.fun
         return result
+
+    def fit(self, _x: NDArray | None = None, _y: NDArray | None = None) -> GIVPOptimizer:
+        """Fit the optimizer (sklearn-compatible interface).
+
+        This method is provided for sklearn compatibility and simply calls
+        :meth:`run()`, ignoring X and y (since GIVP is an unsupervised,
+        black-box optimizer).
+
+        Args:
+            _x: Ignored. Provided for sklearn compatibility.
+            _y: Ignored. Provided for sklearn compatibility.
+
+        Returns:
+            GIVPOptimizer: Returns ``self`` to enable method chaining.
+
+        Example:
+            >>> opt = GIVPOptimizer(objective, bounds)
+            >>> opt.fit()  # Equivalent to opt.run()
+            >>> print(opt.best_fun)
+        """
+        self.run()
+        return self

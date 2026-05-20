@@ -499,6 +499,61 @@ def test_multiobjective_scalarization_tradeoff_sweep() -> None:
     assert risk_obj_risk <= risk_obj_return + 1e-6
 
 
+# ----------------------------- sklearn integration (optional) -----
+
+
+def test_givp_optimizer_has_fit_method() -> None:
+    """GIVPOptimizer must have a fit() method for sklearn compatibility."""
+    opt = GIVPOptimizer(sphere, [(-1.0, 1.0)] * 2)
+    assert hasattr(opt, "fit")
+    assert callable(opt.fit)
+
+
+def test_fit_returns_self() -> None:
+    """fit() must return self to enable method chaining."""
+    opt = GIVPOptimizer(sphere, [(-1.0, 1.0)] * 2, config=GIVPConfig(max_iterations=2))
+    result = opt.fit()
+    assert result is opt
+
+
+def test_fit_calls_run() -> None:
+    """fit() must internally call run() and update best_x, best_fun."""
+    opt = GIVPOptimizer(sphere, [(-1.0, 1.0)] * 2, config=GIVPConfig(max_iterations=2))
+    opt.fit()
+    assert len(opt.history) == 1
+    assert opt.best_x is not None
+    assert np.isfinite(opt.best_fun)
+
+
+def test_fit_ignores_x_y_parameters() -> None:
+    """fit(X, y) must work even with X and y (sklearn API compatibility)."""
+    opt = GIVPOptimizer(sphere, [(-1.0, 1.0)] * 2, config=GIVPConfig(max_iterations=2))
+    dummy_x = np.array([[1, 2], [3, 4]])
+    dummy_y = np.array([0, 1])
+    opt.fit(_x=dummy_x, _y=dummy_y)
+    assert len(opt.history) == 1
+    assert opt.best_x is not None
+
+
+def test_sklearn_grid_search_cv_integration() -> None:
+    """GIVPOptimizer works with sklearn's GridSearchCV."""
+    from sklearn.model_selection import GridSearchCV  # type: ignore[import-not-found]
+
+    def objective(x: np.ndarray) -> float:
+        return float(np.sum(x**2))
+
+    opt = GIVPOptimizer(
+        objective,
+        [(-5.0, 5.0), (-5.0, 5.0)],
+        config=GIVPConfig(max_iterations=2),
+    )
+
+    # Verify that GridSearchCV can instantiate and work with the optimizer
+    grid = GridSearchCV(opt, param_grid={"seed": [42, 43]}, cv=2)  # type: ignore[call-arg]
+    assert isinstance(grid, GridSearchCV)
+
+
+
 def test_long_run_triggers_path_relinking_and_restart() -> None:
     cfg = GIVPConfig(
         max_iterations=8,
