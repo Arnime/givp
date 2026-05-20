@@ -1,18 +1,21 @@
-# givp — GRASP-ILS-VND with Path Relinking
+<h1>
+  <img src="docs/assets/favicon/web-app-manifest-512x512.png" alt="GIVP logo" width="42" style="vertical-align: middle;" />
+  givp — GRASP-ILS-VND with Path Relinking
+</h1>
 
 **Python** &nbsp;
 [![PyPI givp](https://img.shields.io/pypi/v/givp?logo=pypi&logoColor=white&color=3775A9&label=PyPI%20givp)](https://pypi.org/project/givp/)
 [![Python versions](https://img.shields.io/badge/Python-3.10%E2%80%933.15-blue?logo=python&logoColor=white)](https://pypi.org/project/givp/)
-[![CI Python](https://github.com/Arnime/grasp_ils_vnd_pr/actions/workflows/ci-python.yml/badge.svg)](https://github.com/Arnime/grasp_ils_vnd_pr/actions/workflows/ci-python.yml)
-[![Codecov (python)](https://codecov.io/gh/Arnime/grasp_ils_vnd_pr/graph/badge.svg?flag=python)](https://codecov.io/gh/Arnime/grasp_ils_vnd_pr/flags/python)
+[![CI Python](https://github.com/Arnime/givp/actions/workflows/ci-python.yml/badge.svg)](https://github.com/Arnime/givp/actions/workflows/ci-python.yml)
+[![Codecov (python)](https://codecov.io/gh/Arnime/givp/graph/badge.svg?flag=python)](https://codecov.io/gh/Arnime/givp/flags/python)
 [![Ruff](https://img.shields.io/badge/Linter-ruff-red?logo=ruff&logoColor=white)](https://github.com/astral-sh/ruff)
 [![Checked with mypy](https://img.shields.io/badge/Type--Checked-mypy-blue?logo=python&logoColor=white)](https://mypy-lang.org/)
 
 **Julia** &nbsp;
-[![JuliaHub GIVPOptimizer](https://img.shields.io/github/v/tag/Arnime/grasp_ils_vnd_pr?filter=julia--v*&sort=semver&logo=julia&logoColor=white&color=9558B2&label=JuliaHub%20GIVPOptimizer)](https://juliahub.com/ui/Packages/General/GIVPOptimizer)
+[![JuliaHub GIVPOptimizer](https://img.shields.io/github/v/tag/Arnime/givp?filter=julia--v*&sort=semver&logo=julia&logoColor=white&color=9558B2&label=JuliaHub%20GIVPOptimizer)](https://juliahub.com/ui/Packages/General/GIVPOptimizer)
 [![Julia](https://img.shields.io/badge/Julia-1.9%2B-9558B2?logo=julia&logoColor=white)](https://julialang.org/)
-[![CI Julia](https://github.com/Arnime/grasp_ils_vnd_pr/actions/workflows/ci-julia.yml/badge.svg)](https://github.com/Arnime/grasp_ils_vnd_pr/actions/workflows/ci-julia.yml)
-[![Codecov (julia)](https://codecov.io/gh/Arnime/grasp_ils_vnd_pr/graph/badge.svg?flag=julia)](https://codecov.io/gh/Arnime/grasp_ils_vnd_pr/flags/julia)
+[![CI Julia](https://github.com/Arnime/givp/actions/workflows/ci-julia.yml/badge.svg)](https://github.com/Arnime/givp/actions/workflows/ci-julia.yml)
+[![Codecov (julia)](https://codecov.io/gh/Arnime/givp/graph/badge.svg?flag=julia)](https://codecov.io/gh/Arnime/givp/flags/julia)
 [![JuliaFormatter](https://img.shields.io/badge/Formatter-JuliaFormatter.jl-9558B2?logo=julia&logoColor=white)](https://github.com/domluna/JuliaFormatter.jl)
 [![JET](https://img.shields.io/badge/Type--Checked-JET.jl-9558B2?logo=julia&logoColor=white)](https://github.com/aviatesk/JET.jl)
 [![Aqua](https://img.shields.io/badge/Quality-Aqua.jl-9558B2?logo=julia&logoColor=white)](https://github.com/JuliaTesting/Aqua.jl)
@@ -20,8 +23,8 @@
 **Rust** &nbsp;
 [![crates.io givp](https://img.shields.io/crates/v/givp?logo=rust&logoColor=white&color=E05D44&label=Crates%20givp)](https://crates.io/crates/givp)
 [![Rust](https://img.shields.io/badge/Rust-1.85%2B-000000?logo=rust&logoColor=white)](https://www.rust-lang.org/)
-[![CI Rust](https://github.com/Arnime/grasp_ils_vnd_pr/actions/workflows/ci-rust.yml/badge.svg)](https://github.com/Arnime/grasp_ils_vnd_pr/actions/workflows/ci-rust.yml)
-[![Codecov (rust)](https://codecov.io/gh/Arnime/grasp_ils_vnd_pr/graph/badge.svg?flag=rust)](https://codecov.io/gh/Arnime/grasp_ils_vnd_pr/flags/rust)
+[![CI Rust](https://github.com/Arnime/givp/actions/workflows/ci-rust.yml/badge.svg)](https://github.com/Arnime/givp/actions/workflows/ci-rust.yml)
+[![Codecov (rust)](https://codecov.io/gh/Arnime/givp/graph/badge.svg?flag=rust)](https://codecov.io/gh/Arnime/givp/flags/rust)
 [![docs.rs](https://img.shields.io/docsrs/givp?cacheSeconds=300&logo=docs.rs&logoColor=white)](https://docs.rs/givp)
 [![Clippy](https://img.shields.io/badge/Linter-Clippy-E05D44?logo=rust&logoColor=white)](https://doc.rust-lang.org/clippy/)
 [![rustfmt](https://img.shields.io/badge/Formatter-rustfmt-E05D44?logo=rust&logoColor=white)](https://github.com/rust-lang/rustfmt)
@@ -31,24 +34,24 @@
 [![C++17](https://img.shields.io/badge/C%2B%2B-17-blue?logo=cplusplus&logoColor=white)](https://en.cppreference.com/w/cpp/17)
 [![vcpkg port](https://img.shields.io/badge/vcpkg-port%20staging-0078D7?logo=vcpkg&logoColor=white)](cpp/vcpkg_ports/arnime-givp/)
 [![Conan recipe](https://img.shields.io/badge/Conan-recipe%20staging-6699CC?logo=conan&logoColor=white)](cpp/conan/)
-[![CI C++](https://github.com/Arnime/grasp_ils_vnd_pr/actions/workflows/ci-cpp.yml/badge.svg)](https://github.com/Arnime/grasp_ils_vnd_pr/actions/workflows/ci-cpp.yml)
-[![Codecov (cpp)](https://codecov.io/gh/Arnime/grasp_ils_vnd_pr/graph/badge.svg?flag=cpp)](https://codecov.io/gh/Arnime/grasp_ils_vnd_pr/flags/cpp)
+[![CI C++](https://github.com/Arnime/givp/actions/workflows/ci-cpp.yml/badge.svg)](https://github.com/Arnime/givp/actions/workflows/ci-cpp.yml)
+[![Codecov (cpp)](https://codecov.io/gh/Arnime/givp/graph/badge.svg?flag=cpp)](https://codecov.io/gh/Arnime/givp/flags/cpp)
 [![clang-format](https://img.shields.io/badge/Formatter-clang--format-blue?logo=llvm&logoColor=white)](https://clang.llvm.org/docs/ClangFormat.html)
 [![clang-tidy](https://img.shields.io/badge/Linter-clang--tidy-blue?logo=llvm&logoColor=white)](https://clang.llvm.org/extra/clang-tidy/)
 
 **R** &nbsp;
 [![R Package givp](https://img.shields.io/badge/R%20Package-givp%201.0.0-276DC3?logo=r&logoColor=white)](https://arnime.r-universe.dev/givp)
 [![R](https://img.shields.io/badge/R-4.1%2B-276DC3?logo=r&logoColor=white)](https://www.r-project.org/)
-[![CI R](https://github.com/Arnime/grasp_ils_vnd_pr/actions/workflows/ci-r.yml/badge.svg)](https://github.com/Arnime/grasp_ils_vnd_pr/actions/workflows/ci-r.yml)
-[![Codecov (r)](https://codecov.io/gh/Arnime/grasp_ils_vnd_pr/graph/badge.svg?flag=r)](https://codecov.io/gh/Arnime/grasp_ils_vnd_pr/flags/r)
+[![CI R](https://github.com/Arnime/givp/actions/workflows/ci-r.yml/badge.svg)](https://github.com/Arnime/givp/actions/workflows/ci-r.yml)
+[![Codecov (r)](https://codecov.io/gh/Arnime/givp/graph/badge.svg?flag=r)](https://codecov.io/gh/Arnime/givp/flags/r)
 [![lintr](https://img.shields.io/badge/Linter-lintr-276DC3?logo=r&logoColor=white)](https://lintr.r-lib.org/)
 [![testthat](https://img.shields.io/badge/Tests-testthat-276DC3?logo=r&logoColor=white)](https://testthat.r-lib.org/)
 
 **Project** &nbsp;
-[![OpenSSF Scorecard](https://img.shields.io/ossf-scorecard/github.com/Arnime/grasp_ils_vnd_pr?cacheSeconds=300&logo=openssf&logoColor=white&label=OpenSSF%20Scorecard)](https://securityscorecards.dev/viewer/?uri=github.com/Arnime/grasp_ils_vnd_pr)
+[![OpenSSF Scorecard](https://img.shields.io/ossf-scorecard/github.com/Arnime/givp?cacheSeconds=300&logo=openssf&logoColor=white&label=OpenSSF%20Scorecard)](https://securityscorecards.dev/viewer/?uri=github.com/Arnime/givp)
 [![OpenSSF Security](https://img.shields.io/badge/OpenSSF%20Security-gold-gold)](https://www.bestpractices.dev/projects/12627)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Arnime_grasp_ils_vnd_pr&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=Arnime_grasp_ils_vnd_pr)
-[![CI SonarQube](https://github.com/Arnime/grasp_ils_vnd_pr/actions/workflows/ci-sonarqube.yml/badge.svg)](https://github.com/Arnime/grasp_ils_vnd_pr/actions/workflows/ci-sonarqube.yml)
+[![CI SonarQube](https://github.com/Arnime/givp/actions/workflows/ci-sonarqube.yml/badge.svg)](https://github.com/Arnime/givp/actions/workflows/ci-sonarqube.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?logo=open-source-initiative&logoColor=white)](https://opensource.org/licenses/MIT)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?logo=github&logoColor=white)](CONTRIBUTING.md)
 
@@ -176,8 +179,8 @@ pip install givp
 From source (editable):
 
 ```bash
-git clone https://github.com/Arnime/grasp_ils_vnd_pr.git
-cd grasp_ils_vnd_pr
+git clone https://github.com/Arnime/givp.git
+cd givp
 pip install -e .[dev]
 ```
 
@@ -186,8 +189,8 @@ Requires Python 3.10+ and NumPy.
 ### Julia installation
 
 ```bash
-git clone https://github.com/Arnime/grasp_ils_vnd_pr.git
-cd grasp_ils_vnd_pr/julia
+git clone https://github.com/Arnime/givp.git
+cd givp/julia
 julia --project=. -e 'using Pkg; Pkg.instantiate()'
 ```
 
@@ -205,8 +208,8 @@ givp = "1.0.0"
 From source:
 
 ```bash
-git clone https://github.com/Arnime/grasp_ils_vnd_pr.git
-cd grasp_ils_vnd_pr/rust
+git clone https://github.com/Arnime/givp.git
+cd givp/rust
 cargo build --release
 cargo test
 ```
@@ -220,8 +223,8 @@ The C++ port is **header-only**.
 Install with vcpkg using the repository overlay port:
 
 ```bash
-git clone https://github.com/Arnime/grasp_ils_vnd_pr.git
-vcpkg install arnime-givp --overlay-ports=./grasp_ils_vnd_pr/cpp/vcpkg_ports
+git clone https://github.com/Arnime/givp.git
+vcpkg install arnime-givp --overlay-ports=./givp/cpp/vcpkg_ports
 ```
 
 You can also publish this port in your own vcpkg custom registry and consume it
@@ -270,7 +273,7 @@ Alternatively, use CMake `FetchContent`:
 include(FetchContent)
 FetchContent_Declare(
     givp
-    GIT_REPOSITORY https://github.com/Arnime/grasp_ils_vnd_pr.git
+    GIT_REPOSITORY https://github.com/Arnime/givp.git
     GIT_TAG        v1.0.0
     SOURCE_SUBDIR  cpp
 )
@@ -334,14 +337,14 @@ Install directly from GitHub:
 
 ```r
 install.packages("remotes")
-remotes::install_github("Arnime/grasp_ils_vnd_pr", subdir = "r")
+remotes::install_github("Arnime/givp", subdir = "r")
 ```
 
 From source:
 
 ```bash
-git clone https://github.com/Arnime/grasp_ils_vnd_pr.git
-cd grasp_ils_vnd_pr
+git clone https://github.com/Arnime/givp.git
+cd givp
 R CMD INSTALL r
 ```
 
@@ -355,8 +358,8 @@ published packages).
 #### Python development (Poetry)
 
 ```bash
-git clone https://github.com/Arnime/grasp_ils_vnd_pr.git
-cd grasp_ils_vnd_pr
+git clone https://github.com/Arnime/givp.git
+cd givp
 ```
 
 Create the Poetry environment with the exact Python you want to use:
