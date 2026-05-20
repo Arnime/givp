@@ -336,6 +336,10 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.13"
+
       - name: Configure
         run: >
           cmake -S cpp -B cpp/build/benchmarks -DCMAKE_BUILD_TYPE=Release
@@ -346,6 +350,31 @@ jobs:
 
       - name: Run benchmarks (smoke)
         run: ./cpp/build/benchmarks/benchmarks/givp_benchmarks
+
+      - name: Build literature comparison benchmark
+        run: cmake --build cpp/build/benchmarks --target givp_literature_comparison -- -j4
+
+      - name: Run literature comparison smoke test
+        run: |
+          ./cpp/build/benchmarks/benchmarks/givp_literature_comparison \
+            --n-runs 2 \
+            --dims 3 \
+            --max-iter 10 \
+            --time-limit 2 \
+            --algorithms GIVP-full DE PSO GA CMA-ES SA \
+            --output cpp/benchmarks/ci_smoke_results.json
+
+      - name: Install Python report dependencies
+        run: |
+          pip install --only-binary=:all: --require-hashes -r python/requirements/benchmarks.txt
+
+      - name: Generate canonical benchmark smoke report
+        run: |
+          python python/benchmarks/generate_report.py \
+            --input cpp/benchmarks/ci_smoke_results.json \
+            --format markdown \
+            --no-plots \
+            --output-dir cpp/benchmarks
 
   conan-validate:
     name: Validate Conan Recipe

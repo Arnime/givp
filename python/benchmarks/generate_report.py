@@ -119,24 +119,24 @@ class WilcoxonRow(NamedTuple):
     significant: bool  # p < alpha
 
 
+class FriedmanRow(NamedTuple):
+    """Result of Friedman omnibus test for one benchmark function."""
+
+    function: str
+    n_blocks: int
+    n_algorithms: int
+    stat: float
+    pvalue: float
+    significant: bool
+    mean_ranks: dict[str, float]
+
+
 # ---------------------------------------------------------------------------
 # Loader
 # ---------------------------------------------------------------------------
 
 
-def load_results(path: Path) -> tuple[dict, list[RunRecord], list[SummaryRow]]:
-    """Parse the JSON output of run_literature_comparison.py.
-
-    Returns
-    -------
-    (metadata, records, summary)
-        - metadata : dict with experimental settings
-        - records  : flat list of RunRecord (one per run)
-        - summary  : pre-computed statistics per (function, algorithm)
-    """
-    raw = json.loads(path.read_text(encoding="utf-8"))
-    meta = raw["metadata"]
-
+def _parse_records_from_records(raw: dict) -> list[RunRecord]:
     records: list[RunRecord] = []
     for fn_name, fn_recs in raw["records"].items():
         for r in fn_recs:
@@ -152,8 +152,76 @@ def load_results(path: Path) -> tuple[dict, list[RunRecord], list[SummaryRow]]:
                     trace=r.get("trace"),
                 )
             )
+    return records
 
-    summary: list[SummaryRow] = [SummaryRow(**row) for row in raw.get("summary", [])]
+
+def _parse_records_from_runs(raw: dict) -> list[RunRecord]:
+    return [
+        RunRecord(
+            algorithm=r["algorithm"],
+            function=r["function"],
+            seed=r["seed"],
+            fun=r["fun"],
+            nit=r.get("nit", 0),
+            nfev=r.get("nfev", 0),
+            time_s=r.get("time_s", 0.0),
+            trace=r.get("trace"),
+        )
+        for r in raw["runs"]
+    ]
+
+
+def _synthesize_summary(records: list[RunRecord]) -> list[SummaryRow]:
+    grouped: dict[tuple[str, str], list[RunRecord]] = {}
+    for record in records:
+        grouped.setdefault((record.function, record.algorithm), []).append(record)
+
+    summary = []
+    for (function, algorithm), group in sorted(grouped.items()):
+        fun_values = np.asarray([record.fun for record in group], dtype=float)
+        nfev_values = np.asarray([record.nfev for record in group], dtype=float)
+        summary.append(
+            SummaryRow(
+                function=function,
+                algorithm=algorithm,
+                n_runs=len(group),
+                mean=float(fun_values.mean()),
+                std=float(fun_values.std(ddof=0)),
+                best=float(fun_values.min()),
+                median=float(np.median(fun_values)),
+                worst=float(fun_values.max()),
+                nfev_mean=float(nfev_values.mean()) if len(nfev_values) else 0.0,
+            )
+        )
+    return summary
+
+
+def load_results(path: Path) -> tuple[dict, list[RunRecord], list[SummaryRow]]:
+    """Parse the JSON output of run_literature_comparison.py.
+
+    Returns
+    -------
+    (metadata, records, summary)
+        - metadata : dict with experimental settings
+        - records  : flat list of RunRecord (one per run)
+        - summary  : pre-computed statistics per (function, algorithm)
+    """
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    meta = raw["metadata"]
+
+    if "records" in raw:
+        records = _parse_records_from_records(raw)
+    elif "runs" in raw:
+        records = _parse_records_from_runs(raw)
+    else:
+        msg = "Unsupported benchmark schema: expected 'records' or 'runs'"
+        raise KeyError(msg)
+
+    summary_data = raw.get("summary", [])
+    if summary_data:
+        summary = [SummaryRow(**row) for row in summary_data]
+    else:
+        summary = _synthesize_summary(records)
 
     return meta, records, summary
 
@@ -254,6 +322,110 @@ def wilcoxon_table(
     return rows
 
 
+def holm_bonferroni_correction(
+    rows: list[WilcoxonRow],
+    alpha: float = 0.05,
+) -> tuple[dict[tuple[str, str], float], dict[tuple[str, str], bool]]:
+    """Apply Holm-Bonferroni correction to Wilcoxon p-values.
+
+    Correction is applied over the full family of Wilcoxon comparisons in the
+    current report. Returns indexes keyed by (function, algorithm).
+    """
+    if not rows:
+        return {}, {}
+
+    order = sorted(range(len(rows)), key=lambda i: rows[i].pvalue)
+    m = len(rows)
+    adjusted = [1.0] * m
+    running_max = 0.0
+
+    for rank, idx in enumerate(order, start=1):
+        factor = m - rank + 1
+        adj = min(1.0, rows[idx].pvalue * factor)
+        running_max = max(running_max, adj)
+        adjusted[idx] = running_max
+
+    p_adj_idx: dict[tuple[str, str], float] = {}
+    sig_adj_idx: dict[tuple[str, str], bool] = {}
+    for i, row in enumerate(rows):
+        key = (row.function, row.algorithm)
+        p_adj_idx[key] = adjusted[i]
+        sig_adj_idx[key] = adjusted[i] < alpha
+
+    return p_adj_idx, sig_adj_idx
+
+
+def friedman_table(
+    records: list[RunRecord],
+    alpha: float = 0.05,
+) -> list[FriedmanRow]:
+    """Compute Friedman omnibus test across algorithms for each function."""
+    if not _SCIPY_OK:
+        _log.warning(
+            "[warning] scipy not installed — Friedman tests skipped.\n"
+            "          Run:  pip install scipy"
+        )
+        return []
+
+    idx: dict[tuple[str, str, int], float] = {}
+    for r in records:
+        idx[(r.function, r.algorithm, r.seed)] = r.fun
+
+    functions = sorted({r.function for r in records})
+    algorithms = sorted({r.algorithm for r in records})
+    out: list[FriedmanRow] = []
+
+    for fn_name in functions:
+        seeds_by_algo: dict[str, set[int]] = {
+            algo: {s for (fn, a, s) in idx if fn == fn_name and a == algo}
+            for algo in algorithms
+        }
+        if not seeds_by_algo:
+            continue
+
+        common_seeds = (
+            set.intersection(*seeds_by_algo.values()) if seeds_by_algo else set()
+        )
+        if len(common_seeds) < 2 or len(algorithms) < 3:
+            continue
+
+        common_seed_list = sorted(common_seeds)
+        samples = [
+            np.asarray([idx[(fn_name, algo, s)] for s in common_seed_list], dtype=float)
+            for algo in algorithms
+        ]
+        _stat, _pvalue = _scipy_stats.friedmanchisquare(*samples)
+        stat = float(_stat)  # type: ignore[arg-type]
+        pvalue = float(_pvalue)  # type: ignore[arg-type]
+
+        rank_matrix = np.vstack(
+            [
+                _scipy_stats.rankdata(
+                    [idx[(fn_name, algo, s)] for algo in algorithms],
+                    method="average",
+                )
+                for s in common_seed_list
+            ]
+        )
+        mean_ranks = {
+            algo: float(rank_matrix[:, i].mean()) for i, algo in enumerate(algorithms)
+        }
+
+        out.append(
+            FriedmanRow(
+                function=fn_name,
+                n_blocks=len(common_seed_list),
+                n_algorithms=len(algorithms),
+                stat=stat,
+                pvalue=pvalue,
+                significant=pvalue < alpha,
+                mean_ranks=mean_ranks,
+            )
+        )
+
+    return out
+
+
 # ---------------------------------------------------------------------------
 # Console / Markdown / LaTeX table generators
 # ---------------------------------------------------------------------------
@@ -264,10 +436,86 @@ def _fmt_mean_std(mean: float, std: float) -> str:
     return f"{mean:.4e} ± {std:.4e}"
 
 
+def _sig_marker(sig_raw: bool, sig_holm: bool) -> str:
+    """Return significance marker prioritizing Holm-corrected significance."""
+    if sig_holm:
+        return "★H"
+    if sig_raw:
+        return "★"
+    return "—"
+
+
+def _pvalue_display(
+    fn_name: str,
+    algorithm: str,
+    pval_idx: dict[tuple[str, str], float],
+    ref_label: str,
+) -> str:
+    """Return display string for p-value if present, otherwise reference label."""
+    key = (fn_name, algorithm)
+    if key in pval_idx:
+        return f"{pval_idx[key]:.4f}"
+    return ref_label
+
+
+def _console_function_rows(
+    fn_name: str,
+    summary: list[SummaryRow],
+    pval_idx: dict[tuple[str, str], float],
+    sig_idx: dict[tuple[str, str], bool],
+    holm_p_idx: dict[tuple[str, str], float],
+    holm_sig_idx: dict[tuple[str, str], bool],
+    col: int,
+) -> None:
+    """Print one function block in the console summary."""
+    print(f"  ─── {fn_name} ───")
+    print(
+        f"  {'Algorithm':<{col}} {'Mean':>14} {'Std':>14} "
+        f"{'Best':>14} {'Median':>14} {'p':>8} {'p(Holm)':>10} {'Sig':>5}"
+    )
+    print("  " + "─" * (col + 14 * 4 + 8 + 10 + 5 + 8))
+    for row in (r for r in summary if r.function == fn_name):
+        key = (fn_name, row.algorithm)
+        pval_str_raw = _pvalue_display(fn_name, row.algorithm, pval_idx, "  ref")
+        pval_str_holm = _pvalue_display(fn_name, row.algorithm, holm_p_idx, "  ref")
+        sig_str = _sig_marker(sig_idx.get(key, False), holm_sig_idx.get(key, False))
+        print(
+            f"  {row.algorithm:<{col}} "
+            f"{row.mean:>14.4e} {row.std:>14.4e} "
+            f"{row.best:>14.4e} {row.median:>14.4e} "
+            f"{pval_str_raw:>8} {pval_str_holm:>10} {sig_str:>5}"
+        )
+    print()
+
+
+def _console_friedman_rows(friedman: list[FriedmanRow], col: int) -> None:
+    """Print Friedman omnibus section in console output."""
+    if not friedman:
+        return
+    print("  ─── Friedman Omnibus (per function) ───")
+    print(
+        f"  {'Function':<{col}} {'Blocks':>8} {'k':>4} {'chi2':>10} {'p-value':>10} {'Sig':>5}"
+    )
+    print("  " + "─" * (col + 8 + 4 + 10 + 10 + 5 + 10))
+    for row in friedman:
+        sig_str = "★" if row.significant else "—"
+        print(
+            f"  {row.function:<{col}} {row.n_blocks:>8d} {row.n_algorithms:>4d} "
+            f"{row.stat:>10.4f} {row.pvalue:>10.4f} {sig_str:>5}"
+        )
+    print()
+
+
 def print_console_summary(
-    summary: list[SummaryRow], wilcoxon: list[WilcoxonRow]
+    summary: list[SummaryRow],
+    wilcoxon: list[WilcoxonRow],
+    holm_p_idx: dict[tuple[str, str], float] | None = None,
+    holm_sig_idx: dict[tuple[str, str], bool] | None = None,
+    friedman: list[FriedmanRow] | None = None,
 ) -> None:
     """Print a human-readable summary table to stdout."""
+    holm_p_idx = holm_p_idx or {}
+    holm_sig_idx = holm_sig_idx or {}
     pval_idx: dict[tuple[str, str], float] = {
         (r.function, r.algorithm): r.pvalue for r in wilcoxon
     }
@@ -280,39 +528,102 @@ def print_console_summary(
 
     print()
     for fn_name in functions:
-        print(f"  ─── {fn_name} ───")
-        print(
-            f"  {'Algorithm':<{col}} {'Mean':>14} {'Std':>14} "
-            f"{'Best':>14} {'Median':>14} {'p-value':>10} {'Sig':>5}"
+        _console_function_rows(
+            fn_name,
+            summary,
+            pval_idx,
+            sig_idx,
+            holm_p_idx,
+            holm_sig_idx,
+            col,
         )
-        print("  " + "─" * (col + 14 * 4 + 10 + 5 + 6))
-        for row in summary:
-            if row.function != fn_name:
-                continue
-            pval_str = (
-                f"{pval_idx[(fn_name, row.algorithm)]:.4f}"
-                if (fn_name, row.algorithm) in pval_idx
-                else "  ref"
-            )
-            sig_str = "★" if sig_idx.get((fn_name, row.algorithm)) else "—"
-            print(
-                f"  {row.algorithm:<{col}} "
-                f"{row.mean:>14.4e} {row.std:>14.4e} "
-                f"{row.best:>14.4e} {row.median:>14.4e} "
-                f"{pval_str:>10} {sig_str:>5}"
-            )
-        print()
+
+    _console_friedman_rows(friedman or [], col)
+
+
+def _markdown_function_table(
+    fn_name: str,
+    summary: list[SummaryRow],
+    pval_idx: dict[tuple[str, str], float],
+    sig_idx: dict[tuple[str, str], bool],
+    holm_p_idx: dict[tuple[str, str], float],
+    holm_sig_idx: dict[tuple[str, str], bool],
+    ref_note: str,
+) -> list[str]:
+    """Build markdown lines for a single function summary table."""
+    lines: list[str] = []
+    lines.append(f"### {fn_name}")
+    if ref_note:
+        lines.append(f"*Reference: {ref_note}*  ")
+    lines.append("")
+    lines.append(
+        "| Algorithm | Mean ± Std | Best | Median | Worst | "
+        "NFev (mean) | p-value | p-value (Holm) | Sig |"
+    )
+    lines.append(
+        "|-----------|------------|------|--------|-------|"
+        "------------|---------|----------------|-----|"
+    )
+    for row in (r for r in summary if r.function == fn_name):
+        key = (fn_name, row.algorithm)
+        pval_str_raw = _pvalue_display(fn_name, row.algorithm, pval_idx, "*(ref)*")
+        pval_str_holm = _pvalue_display(fn_name, row.algorithm, holm_p_idx, "*(ref)*")
+        sig_str = _sig_marker(sig_idx.get(key, False), holm_sig_idx.get(key, False))
+        lines.append(
+            f"| {row.algorithm} "
+            f"| {_fmt_mean_std(row.mean, row.std)} "
+            f"| {row.best:.4e} "
+            f"| {row.median:.4e} "
+            f"| {row.worst:.4e} "
+            f"| {int(row.nfev_mean)} "
+            f"| {pval_str_raw} "
+            f"| {pval_str_holm} "
+            f"| {sig_str} |"
+        )
+    lines.append("")
+    return lines
+
+
+def _markdown_friedman_table(friedman: list[FriedmanRow]) -> list[str]:
+    """Build markdown lines for Friedman omnibus section."""
+    if not friedman:
+        return []
+    lines: list[str] = []
+    lines.append("## Friedman Omnibus Test")
+    lines.append("")
+    lines.append(
+        "| Function | Blocks | k | chi2 | p-value | Sig | Mean ranks (lower is better) |"
+    )
+    lines.append(
+        "|----------|--------|---|------|---------|-----|-------------------------------|"
+    )
+    for row in friedman:
+        sig_str = "★" if row.significant else "—"
+        ranks_str = ", ".join(
+            f"{algo}={rank:.2f}" for algo, rank in sorted(row.mean_ranks.items())
+        )
+        lines.append(
+            f"| {row.function} | {row.n_blocks} | {row.n_algorithms} | {row.stat:.4f} "
+            f"| {row.pvalue:.4f} | {sig_str} | {ranks_str} |"
+        )
+    lines.append("")
+    return lines
 
 
 def to_markdown(
     summary: list[SummaryRow],
     wilcoxon: list[WilcoxonRow],
     meta: dict,
+    holm_p_idx: dict[tuple[str, str], float] | None = None,
+    holm_sig_idx: dict[tuple[str, str], bool] | None = None,
+    friedman: list[FriedmanRow] | None = None,
 ) -> str:
     """Return a Markdown string with one table per benchmark function.
 
     Suitable for pasting into README.md or paper supplementary material.
     """
+    holm_p_idx = holm_p_idx or {}
+    holm_sig_idx = holm_sig_idx or {}
     pval_idx = {(r.function, r.algorithm): r.pvalue for r in wilcoxon}
     sig_idx = {(r.function, r.algorithm): r.significant for r in wilcoxon}
 
@@ -329,42 +640,23 @@ def to_markdown(
 
     functions = list(dict.fromkeys(r.function for r in summary))
     algo_descriptions = meta.get("algo_descriptions", {})
+    ref = meta.get("reference_algorithm", "GIVP-full")
 
     for fn_name in functions:
-        ref = meta.get("reference_algorithm", "GIVP-full")
         ref_note = meta.get("problem_references", {}).get(fn_name, "")
-        lines.append(f"### {fn_name}")
-        if ref_note:
-            lines.append(f"*Reference: {ref_note}*  ")
-        lines.append("")
-        lines.append(
-            "| Algorithm | Mean ± Std | Best | Median | Worst | "
-            "NFev (mean) | p-value | Sig |"
-        )
-        lines.append(
-            "|-----------|------------|------|--------|-------|"
-            "------------|---------|-----|"
-        )
-        for row in summary:
-            if row.function != fn_name:
-                continue
-            pval_str = (
-                f"{pval_idx[(fn_name, row.algorithm)]:.4f}"
-                if (fn_name, row.algorithm) in pval_idx
-                else "*(ref)*"
+        lines.extend(
+            _markdown_function_table(
+                fn_name,
+                summary,
+                pval_idx,
+                sig_idx,
+                holm_p_idx,
+                holm_sig_idx,
+                ref_note,
             )
-            sig_str = "★" if sig_idx.get((fn_name, row.algorithm)) else "—"
-            lines.append(
-                f"| {row.algorithm} "
-                f"| {_fmt_mean_std(row.mean, row.std)} "
-                f"| {row.best:.4e} "
-                f"| {row.median:.4e} "
-                f"| {row.worst:.4e} "
-                f"| {int(row.nfev_mean)} "
-                f"| {pval_str} "
-                f"| {sig_str} |"
-            )
-        lines.append("")
+        )
+
+    lines.extend(_markdown_friedman_table(friedman or []))
 
     # Algorithm legend
     lines.append("**Algorithm descriptions:**")
@@ -376,38 +668,86 @@ def to_markdown(
         "★ p < 0.05 (Wilcoxon signed-rank test, two-sided) — "
         f"significantly different from *{ref}*."
     )
+    lines.append("★H p(Holm) < 0.05 after Holm-Bonferroni correction.")
 
     return "\n".join(lines)
 
 
 _LATEX_MIDRULE = r"\midrule"
+_LATEX_TOPRULE = r"\toprule"
+_LATEX_BOTTOMRULE = r"\bottomrule"
+_LATEX_END_TABULAR = r"\end{tabular}"
 
 
 def _latex_wilcoxon_subtable(
-    wilcoxon: list[WilcoxonRow], _esc: Callable[[str], str]
+    wilcoxon: list[WilcoxonRow],
+    _esc: Callable[[str], str],
+    holm_p_idx: dict[tuple[str, str], float] | None = None,
+    holm_sig_idx: dict[tuple[str, str], bool] | None = None,
 ) -> list[str]:
     """Build the Wilcoxon significance sub-table lines for the LaTeX report."""
+    holm_p_idx = holm_p_idx or {}
+    holm_sig_idx = holm_sig_idx or {}
     lines: list[str] = []
     lines.append("")
     lines.append(r"\medskip")
-    lines.append(r"\begin{tabular}{llrrr}")
-    lines.append(r"\toprule")
-    lines.append(r"Function & Challenger & $W$ & $p$-value & $r$ (effect) \\")
+    lines.append(r"\begin{tabular}{llrrrr}")
+    lines.append(_LATEX_TOPRULE)
+    lines.append(r"Function & Challenger & $W$ & $p$ & $p_{Holm}$ & $r$ (effect) \\")
     lines.append(_LATEX_MIDRULE)
     for w in wilcoxon:
-        sig = r"$^\star$" if w.significant else ""
+        key = (w.function, w.algorithm)
+        sig = ""
+        if holm_sig_idx.get(key, False):
+            sig = r"$^{\star H}$"
+        elif w.significant:
+            sig = r"$^\star$"
+        p_holm = holm_p_idx.get(key)
+        p_holm_str = f"{p_holm:.4f}" if p_holm is not None else "--"
         lines.append(
             f"  {w.function} & {_esc(w.algorithm)}{sig} "
             f"& {w.stat:.1f} "
             f"& {w.pvalue:.4f} "
+            f"& {p_holm_str} "
             f"& {w.effect_r:.3f} \\\\"
         )
-    lines.append(r"\bottomrule")
-    lines.append(r"\end{tabular}")
+    lines.append(_LATEX_BOTTOMRULE)
+    lines.append(_LATEX_END_TABULAR)
     lines.append(
         r"\\ \footnotesize{$W$: Wilcoxon test statistic; "
         r"$r$: rank-biserial correlation (effect size); "
-        r"$^\star$: $p < 0.05$.}"
+        r"$^\star$: raw $p < 0.05$; "
+        r"$^{\star H}$: Holm-corrected $p < 0.05$.}"
+    )
+    return lines
+
+
+def _latex_friedman_subtable(
+    friedman: list[FriedmanRow],
+    _esc: Callable[[str], str],
+) -> list[str]:
+    """Build Friedman omnibus sub-table lines for the LaTeX report."""
+    lines: list[str] = []
+    lines.append("")
+    lines.append(r"\medskip")
+    lines.append(r"\begin{tabular}{lrrrl}")
+    lines.append(_LATEX_TOPRULE)
+    lines.append(
+        r"Function & Blocks & $k$ & $\chi^2_F$ & Mean ranks (lower is better) \\"
+    )
+    lines.append(_LATEX_MIDRULE)
+    for row in friedman:
+        ranks_str = "; ".join(
+            f"{_esc(algo)}={rank:.2f}" for algo, rank in sorted(row.mean_ranks.items())
+        )
+        lines.append(
+            f"  {_esc(row.function)} & {row.n_blocks} & {row.n_algorithms} "
+            f"& {row.stat:.4f} & {ranks_str} \\\\"
+        )
+    lines.append(_LATEX_BOTTOMRULE)
+    lines.append(_LATEX_END_TABULAR)
+    lines.append(
+        r"\\ \footnotesize{Friedman omnibus test across all algorithms per function.}"
     )
     return lines
 
@@ -416,13 +756,22 @@ def to_latex(
     summary: list[SummaryRow],
     wilcoxon: list[WilcoxonRow],
     meta: dict,
+    holm_p_idx: dict[tuple[str, str], float] | None = None,
+    holm_sig_idx: dict[tuple[str, str], bool] | None = None,
+    friedman: list[FriedmanRow] | None = None,
 ) -> str:
     """Return a LaTeX string with a booktabs comparison table.
 
     Designed for SBPO / BRACIS paper submissions (A4, two-column or single).
     Requires: \\usepackage{booktabs} in the preamble.
     """
-    sig_idx = {(r.function, r.algorithm): r.significant for r in wilcoxon}
+    holm_sig_idx = holm_sig_idx or {}
+    sig_idx = {
+        (r.function, r.algorithm): holm_sig_idx.get(
+            (r.function, r.algorithm), r.significant
+        )
+        for r in wilcoxon
+    }
 
     dims = meta.get("dims", "?")
     n_runs = meta.get("n_runs", "?")
@@ -445,12 +794,13 @@ def to_latex(
         r"\caption{Comparison of optimization algorithms on standard benchmark functions "
         f"($n={dims}$ variables, {n_runs} independent runs per cell). "
         r"Mean $\pm$ std over all runs. "
-        r"$^\star$ denotes $p < 0.05$ (Wilcoxon signed-rank, two-sided) "
+        r"$^\star$ denotes Holm-corrected $p < 0.05$ "
+        r"(Wilcoxon signed-rank, two-sided) "
         f"vs.\\ \\texttt{{{_esc(ref)}}}.}}"
     )
     lines.append(r"\label{tab:benchmark_comparison}")
     lines.append(r"\begin{tabular}{ll" + "r" * 4 + r"}")
-    lines.append(r"\toprule")
+    lines.append(_LATEX_TOPRULE)
     lines.append(r"Function & Algorithm & Mean & Std & Best & Median \\")
     lines.append(_LATEX_MIDRULE)
 
@@ -473,11 +823,14 @@ def to_latex(
         lines.append(_LATEX_MIDRULE)
 
     # Replace last \midrule with \bottomrule
-    lines[-1] = r"\bottomrule"
-    lines.append(r"\end{tabular}")
+    lines[-1] = _LATEX_BOTTOMRULE
+    lines.append(_LATEX_END_TABULAR)
 
     if wilcoxon:
-        lines.extend(_latex_wilcoxon_subtable(wilcoxon, _esc))
+        lines.extend(_latex_wilcoxon_subtable(wilcoxon, _esc, holm_p_idx, holm_sig_idx))
+
+    if friedman:
+        lines.extend(_latex_friedman_subtable(friedman, _esc))
 
     lines.append(r"\end{table}")
 
@@ -710,6 +1063,16 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Significance level for Wilcoxon tests (default: 0.05).",
     )
     p.add_argument(
+        "--no-holm",
+        action="store_true",
+        help="Disable Holm-Bonferroni correction in reported p-values.",
+    )
+    p.add_argument(
+        "--no-friedman",
+        action="store_true",
+        help="Disable Friedman omnibus test section in reports.",
+    )
+    p.add_argument(
         "--trace-seed",
         type=int,
         default=0,
@@ -765,6 +1128,12 @@ def main(argv: list[str] | None = None) -> int:
 
     # Wilcoxon tests
     wrows = wilcoxon_table(records, reference=reference, alpha=args.alpha)
+    holm_p_idx, holm_sig_idx = (
+        ({}, {})
+        if args.no_holm
+        else holm_bonferroni_correction(wrows, alpha=args.alpha)
+    )
+    frows = [] if args.no_friedman else friedman_table(records, alpha=args.alpha)
     _log.debug(
         "Wilcoxon: %d significant pairs out of %d",
         sum(w.significant for w in wrows),
@@ -772,7 +1141,7 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     # Console summary
-    print_console_summary(summary, wrows)
+    print_console_summary(summary, wrows, holm_p_idx, holm_sig_idx, frows)
 
     if not _SCIPY_OK:
         _log.warning(
@@ -787,14 +1156,20 @@ def main(argv: list[str] | None = None) -> int:
         md_path = out_dir / f"{stem}_report.md"
         md_path.parent.mkdir(parents=True, exist_ok=True)
         meta["reference_algorithm"] = reference
-        md_path.write_text(to_markdown(summary, wrows, meta), encoding="utf-8")
+        md_path.write_text(
+            to_markdown(summary, wrows, meta, holm_p_idx, holm_sig_idx, frows),
+            encoding="utf-8",
+        )
         _log.info("Markdown table → %s", md_path)
 
     # LaTeX
     if args.format in ("latex", "both"):
         tex_path = out_dir / f"{stem}_report.tex"
         tex_path.parent.mkdir(parents=True, exist_ok=True)
-        tex_path.write_text(to_latex(summary, wrows, meta), encoding="utf-8")
+        tex_path.write_text(
+            to_latex(summary, wrows, meta, holm_p_idx, holm_sig_idx, frows),
+            encoding="utf-8",
+        )
         _log.info("LaTeX table    → %s", tex_path)
 
     # Plots

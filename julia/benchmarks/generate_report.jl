@@ -160,6 +160,16 @@ struct WilcoxonRow
     significant::Bool
 end
 
+struct FriedmanRow
+    func::String
+    n_blocks::Int
+    n_algorithms::Int
+    stat::Float64
+    pvalue::Float64
+    significant::Bool
+    mean_ranks::Dict{String, Float64}
+end
+
 # ── Loader ────────────────────────────────────────────────────────────────────
 
 """Load JSON output of run_literature_comparison.jl.
@@ -278,6 +288,107 @@ function compute_wilcoxon(
         end
     end
     return rows
+end
+
+function _average_ranks(values::Vector{Float64})::Vector{Float64}
+    n = length(values)
+    order = sortperm(values)
+    ranks = zeros(Float64, n)
+    i = 1
+    while i <= n
+        j = i
+        while j < n && values[order[j + 1]] ≈ values[order[i]]
+            j += 1
+        end
+        avg_rank = (i + j) / 2.0
+        for k in i:j
+            ranks[order[k]] = avg_rank
+        end
+        i = j + 1
+    end
+    return ranks
+end
+
+function _chi_square_pvalue_approx(stat::Float64, df::Int)::Float64
+    # Wilson-Hilferty approximation for chi-square upper-tail p-value.
+    if df <= 0
+        return 1.0
+    end
+    v = Float64(df)
+    z = ((stat / v)^(1 / 3) - (1.0 - 2.0 / (9.0 * v))) / sqrt(2.0 / (9.0 * v))
+    return 1.0 - _normal_cdf(z)
+end
+
+function compute_friedman(
+    records::Vector{RunRecord};
+    alpha::Float64 = 0.05,
+)::Vector{FriedmanRow}
+    idx = Dict{Tuple{String, String, Int}, Float64}()
+    for r in records
+        idx[(r.func, r.algorithm, r.seed)] = r.fun
+    end
+
+    functions = sort(unique(r.func for r in records))
+    algorithms = sort(unique(r.algorithm for r in records))
+    out = FriedmanRow[]
+
+    for fn in functions
+        seed_sets = [
+            Set(s for (f, a, s) in keys(idx) if f == fn && a == algo) for algo in algorithms
+        ]
+        isempty(seed_sets) && continue
+        common_seeds = reduce(intersect, seed_sets)
+        n = length(common_seeds)
+        k = length(algorithms)
+        if n < 2 || k < 3
+            continue
+        end
+
+        seed_list = sort(collect(common_seeds))
+        rank_sums = zeros(Float64, k)
+        for s in seed_list
+            vals = [idx[(fn, algo, s)] for algo in algorithms]
+            ranks = _average_ranks(vals)
+            rank_sums .+= ranks
+        end
+
+        stat = (12.0 / (n * k * (k + 1.0))) * sum(rank_sums .^ 2) - 3.0 * n * (k + 1.0)
+        pval = _chi_square_pvalue_approx(stat, k - 1)
+        mean_ranks = Dict(algo => rank_sums[i] / n for (i, algo) in enumerate(algorithms))
+        push!(out, FriedmanRow(fn, n, k, stat, pval, pval < alpha, mean_ranks))
+    end
+
+    return out
+end
+
+function holm_bonferroni_correction(
+    rows::Vector{WilcoxonRow};
+    alpha::Float64 = 0.05,
+)::Tuple{Dict{Tuple{String, String}, Float64}, Dict{Tuple{String, String}, Bool}}
+    isempty(rows) &&
+        return Dict{Tuple{String, String}, Float64}(), Dict{Tuple{String, String}, Bool}()
+
+    order = sortperm(rows; by = x -> x.pvalue)
+    m = length(rows)
+    adjusted = fill(1.0, m)
+    running_max = 0.0
+
+    for (rank, idx) in enumerate(order)
+        factor = m - rank + 1
+        adj = min(1.0, rows[idx].pvalue * factor)
+        running_max = max(running_max, adj)
+        adjusted[idx] = running_max
+    end
+
+    p_adj_idx = Dict{Tuple{String, String}, Float64}()
+    sig_adj_idx = Dict{Tuple{String, String}, Bool}()
+    for (i, row) in enumerate(rows)
+        key = (row.func, row.algorithm)
+        p_adj_idx[key] = adjusted[i]
+        sig_adj_idx[key] = adjusted[i] < alpha
+    end
+
+    return p_adj_idx, sig_adj_idx
 end
 
 # ── Convergence analysis ──────────────────────────────────────────────────────
@@ -484,7 +595,16 @@ end
 _fmt_sci(x::Float64) = @sprintf("%.4e", x)
 _fmt_mean_std(m, s) = @sprintf("%.4e ± %.4e", m, s)
 
-function print_console_summary(summary::Vector{SummaryRow}, wilcoxon::Vector{WilcoxonRow})
+function print_console_summary(
+    summary::Vector{SummaryRow},
+    wilcoxon::Vector{WilcoxonRow},
+    holm_p_idx::Dict{Tuple{String, String}, Float64} = Dict{
+        Tuple{String, String},
+        Float64,
+    }(),
+    holm_sig_idx::Dict{Tuple{String, String}, Bool} = Dict{Tuple{String, String}, Bool}(),
+    friedman::Vector{FriedmanRow} = FriedmanRow[],
+)
     pval_idx = Dict((w.func, w.algorithm) => w.pvalue for w in wilcoxon)
     sig_idx = Dict((w.func, w.algorithm) => w.significant for w in wilcoxon)
 
@@ -495,30 +615,64 @@ function print_console_summary(summary::Vector{SummaryRow}, wilcoxon::Vector{Wil
     for fn in functions
         println("  ─── $fn ───")
         @printf(
-            "  %-16s %14s %14s %14s %14s %10s %5s\n",
+            "  %-16s %14s %14s %14s %14s %8s %10s %5s\n",
             "Algorithm",
             "Mean",
             "Std",
             "Best",
             "Median",
-            "p-value",
+            "p",
+            "p(Holm)",
             "Sig"
         )
-        println("  " * "─"^(col + 14 * 4 + 10 + 5 + 6))
+        println("  " * "─"^(col + 14 * 4 + 8 + 10 + 5 + 8))
         for row in filter(r -> r.func == fn, summary)
             pval_str =
                 haskey(pval_idx, (fn, row.algorithm)) ?
                 @sprintf("%.4f", pval_idx[(fn, row.algorithm)]) : "  ref"
-            sig_str = get(sig_idx, (fn, row.algorithm), false) ? "★" : "—"
+            pval_holm_str =
+                haskey(holm_p_idx, (fn, row.algorithm)) ?
+                @sprintf("%.4f", holm_p_idx[(fn, row.algorithm)]) : "  ref"
+            sig_raw = get(sig_idx, (fn, row.algorithm), false)
+            sig_holm = get(holm_sig_idx, (fn, row.algorithm), false)
+            sig_str = sig_holm ? "★H" : (sig_raw ? "★" : "—")
             @printf(
-                "  %-16s %14s %14s %14s %14s %10s %5s\n",
+                "  %-16s %14s %14s %14s %14s %8s %10s %5s\n",
                 row.algorithm,
                 _fmt_sci(row.mean_val),
                 _fmt_sci(row.std_val),
                 _fmt_sci(row.best),
                 _fmt_sci(row.median_val),
                 pval_str,
+                pval_holm_str,
                 sig_str
+            )
+        end
+        println()
+    end
+
+    if !isempty(friedman)
+        println("  ─── Friedman Omnibus (per function) ───")
+        @printf(
+            "  %-16s %8s %4s %10s %10s %5s\n",
+            "Function",
+            "Blocks",
+            "k",
+            "chi2",
+            "p-value",
+            "Sig"
+        )
+        println("  " * "─"^(16 + 8 + 4 + 10 + 10 + 5 + 10))
+        for row in friedman
+            sig = row.significant ? "★" : "—"
+            @printf(
+                "  %-16s %8d %4d %10.4f %10.4f %5s\n",
+                row.func,
+                row.n_blocks,
+                row.n_algorithms,
+                row.stat,
+                row.pvalue,
+                sig,
             )
         end
         println()
@@ -529,6 +683,12 @@ function to_markdown(
     summary::Vector{SummaryRow},
     wilcoxon::Vector{WilcoxonRow},
     meta::Dict,
+    holm_p_idx::Dict{Tuple{String, String}, Float64} = Dict{
+        Tuple{String, String},
+        Float64,
+    }(),
+    holm_sig_idx::Dict{Tuple{String, String}, Bool} = Dict{Tuple{String, String}, Bool}(),
+    friedman::Vector{FriedmanRow} = FriedmanRow[],
 )::String
     pval_idx = Dict((w.func, w.algorithm) => w.pvalue for w in wilcoxon)
     sig_idx = Dict((w.func, w.algorithm) => w.significant for w in wilcoxon)
@@ -551,17 +711,22 @@ function to_markdown(
         push!(lines, "")
         push!(
             lines,
-            "| Algorithm | Mean ± Std | Best | Median | Worst | NFev (mean) | p-value | Sig |",
+            "| Algorithm | Mean ± Std | Best | Median | Worst | NFev (mean) | p-value | p-value (Holm) | Sig |",
         )
         push!(
             lines,
-            "|-----------|------------|------|--------|-------|-------------|---------|-----|",
+            "|-----------|------------|------|--------|-------|-------------|---------|----------------|-----|",
         )
         for row in filter(r -> r.func == fn, summary)
             pval_str =
                 haskey(pval_idx, (fn, row.algorithm)) ?
                 @sprintf("%.4f", pval_idx[(fn, row.algorithm)]) : "*(ref)*"
-            sig_str = get(sig_idx, (fn, row.algorithm), false) ? "★" : "—"
+            pval_holm_str =
+                haskey(holm_p_idx, (fn, row.algorithm)) ?
+                @sprintf("%.4f", holm_p_idx[(fn, row.algorithm)]) : "*(ref)*"
+            sig_raw = get(sig_idx, (fn, row.algorithm), false)
+            sig_holm = get(holm_sig_idx, (fn, row.algorithm), false)
+            sig_str = sig_holm ? "★H" : (sig_raw ? "★" : "—")
             push!(
                 lines,
                 "| $(row.algorithm) " *
@@ -571,7 +736,34 @@ function to_markdown(
                 "| $(_fmt_sci(row.worst)) " *
                 "| $(Int(round(row.nfev_mean))) " *
                 "| $pval_str " *
+                "| $pval_holm_str " *
                 "| $sig_str |",
+            )
+        end
+        push!(lines, "")
+    end
+
+    if !isempty(friedman)
+        push!(lines, "## Friedman Omnibus Test")
+        push!(lines, "")
+        push!(
+            lines,
+            "| Function | Blocks | k | chi2 | p-value | Sig | Mean ranks (lower is better) |",
+        )
+        push!(
+            lines,
+            "|----------|--------|---|------|---------|-----|-------------------------------|",
+        )
+        for row in friedman
+            sig = row.significant ? "★" : "—"
+            ranks = join(
+                ["$(k)=$(@sprintf("%.2f", v))" for (k, v) in sort(collect(row.mean_ranks))],
+                ", ",
+            )
+            push!(
+                lines,
+                "| $(row.func) | $(row.n_blocks) | $(row.n_algorithms) | $(@sprintf("%.4f", row.stat)) | " *
+                "$(@sprintf("%.4f", row.pvalue)) | $sig | $ranks |",
             )
         end
         push!(lines, "")
@@ -581,6 +773,7 @@ function to_markdown(
         lines,
         "★ p < 0.05 (Wilcoxon signed-rank test, two-sided) — significantly different from *$reference*.",
     )
+    push!(lines, "★H p(Holm) < 0.05 after Holm-Bonferroni correction.")
     return join(lines, "\n")
 end
 
@@ -595,8 +788,17 @@ function to_latex(
     summary::Vector{SummaryRow},
     wilcoxon::Vector{WilcoxonRow},
     meta::Dict,
+    holm_p_idx::Dict{Tuple{String, String}, Float64} = Dict{
+        Tuple{String, String},
+        Float64,
+    }(),
+    holm_sig_idx::Dict{Tuple{String, String}, Bool} = Dict{Tuple{String, String}, Bool}(),
+    friedman::Vector{FriedmanRow} = FriedmanRow[],
 )::String
-    sig_idx = Dict((w.func, w.algorithm) => w.significant for w in wilcoxon)
+    sig_idx = Dict(
+        (w.func, w.algorithm) =>
+            get(holm_sig_idx, (w.func, w.algorithm), w.significant) for w in wilcoxon
+    )
 
     dims = get(meta, "dims", "?")
     n_runs = get(meta, "n_runs", "?")
@@ -615,7 +817,7 @@ function to_latex(
         "\\caption{Comparison of optimization algorithms on standard benchmark functions " *
         "(\$n=$dims\$ variables, $n_runs independent runs per cell). " *
         "Mean \$\\pm\$ std over all runs. " *
-        "\$^\\star\$ denotes \$p < 0.05\$ (Wilcoxon signed-rank, two-sided) " *
+        "\$^\\star\$ denotes Holm-corrected \$p < 0.05\$ (Wilcoxon signed-rank, two-sided) " *
         "vs.\\ \\texttt{$(_latex_esc(reference))}.}}",
     )
     push!(lines, "\\label{tab:benchmark_comparison_julia}")
@@ -652,17 +854,26 @@ function to_latex(
     if !isempty(wilcoxon)
         push!(lines, "")
         push!(lines, "\\medskip")
-        push!(lines, "\\begin{tabular}{llrrr}")
+        push!(lines, "\\begin{tabular}{llrrrr}")
         push!(lines, "\\toprule")
-        push!(lines, "Function & Challenger & \$W\$ & \$p\$-value & \$r\$ (effect) \\\\")
+        push!(
+            lines,
+            "Function & Challenger & \$W\$ & \$p\$ & \$p_{Holm}\$ & \$r\$ (effect) " *
+            "\\\\",
+        )
         push!(lines, "\\midrule")
         for w in wilcoxon
-            sig = w.significant ? "\$^\\star\$" : ""
+            key = (w.func, w.algorithm)
+            sig =
+                get(holm_sig_idx, key, false) ? "\$^{\\star H}\$" :
+                (w.significant ? "\$^\\star\$" : "")
+            p_holm = haskey(holm_p_idx, key) ? @sprintf("%.4f", holm_p_idx[key]) : "--"
             push!(
                 lines,
                 "  $(w.func) & $(_latex_esc(w.algorithm))$sig " *
                 "& $(@sprintf("%.1f", w.stat)) " *
                 "& $(@sprintf("%.4f", w.pvalue)) " *
+                "& $p_holm " *
                 "& $(@sprintf("%.3f", w.effect_r)) \\\\",
             )
         end
@@ -672,7 +883,42 @@ function to_latex(
             lines,
             "\\\\ \\footnotesize{\$W\$: Wilcoxon test statistic; " *
             "\$r\$: rank-biserial correlation (effect size); " *
-            "\$^\\star\$: \$p < 0.05\$.}",
+            "\$^\\star\$: raw \$p < 0.05\$; " *
+            "\$^{\\star H}\$: Holm-corrected \$p < 0.05\$.}",
+        )
+    end
+
+    if !isempty(friedman)
+        push!(lines, "")
+        push!(lines, "\\medskip")
+        push!(lines, "\\begin{tabular}{lrrrl}")
+        push!(lines, "\\toprule")
+        push!(
+            lines,
+            "Function & Blocks & \$k\$ & \$\\chi^2_F\$ & Mean ranks (lower is better) " *
+            "\\\\",
+        )
+        push!(lines, "\\midrule")
+        for row in friedman
+            ranks = join(
+                [
+                    "$(_latex_esc(k))=$(@sprintf("%.2f", v))" for
+                    (k, v) in sort(collect(row.mean_ranks))
+                ],
+                "; ",
+            )
+            push!(
+                lines,
+                "  $(_latex_esc(row.func)) & $(row.n_blocks) & $(row.n_algorithms) & " *
+                "$(@sprintf("%.4f", row.stat)) & $ranks " *
+                "\\\\",
+            )
+        end
+        push!(lines, "\\bottomrule")
+        push!(lines, "\\end{tabular}")
+        push!(
+            lines,
+            "\\\\ \\footnotesize{Friedman omnibus test across all algorithms per function.}",
         )
     end
 
@@ -690,6 +936,8 @@ function parse_cli_args()
         "format" => "both",
         "reference" => "",
         "alpha" => 0.05,
+        "no-holm" => false,
+        "no-friedman" => false,
         "convergence" => false,
         "checkpoints" => Int[1, 5, 10, 25, 50, 75, 100],
         "verbose" => false,
@@ -708,6 +956,8 @@ Options:
   --format STR          markdown | latex | both  (default: both)
   --reference ALGO      Reference algorithm for Wilcoxon tests (default: first in JSON)
   --alpha FLOAT         Significance level (default: 0.05)
+    --no-holm             Disable Holm-Bonferroni correction output
+    --no-friedman         Disable Friedman omnibus section
   --convergence         Output convergence curve tables (requires --traces in experiment)
   --checkpoints INTS    Space-separated iteration checkpoints for convergence tables
                           (default: 1 5 10 25 50 75 100)
@@ -730,6 +980,12 @@ Options:
         elseif arg == "--alpha" && i < length(args)
             params["alpha"] = parse(Float64, args[i + 1])
             i += 2
+        elseif arg == "--no-holm"
+            params["no-holm"] = true
+            i += 1
+        elseif arg == "--no-friedman"
+            params["no-friedman"] = true
+            i += 1
         elseif arg == "--convergence"
             params["convergence"] = true
             i += 1
@@ -797,10 +1053,17 @@ function main()
     meta["reference_algorithm"] = reference
 
     wrows = compute_wilcoxon(records, reference; alpha = params["alpha"])
+    holm_p_idx, holm_sig_idx =
+        params["no-holm"] ?
+        (Dict{Tuple{String, String}, Float64}(), Dict{Tuple{String, String}, Bool}()) :
+        holm_bonferroni_correction(wrows; alpha = params["alpha"])
+    frows =
+        params["no-friedman"] ? FriedmanRow[] :
+        compute_friedman(records; alpha = params["alpha"])
     n_sig = count(w -> w.significant, wrows)
     params["verbose"] && @info "Wilcoxon: $n_sig significant out of $(length(wrows)) pairs"
 
-    print_console_summary(summary, wrows)
+    print_console_summary(summary, wrows, holm_p_idx, holm_sig_idx, frows)
 
     # Auto-enable convergence if traces are present in data
     has_traces = any(!isempty(r.convergence_trace) for r in records)
@@ -823,7 +1086,7 @@ function main()
     if fmt in ("markdown", "both")
         md_path = joinpath(out_dir, "$(stem)_report.md")
         open(md_path, "w") do io
-            write(io, to_markdown(summary, wrows, meta))
+            write(io, to_markdown(summary, wrows, meta, holm_p_idx, holm_sig_idx, frows))
             if !isempty(conv_stats)
                 write(io, "\n\n")
                 write(io, to_markdown_convergence(conv_stats, meta))
@@ -835,7 +1098,7 @@ function main()
     if fmt in ("latex", "both")
         tex_path = joinpath(out_dir, "$(stem)_report.tex")
         open(tex_path, "w") do io
-            write(io, to_latex(summary, wrows, meta))
+            write(io, to_latex(summary, wrows, meta, holm_p_idx, holm_sig_idx, frows))
             if !isempty(conv_stats)
                 write(io, "\n\n")
                 write(io, to_latex_convergence(conv_stats, meta))
