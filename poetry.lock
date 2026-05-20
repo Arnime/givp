@@ -5641,4 +5641,4 @@ parallel = ["cloudpickle"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<3.16"
-content-hash = "5787c261647b4a9f8004f9c5af05d0280787d06bcfcc95b51cda9d3f5de24ab7"
+content-hash = "e9d5180ab5bb41a95ff20d221f5e2f084dcbca942cae17ccb0a65ef64cb83375"
