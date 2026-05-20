@@ -17,6 +17,6 @@ python benchmarks/publish_docs_artifacts.py
 |---|---|---|---|---|
 | Python | [Notebooks/Python/benchmark_literature_comparison_results.json](https://github.com/Arnime/grasp_ils_vnd_pr/blob/main/Notebooks/Python/benchmark_literature_comparison_results.json) | 10 | 30 | [Python report](python.md) |
 | Julia | [Notebooks/Julia/results_notebook_julia.json](https://github.com/Arnime/grasp_ils_vnd_pr/blob/main/Notebooks/Julia/results_notebook_julia.json) | 10 | 30 | [Julia report](julia.md) |
-| Rust | [Notebooks/Rust/benchmark_literature_comparison_rust_results.json](https://github.com/Arnime/grasp_ils_vnd_pr/blob/main/Notebooks/Rust/benchmark_literature_comparison_rust_results.json) | 10 | 30 | [Rust report](rust.md) |
-| C++ | [Notebooks/Cpp/benchmark_literature_comparison_cpp_results.json](https://github.com/Arnime/grasp_ils_vnd_pr/blob/main/Notebooks/Cpp/benchmark_literature_comparison_cpp_results.json) | 10 | 30 | [C++ report](cpp.md) |
+| Rust | [rust/benchmarks/ci_smoke_results.json](https://github.com/Arnime/grasp_ils_vnd_pr/blob/main/rust/benchmarks/ci_smoke_results.json) | 5 | 2 | [Rust report](rust.md) |
+| C++ | [cpp/benchmarks/ci_smoke_results.json](https://github.com/Arnime/grasp_ils_vnd_pr/blob/main/cpp/benchmarks/ci_smoke_results.json) | 5 | 2 | [C++ report](cpp.md) |
 | R | [Notebooks/R/benchmark_literature_comparison_r_results.json](https://github.com/Arnime/grasp_ils_vnd_pr/blob/main/Notebooks/R/benchmark_literature_comparison_r_results.json) | 10 | 5 | [R report](r.md) |

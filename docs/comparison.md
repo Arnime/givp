@@ -124,14 +124,18 @@ The generated entry point lives at [examples/benchmark-reports/index.md](example
 and publishes per-language pages plus reusable SVG charts under
 `docs/examples/benchmark-reports/assets/`.
 
+For Rust and C++, the generated pages are currently fed from local benchmark
+artifacts committed under each language folder (`rust/benchmarks/` and
+`cpp/benchmarks/`) to keep the Phase 2 dispatch/baseline parity results in sync.
+
 ### Available generated pages
 
 | Language | Generated page | Source artifact |
 |---|---|---|
 | Python | [examples/benchmark-reports/python.md](examples/benchmark-reports/python.md) | `Notebooks/Python/benchmark_literature_comparison_results.json` |
 | Julia | [examples/benchmark-reports/julia.md](examples/benchmark-reports/julia.md) | `Notebooks/Julia/results_notebook_julia.json` |
-| Rust | [examples/benchmark-reports/rust.md](examples/benchmark-reports/rust.md) | `Notebooks/Rust/benchmark_literature_comparison_rust_results.json` |
-| C++ | [examples/benchmark-reports/cpp.md](examples/benchmark-reports/cpp.md) | `Notebooks/Cpp/benchmark_literature_comparison_cpp_results.json` |
+| Rust | [examples/benchmark-reports/rust.md](examples/benchmark-reports/rust.md) | `rust/benchmarks/ci_smoke_results.json` |
+| C++ | [examples/benchmark-reports/cpp.md](examples/benchmark-reports/cpp.md) | `cpp/benchmarks/ci_smoke_results.json` |
 | R | [examples/benchmark-reports/r.md](examples/benchmark-reports/r.md) | `Notebooks/R/benchmark_literature_comparison_r_results.json` |
 
 ### Example generated chart
