@@ -1641,14 +1641,14 @@ license = ["ukkonen"]
 
 [[package]]
 name = "idna"
-version = "3.12"
+version = "3.15"
 description = "Internationalized Domain Names in Applications (IDNA)"
 optional = false
 python-versions = ">=3.8"
 groups = ["main", "dev", "docs"]
 files = [
-    {file = "idna-3.12-py3-none-any.whl", hash = "sha256:60ffaa1858fac94c9c124728c24fcde8160f3fb4a7f79aa8cdd33a9d1af60a67"},
-    {file = "idna-3.12.tar.gz", hash = "sha256:724e9952cc9e2bd7550ea784adb098d837ab5267ef67a1ab9cf7846bdbdd8254"},
+    {file = "idna-3.15-py3-none-any.whl", hash = "sha256:048adeaf8c2d788c40fee287673ccaa74c24ffd8dcf09ffa555a2fbb59f10ac8"},
+    {file = "idna-3.15.tar.gz", hash = "sha256:ca962446ea538f7092a95e057da437618e886f4d349216d2b1e294abfdb65fdc"},
 ]
 
 [package.extras]
@@ -3790,14 +3790,14 @@ windows-terminal = ["colorama (>=0.4.6)"]
 
 [[package]]
 name = "pymdown-extensions"
-version = "10.21.2"
+version = "10.21.3"
 description = "Extension pack for Python Markdown."
 optional = false
 python-versions = ">=3.9"
 groups = ["main", "docs"]
 files = [
-    {file = "pymdown_extensions-10.21.2-py3-none-any.whl", hash = "sha256:5c0fd2a2bea14eb39af8ff284f1066d898ab2187d81b889b75d46d4348c01638"},
-    {file = "pymdown_extensions-10.21.2.tar.gz", hash = "sha256:c3f55a5b8a1d0edf6699e35dcbea71d978d34ff3fa79f3d807b8a5b3fa90fbdc"},
+    {file = "pymdown_extensions-10.21.3-py3-none-any.whl", hash = "sha256:d7a5d08014fc571e80ca21dd6f854e31f94c489800350564d55d15b3c41e76b6"},
+    {file = "pymdown_extensions-10.21.3.tar.gz", hash = "sha256:72cfcf55f07aea0d4af2c4f11dd4e52466ddfb1bb819673146398e0bd3a77354"},
 ]
 
 [package.dependencies]
@@ -5633,7 +5633,7 @@ type = ["pytest-mypy (>=1.0.1) ; platform_python_implementation != \"PyPy\""]
 [extras]
 benchmarks = ["matplotlib", "optuna", "pandas", "pymoo", "scipy"]
 dev = ["black", "build", "hypothesis", "mypy", "pre-commit", "pytest", "pytest-benchmark", "pytest-cov", "pytest-xdist", "ruff", "tqdm"]
-docs = ["mkdocs", "mkdocs-material", "mkdocstrings"]
+docs = ["idna", "markdown", "mkdocs", "mkdocs-material", "mkdocstrings", "pymdown-extensions"]
 fuzz = ["atheris"]
 notebooks = ["ipykernel", "jupyter", "jupyter-server", "matplotlib", "mistune", "pandas", "scipy"]
 parallel = ["cloudpickle"]
@@ -5641,4 +5641,4 @@ parallel = ["cloudpickle"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<3.16"
-content-hash = "8f170a80136e98e616f502a728a7f3164b63c6bc0ed92854c3e55eaea41be564"
+content-hash = "e9d5180ab5bb41a95ff20d221f5e2f084dcbca942cae17ccb0a65ef64cb83375"
