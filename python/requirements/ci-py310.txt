@@ -214,6 +214,10 @@ filelock==3.29.0 \
     # via
     #   python-discovery
     #   virtualenv
+hatchling==1.29.0 \
+    --hash=sha256:50af9343281f34785fab12da82e445ed987a6efb34fd8c2fc0f6e6630dbcc1b0 \
+    --hash=sha256:793c31816d952cee405b83488ce001c719f325d9cda69f1fc4cd750527640ea6
+    # via -r python/requirements/py310-extra.in
 hypothesis==6.152.9 \
     --hash=sha256:9c4fdccb1eac0b12ec740c12290d0e6a0bea3526a3f0bf812b7643bb563c2d8b \
     --hash=sha256:de4711d69ce3a18009047c3b44882810fd0c0348c1558e920a4b0d2c45f59e1e
@@ -445,12 +449,14 @@ packaging==26.1 \
     # via
     #   black
     #   build
+    #   hatchling
     #   pytest
 pathspec==1.1.0 \
     --hash=sha256:574b128f7456bd899045ccd142dd446af7e6cfd0072d63ad73fbc55fbb4aaa42 \
     --hash=sha256:f5d7c555da02fd8dde3e4a2354b6aba817a89112fa8f333f7917a2a4834dd080
     # via
     #   black
+    #   hatchling
     #   mypy
 platformdirs==4.9.6 \
     --hash=sha256:3bfa75b0ad0db84096ae777218481852c0ebc6c727b3168c1b9e0118e458cf0a \
@@ -463,6 +469,7 @@ pluggy==1.6.0 \
     --hash=sha256:7dcc130b76258d33b90f61b658791dede3486c3e6bfb003ee5c9bfb396dd22f3 \
     --hash=sha256:e920276dd6813095e9377c0bc5566d94c932c33b27a3e3945d8389c374dd4746
     # via
+    #   hatchling
     #   pytest
     #   pytest-cov
 pre-commit==4.6.0 \
@@ -792,6 +799,10 @@ tqdm==4.67.3 \
     --hash=sha256:7d825f03f89244ef73f1d4ce193cb1774a8179fd96f31d7e1dcde62092b960bb \
     --hash=sha256:ee1e4c0e59148062281c49d80b25b67771a127c85fc9676d3be5f243206826bf
     # via givp (pyproject.toml)
+trove-classifiers==2026.5.20.13 \
+    --hash=sha256:39488311115da459eba824bc928291723e29fb876f515af46933c5d5c617202c \
+    --hash=sha256:ba51ff2e5c24bd5a23e17a8170acb7940ab677a5f90eed1ff5b03ca57be11732
+    # via hatchling
 typing-extensions==4.15.0 \
     --hash=sha256:0cea48d173cc12fa28ecabc3b837ea3cf6f38c6d1136f85cbaaf598984861466 \
     --hash=sha256:f0fa19c6845758ab08074a0cfa8b7aecb71c999ca73d62883bc25cc018c4e548
