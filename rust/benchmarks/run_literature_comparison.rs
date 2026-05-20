@@ -743,8 +743,8 @@ fn parse_args() -> Args {
     let argv: Vec<String> = env::args().collect();
     let mut n_runs = 30usize;
     let mut dims = 10usize;
-    let mut max_iter = 50usize;
-    let mut time_limit = 0.0f64;
+    let mut max_iter = 200usize;
+    let mut time_limit = 30.0f64;
     let mut algorithms = vec![
         "GIVP-full".to_string(),
         "DE".to_string(),
@@ -767,11 +767,11 @@ fn parse_args() -> Args {
                 i += 2;
             }
             "--max-iter" if i + 1 < argv.len() => {
-                max_iter = argv[i + 1].parse().unwrap_or(50);
+                max_iter = argv[i + 1].parse().unwrap_or(200);
                 i += 2;
             }
             "--time-limit" if i + 1 < argv.len() => {
-                time_limit = argv[i + 1].parse().unwrap_or(0.0);
+                time_limit = argv[i + 1].parse().unwrap_or(30.0);
                 i += 2;
             }
             "--algorithms" => {

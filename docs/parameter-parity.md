@@ -7,7 +7,7 @@ This page versions the cross-port parameter checklist requested by Issue #138.
 The canonical contract is the shared `GIVPConfig` surface used across Python,
 Julia, Rust, C++, and R.
 
-Audit date: 2026-05-15
+Audit date: 2026-05-19
 
 ## Scope
 
@@ -54,6 +54,20 @@ arguments:
 - `initial_guess`
 - `seed`
 - `verbose`
+
+## Literature benchmark runner protocol parity
+
+The literature-comparison runners use the following canonical defaults across
+Python, Julia, Rust, C++, and R:
+
+| Field | Canonical value | Status |
+|---|---|---|
+| `dims` | 10 | Aligned |
+| `n_runs` | 30 | Aligned |
+| `seed_start` | 0 | Aligned (window `[0, n_runs)`) |
+| `max_iter` | 200 | Aligned |
+| `time_limit` | 30.0 | Aligned |
+| `algorithms` | `GIVP-full DE PSO GA CMA-ES SA` | Aligned |
 
 ## Validation checklist
 

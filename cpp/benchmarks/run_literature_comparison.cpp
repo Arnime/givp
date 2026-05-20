@@ -624,8 +624,8 @@ void write_json(const std::string &path, const std::vector<TrialResult> &rows,
 int main(int argc, char **argv) try {
     std::size_t n_runs = 30;
     std::size_t dims = 10;
-    std::size_t max_iter = 50;
-    double time_limit = 0.0;
+    std::size_t max_iter = 200;
+    double time_limit = 30.0;
     std::vector<std::string> algorithms = {"GIVP-full", "DE", "PSO", "GA", "CMA-ES", "SA"};
     std::string output = "cpp/benchmarks/literature_comparison.json";
     bool verbose = false;

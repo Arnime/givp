@@ -74,3 +74,6 @@ reports/sonar/
 .gitmodules
 vcpkg/
 conan-center-index/
+
+# resultados do mestrados rodado localmente
+results/

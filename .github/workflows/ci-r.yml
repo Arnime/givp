@@ -383,3 +383,21 @@ jobs:
             --algorithms GIVP-full DE PSO GA CMA-ES SA \
             --output r/benchmarks/ci_smoke_results.json \
             --verbose
+
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.13"
+
+      - name: Install Python report dependencies
+        shell: bash
+        run: |
+          pip install --only-binary=:all: --require-hashes -r python/requirements/benchmarks.txt
+
+      - name: Generate canonical benchmark smoke report
+        shell: bash
+        run: |
+          python python/benchmarks/generate_report.py \
+            --input r/benchmarks/ci_smoke_results.json \
+            --format markdown \
+            --no-plots \
+            --output-dir r/benchmarks

@@ -606,8 +606,8 @@ function run_experiment(;
     functions::Vector{String} = FUNCTION_ORDER,
     n_runs::Int = 30,
     dims::Int = 10,
-    max_iter::Int = 100,
-    time_limit::Float64 = 0.0,
+    max_iter::Int = 200,
+    time_limit::Float64 = 30.0,
     output::String = "results_julia.json",
     resume::Bool = false,
     verbose::Bool = false,
@@ -706,8 +706,8 @@ function parse_cli_args()
     params = Dict{String, Any}(
         "n-runs" => 30,
         "dims" => 10,
-        "max-iter" => 100,
-        "time-limit" => 0.0,
+        "max-iter" => 200,
+        "time-limit" => 30.0,
         "output" => "results_julia.json",
         "algorithms" => ["GIVP-full", "DE", "PSO", "GA", "CMA-ES", "SA"],
         "functions" => copy(FUNCTION_ORDER),
@@ -727,8 +727,8 @@ Usage: julia --project=julia julia/benchmarks/run_literature_comparison.jl [OPTI
 Options:
   --n-runs INT        Independent runs per (algorithm, function) pair (default: 30)
   --dims INT          Problem dimensionality (default: 10)
-  --max-iter INT      Maximum GRASP iterations per run (default: 100)
-  --time-limit FLOAT  Wall-clock seconds per run, 0 = unlimited (default: 0.0)
+    --max-iter INT      Maximum GRASP iterations per run (default: 200)
+    --time-limit FLOAT  Wall-clock seconds per run (default: 30.0)
   --algorithms LIST   Space-separated list; available:
                         GIVP-full   — full GRASP-ILS-VND-PR pipeline (this work)
                         GRASP-only  — GRASP construction baseline
