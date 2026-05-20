@@ -8,7 +8,7 @@ set -e
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT INT TERM
 
-python -m build --wheel --no-isolation --outdir "$TMP_DIR" .
+python -m build --wheel --outdir "$TMP_DIR" .
 WHEEL_PATH="$(find "$TMP_DIR" -maxdepth 1 -name '*.whl' | head -n 1)"
 WHEEL_HASH="$(sha256sum "$WHEEL_PATH" | awk '{print $1}')"
 WHEEL_URL="$(python -c 'from pathlib import Path; import sys; print(Path(sys.argv[1]).resolve().as_uri())' "$WHEEL_PATH")"

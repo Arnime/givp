@@ -431,7 +431,7 @@ description = "A simple, correct Python build frontend"
 optional = true
 python-versions = ">=3.10"
 groups = ["main"]
-markers = "extra == \"dev\""
+markers = "extra == \"dev\" or extra == \"docs\""
 files = [
     {file = "build-1.5.0-py3-none-any.whl", hash = "sha256:13f3eecb844759ab66efec90ca17639bbf14dc06cb2fdf37a9010322d9c50a6f"},
     {file = "build-1.5.0.tar.gz", hash = "sha256:302c22c3ba2a0fd5f3911918651341ebb3896176cbdec15bd421f80b1afc7647"},
@@ -1661,7 +1661,7 @@ description = "Read metadata from Python packages"
 optional = true
 python-versions = ">=3.10"
 groups = ["main"]
-markers = "extra == \"dev\" and python_full_version < \"3.10.2\" and python_version == \"3.10\""
+markers = "(extra == \"dev\" or extra == \"docs\") and python_full_version < \"3.10.2\" and python_version == \"3.10\""
 files = [
     {file = "importlib_metadata-9.0.0-py3-none-any.whl", hash = "sha256:2d21d1cc5a017bd0559e36150c21c830ab1dc304dedd1b7ea85d20f45ef3edd7"},
     {file = "importlib_metadata-9.0.0.tar.gz", hash = "sha256:a4f57ab599e6a2e3016d7595cfd72eb4661a5106e787a95bcc90c7105b831efc"},
@@ -3891,7 +3891,7 @@ description = "Wrappers to call pyproject.toml-based build backend hooks."
 optional = true
 python-versions = ">=3.7"
 groups = ["main"]
-markers = "extra == \"dev\""
+markers = "extra == \"dev\" or extra == \"docs\""
 files = [
     {file = "pyproject_hooks-1.2.0-py3-none-any.whl", hash = "sha256:9e5c6bfa8dcc30091c74b0cf803c81fdd29d94f01992a7707bc97babb1141913"},
     {file = "pyproject_hooks-1.2.0.tar.gz", hash = "sha256:1e859bd5c40fae9448642dd871adf459e5e2084186e8d2c2a79a824c970da1f8"},
@@ -5616,7 +5616,7 @@ description = "Backport of pathlib-compatible object wrapper for zip files"
 optional = true
 python-versions = ">=3.10"
 groups = ["main"]
-markers = "extra == \"dev\" and python_full_version < \"3.10.2\" and python_version == \"3.10\""
+markers = "(extra == \"dev\" or extra == \"docs\") and python_full_version < \"3.10.2\" and python_version == \"3.10\""
 files = [
     {file = "zipp-4.1.0-py3-none-any.whl", hash = "sha256:25ad4e16390cd314347dd8f1de67a2ac538ae658ed4ab9db16029c07c188e97f"},
     {file = "zipp-4.1.0.tar.gz", hash = "sha256:4cb57381f544315db7688e976e922a2b18cdb513d21cc194eb42232ba2a3e602"},
@@ -5633,7 +5633,7 @@ type = ["pytest-mypy (>=1.0.1) ; platform_python_implementation != \"PyPy\""]
 [extras]
 benchmarks = ["matplotlib", "optuna", "pandas", "pymoo", "scipy"]
 dev = ["black", "build", "hypothesis", "mypy", "pre-commit", "pytest", "pytest-benchmark", "pytest-cov", "pytest-xdist", "ruff", "tqdm"]
-docs = ["idna", "markdown", "mkdocs", "mkdocs-material", "mkdocstrings", "pymdown-extensions"]
+docs = ["build", "idna", "markdown", "mkdocs", "mkdocs-material", "mkdocstrings", "pymdown-extensions"]
 fuzz = ["atheris"]
 notebooks = ["ipykernel", "jupyter", "jupyter-server", "matplotlib", "mistune", "pandas", "scipy"]
 parallel = ["cloudpickle"]
@@ -5641,4 +5641,4 @@ parallel = ["cloudpickle"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<3.16"
-content-hash = "e9d5180ab5bb41a95ff20d221f5e2f084dcbca942cae17ccb0a65ef64cb83375"
+content-hash = "42f500d927e4345bae8c8d9cf6dcd1c815ac59de14dae7457e69126b9230e699"
