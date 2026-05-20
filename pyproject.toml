@@ -65,6 +65,7 @@ docs = [
     "markdown>=3.8.1",
     "pymdown-extensions>=10.21.3",
     "idna>=3.15",
+    "build>=1.4.4",
 ]
 notebooks = [
     "jupyter>=1.1",
