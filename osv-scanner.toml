@@ -1,0 +1,10 @@
+[[IgnoredVulns]]
+id = "PYSEC-2024-277"
+reason = """
+joblib's NumpyArrayWrapper deserialization vulnerability (CVE-2024-34997) is
+disputed by the joblib maintainers. It only affects deserialization of data
+from untrusted sources via numpy pickle caching. In this project, joblib is
+a transitive dependency pulled by scikit-learn and is only ever used for
+caching ML computations on trusted, internally-generated data. No fix is
+available upstream.
+"""

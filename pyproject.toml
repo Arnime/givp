@@ -58,7 +58,14 @@ benchmarks = [
     "pandas>=2.2",
 ]
 fuzz = ["atheris>=2.3.0; sys_platform == 'linux'"]
-docs = ["mkdocs>=1.6", "mkdocs-material>=9.5", "mkdocstrings[python]>=0.26"]
+docs = [
+    "mkdocs>=1.6",
+    "mkdocs-material>=9.5",
+    "mkdocstrings[python]>=0.26",
+    "markdown>=3.8.1",
+    "pymdown-extensions>=10.21.3",
+    "idna>=3.15",
+]
 notebooks = [
     "jupyter>=1.1",
     "jupyter-server>=2.18.0",
