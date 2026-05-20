@@ -537,7 +537,7 @@ def test_fit_ignores_x_y_parameters() -> None:
 
 def test_sklearn_grid_search_cv_integration() -> None:
     """GIVPOptimizer works with sklearn's GridSearchCV."""
-    from sklearn.model_selection import GridSearchCV  # type: ignore[import-not-found]
+    from sklearn.model_selection import GridSearchCV  # type: ignore[import-untyped]
 
     def objective(x: np.ndarray) -> float:
         return float(np.sum(x**2))
