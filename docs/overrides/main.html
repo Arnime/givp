@@ -1,0 +1,14 @@
+<!-- SPDX-FileCopyrightText: 2026 Arnaldo Mendes Pires Junior -->
+<!-- SPDX-License-Identifier: MIT -->
+{% extends "base.html" %}
+
+{% block extrahead %}
+{{ super() }}
+<link rel="apple-touch-icon" sizes="180x180" href="{{ 'assets/favicon/apple-touch-icon.png' | url }}">
+<link rel="icon" type="image/svg+xml" href="{{ 'assets/favicon/favicon.svg' | url }}">
+<link rel="icon" type="image/png" sizes="96x96" href="{{ 'assets/favicon/favicon-96x96.png' | url }}">
+<link rel="manifest" href="{{ 'assets/favicon/site.webmanifest' | url }}">
+<meta name="theme-color" content="#0a1633">
+<meta property="og:image" content="{{ 'assets/favicon/web-app-manifest-512x512.png' | url }}">
+<meta name="twitter:image" content="{{ 'assets/favicon/web-app-manifest-512x512.png' | url }}">
+{% endblock %}

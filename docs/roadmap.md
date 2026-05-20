@@ -49,20 +49,21 @@ Available in **Python**, **Julia**, **Rust**, **C++** (header-only), and **R**.
 > `python/benchmarks/publish_docs_artifacts.py`, which publishes generated
 > benchmark report pages and reusable SVG charts in `docs/examples/` from the
 > committed Python, Julia, Rust, C++, and R literature-comparison artifacts.
+> Documentation improvements: benchmark comparison charts (`docs/examples/benchmark-reports/`),
+> parity tables, and roadmap status synchronized with implemented changes.
+> Optional scikit-learn integration (Issue #145): `GIVPOptimizer` now inherits
+> from `sklearn.base.BaseEstimator` when scikit-learn is installed, enabling use
+> in scikit-learn's `GridSearchCV`, `RandomizedSearchCV`, and other model
+> selection / hyperparameter tuning pipelines via the `fit()` method.
 
 ## Medium-term (3–6 months)
 
-- **Documentation improvements**: maintain benchmark comparison charts,
-  parity tables, and roadmap status synchronized with implemented changes.
 - **C++ package promotion (from October 2026)**: track migration from staging
   overlays (`cpp/vcpkg_ports/arnime-givp/`, `cpp/conan/`) to upstream package
   indexes when the external submission window opens (Issue #139).
 
 ## Long-term (6–12 months)
 
-- **Optional scikit-learn integration** (Issue #145): expose `givp` as a
-  scikit-learn-compatible `BaseEstimator` for hyper-parameter tuning
-  workflows.
 - **Type-safe bounds specification** (Issue #146): accept named-parameter bounds
   via mapping in addition to the current sequence-of-pairs format.
 - **Async support** (Issue #147): explore asyncio-compatible runner for use in

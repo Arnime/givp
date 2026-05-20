@@ -6,6 +6,9 @@ edit_uri: edit/main/docs/
 
 theme:
   name: material
+  custom_dir: docs/overrides
+  logo: assets/favicon/favicon-96x96.png
+  favicon: assets/favicon/favicon-96x96.png
   features:
     - navigation.tabs
     - navigation.sections
@@ -34,7 +37,7 @@ plugins:
       default_handler: python
       handlers:
         python:
-          paths: [ python/src ]
+          paths: [python/src]
           options:
             show_source: false
             show_root_heading: true
@@ -72,12 +75,12 @@ nav:
       - Benchmarks: examples/benchmarks.md
       - Benchmark Schema: examples/benchmark-schema.md
       - Benchmark Reports:
-        - Overview: examples/benchmark-reports/index.md
-        - Python: examples/benchmark-reports/python.md
-        - Julia: examples/benchmark-reports/julia.md
-        - Rust: examples/benchmark-reports/rust.md
-        - C++: examples/benchmark-reports/cpp.md
-        - R: examples/benchmark-reports/r.md
+          - Overview: examples/benchmark-reports/index.md
+          - Python: examples/benchmark-reports/python.md
+          - Julia: examples/benchmark-reports/julia.md
+          - Rust: examples/benchmark-reports/rust.md
+          - C++: examples/benchmark-reports/cpp.md
+          - R: examples/benchmark-reports/r.md
   - Comparison: comparison.md
   - Profiling: profiling.md
   - Roadmap: roadmap.md

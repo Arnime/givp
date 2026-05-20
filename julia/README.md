@@ -1,7 +1,10 @@
-# GIVPOptimizer.jl
+<h1>
+    <img src="../docs/assets/favicon/web-app-manifest-512x512.png" alt="GIVP logo" width="42" style="vertical-align: middle;" />
+    GIVPOptimizer.jl
+</h1>
 
 [![Julia](https://img.shields.io/badge/Julia-1.9%2B-9558B2?logo=julia&logoColor=white)](https://julialang.org/)
-[![CI Julia](https://github.com/Arnime/grasp_ils_vnd_pr/actions/workflows/ci-julia.yml/badge.svg)](https://github.com/Arnime/grasp_ils_vnd_pr/actions/workflows/ci-julia.yml)
+[![CI Julia](https://github.com/Arnime/givp/actions/workflows/ci-julia.yml/badge.svg)](https://github.com/Arnime/givp/actions/workflows/ci-julia.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Julia port of **GRASP-ILS-VND with Path Relinking** — a direction-agnostic
@@ -33,8 +36,8 @@ Pkg.add("GIVPOptimizer")
 From a local clone:
 
 ```bash
-git clone https://github.com/Arnime/grasp_ils_vnd_pr.git
-cd grasp_ils_vnd_pr/julia
+git clone https://github.com/Arnime/givp.git
+cd givp/julia
 julia --project=. -e 'using Pkg; Pkg.instantiate()'
 ```
 
