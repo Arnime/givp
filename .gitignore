@@ -6,7 +6,7 @@ build*/
 cpp/build/
 dist/
 .venv/
-.venv-ci/
+.venv*/
 .julia-env/
 .scannerwork/
 .env
