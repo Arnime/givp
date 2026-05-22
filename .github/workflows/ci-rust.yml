@@ -310,11 +310,12 @@ jobs:
 
       - name: Install Python report dependencies
         run: |
-          pip install --only-binary=:all: --require-hashes -r python/requirements/benchmarks.txt
+          bash .github/scripts/bootstrap-poetry.sh
+          bash .github/scripts/poetry-install.sh --no-root --only main,benchmarks
 
       - name: Generate canonical benchmark smoke report
         run: |
-          python python/benchmarks/generate_report.py \
+          poetry run python python/benchmarks/generate_report.py \
             --input rust/benchmarks/ci_smoke_results.json \
             --format markdown \
             --no-plots \

@@ -2,7 +2,7 @@ name: Docs
 
 on:
     push:
-        branches: [ main ]
+        branches: [main]
         paths:
             - "docs/**"
             - "mkdocs.yml"
@@ -12,6 +12,7 @@ on:
 
 env:
     FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    POETRY_VIRTUALENVS_CREATE: "false"
 
 permissions:
     contents: read
@@ -35,7 +36,8 @@ jobs:
                   enablement: true
             - name: Install
               run: |
-                  pip install --only-binary ":all:" --require-hashes -r python/requirements/docs.txt
+                  bash .github/scripts/bootstrap-poetry.sh
+                  bash .github/scripts/poetry-install.sh --no-root --only main,docs
                   bash .github/scripts/install-package.sh
             - name: Build
               run: mkdocs build --strict --site-dir _site
