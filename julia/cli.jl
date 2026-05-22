@@ -41,7 +41,7 @@ Output (stdout, JSON)
       "success": true/false,
       "message": "termination reason",
       "time_s":  wall-clock seconds,
-      "givp_version": "1.0.0"
+    "givp_version": "1.0.1"
     }
 
 Bounds format

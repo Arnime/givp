@@ -5,8 +5,10 @@
 [
   {
     "package": "givp",
-    "url": "https://github.com/Arnime/grasp_ils_vnd_pr",
+    "url": "https://github.com/Arnime/givp",
     "subdir": "r",
-    "branches": ["main"]
+    "branches": [
+      "main"
+    ]
   }
 ]

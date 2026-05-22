@@ -28,7 +28,7 @@ else:
 class GivpConan(ConanFileBase):
     """GRASP-ILS-VND with Path Relinking optimizer for C++17."""
 
-    DEFAULT_VERSION: ClassVar[str] = "1.0.0"
+    DEFAULT_VERSION: ClassVar[str] = "1.0.1"
     _SEMVER_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
         r"^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$"
     )
@@ -37,8 +37,8 @@ class GivpConan(ConanFileBase):
     version: str
     license: ClassVar[str] = "MIT"
     author: ClassVar[str] = "Arnaldo Mendes Pires Junior"
-    url: ClassVar[str] = "https://github.com/Arnime/grasp_ils_vnd_pr"
-    homepage: ClassVar[str] = "https://github.com/Arnime/grasp_ils_vnd_pr"
+    url: ClassVar[str] = "https://github.com/Arnime/givp"
+    homepage: ClassVar[str] = "https://github.com/Arnime/givp"
     description: ClassVar[str] = (
         "GRASP-ILS-VND with Path Relinking optimizer for continuous and "
         "mixed-integer black-box optimization. Header-only C++17 library."

@@ -43,6 +43,6 @@ include("impl.jl")
 include("api.jl")
 include("experiment.jl")
 
-const __version__ = "1.0.0"
+const __version__ = "1.0.1"
 
 end # module

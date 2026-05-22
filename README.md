@@ -40,7 +40,7 @@
 [![clang-tidy](https://img.shields.io/badge/Linter-clang--tidy-blue?logo=llvm&logoColor=white)](https://clang.llvm.org/extra/clang-tidy/)
 
 **R** &nbsp;
-[![R Package givp](https://img.shields.io/badge/R%20Package-givp%201.0.0-276DC3?logo=r&logoColor=white)](https://arnime.r-universe.dev/givp)
+[![R Package givp](https://img.shields.io/badge/R%20Package-givp%201.0.1-276DC3?logo=r&logoColor=white)](https://arnime.r-universe.dev/givp)
 [![R](https://img.shields.io/badge/R-4.1%2B-276DC3?logo=r&logoColor=white)](https://www.r-project.org/)
 [![CI R](https://github.com/Arnime/givp/actions/workflows/ci-r.yml/badge.svg)](https://github.com/Arnime/givp/actions/workflows/ci-r.yml)
 [![Codecov (r)](https://codecov.io/gh/Arnime/givp/graph/badge.svg?flag=r)](https://codecov.io/gh/Arnime/givp/flags/r)
@@ -202,7 +202,7 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-givp = "1.0.0"
+givp = "1.0.1"
 ```
 
 From source:
@@ -245,14 +245,14 @@ vcpkg install arnime-givp:x64-windows --overlay-ports=./cpp/vcpkg_ports
 Install with Conan (after ConanCenter publication):
 
 ```bash
-conan install --requires=givp/1.0.0 --build=missing
+conan install --requires=givp/1.0.1 --build=missing
 ```
 
 For local staging/validation before ConanCenter publication:
 
 ```bash
 cd cpp/conan
-conan create . --version=1.0.0 --build=missing
+conan create . --version=1.0.1 --build=missing
 ```
 
 Maintainer submission guides:
@@ -274,7 +274,7 @@ include(FetchContent)
 FetchContent_Declare(
     givp
     GIT_REPOSITORY https://github.com/Arnime/givp.git
-    GIT_TAG        v1.0.0
+    GIT_TAG        v1.0.1
     SOURCE_SUBDIR  cpp
 )
 FetchContent_MakeAvailable(givp)

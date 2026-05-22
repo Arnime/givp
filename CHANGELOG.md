@@ -2,6 +2,13 @@
 
 <!-- markdownlint-disable MD024 -->
 
+## [1.0.1](https://github.com/Arnime/givp/compare/v1.0.0...v1.0.1) (2026-05-22)
+
+### Bug Fixes
+
+* bump version metadata to 1.0.1 across Python, Julia, Rust, C++, and R
+* update installation snippets and release metadata to reference v1.0.1
+
 ## [1.0.0](https://github.com/Arnime/grasp_ils_vnd_pr/compare/v0.5.4...v1.0.0) (2026-04-29)
 
 ### Features

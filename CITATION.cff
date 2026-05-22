@@ -11,7 +11,7 @@ authors:
   - family-names: "Mendes Pires Junior"
     given-names: "Arnaldo"
 license: MIT
-repository-code: "https://github.com/Arnime/grasp_ils_vnd_pr"
+repository-code: "https://github.com/Arnime/givp"
 keywords:
   - optimization
   - metaheuristic
@@ -22,5 +22,5 @@ keywords:
   - global-optimization
   - julia
   - python
-version: 1.0.0
-date-released: 2026-04-29
+version: 1.0.1
+date-released: 2026-05-22
