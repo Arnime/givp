@@ -16,6 +16,7 @@ on:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  POETRY_VIRTUALENVS_CREATE: "false"
 
 permissions:
   contents: read
@@ -56,17 +57,17 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         python-version: ${{ fromJson(needs.setup.outputs.versions) }}
-        include:
-          - python-version: "3.10"
-            lockfile: python/requirements/ci-py310.txt
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Bootstrap Poetry
+        run: |
+          bash .github/scripts/bootstrap-poetry.sh
       - name: Install
         run: |
-          pip install --only-binary=:all: --require-hashes -r ${{ matrix.lockfile || 'python/requirements/ci.txt' }}
+          bash .github/scripts/poetry-install.sh --no-root --with dev
           bash .github/scripts/install-package.sh
       - name: Lint
         run: ruff check python/src python/tests
@@ -84,9 +85,12 @@ jobs:
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.13"
+      - name: Bootstrap Poetry
+        run: |
+          bash .github/scripts/bootstrap-poetry.sh
       - name: Install
         run: |
-          pip install --only-binary=:all: --require-hashes -r python/requirements/ci.txt
+          bash .github/scripts/poetry-install.sh --no-root --with dev
           bash .github/scripts/install-package.sh
       - name: Test with coverage
         run: pytest --cov=givp --cov-report=xml:coverage-python.xml --cov-fail-under=95
@@ -180,9 +184,12 @@ jobs:
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.13"
+      - name: Bootstrap Poetry
+        run: |
+          bash .github/scripts/bootstrap-poetry.sh
       - name: Install
         run: |
-          pip install --only-binary=:all: --require-hashes -r python/requirements/ci.txt
+          bash .github/scripts/poetry-install.sh --no-root --with dev
           bash .github/scripts/install-package.sh
       - name: Run property tests
         # Run only test_properties.py with a generous timeout; --no-cov keeps it fast.
@@ -204,10 +211,12 @@ jobs:
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.13"
+      - name: Bootstrap Poetry
+        run: |
+          bash .github/scripts/bootstrap-poetry.sh
       - name: Install (with benchmark extras)
         run: |
-          pip install --only-binary=:all: --require-hashes -r python/requirements/ci.txt
-          pip install --only-binary=:all: --require-hashes -r python/requirements/benchmarks.txt
+          bash .github/scripts/poetry-install.sh --no-root --with dev --with benchmarks
           bash .github/scripts/install-package.sh
       - name: Benchmark smoke tests
         run: |
@@ -246,9 +255,12 @@ jobs:
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.13"
+      - name: Bootstrap Poetry
+        run: |
+          bash .github/scripts/bootstrap-poetry.sh
       - name: Install
         run: |
-          pip install --only-binary=:all: --require-hashes -r python/requirements/ci.txt
+          bash .github/scripts/poetry-install.sh --no-root --with dev
           bash .github/scripts/install-package.sh
       - name: Run convergence quality gate
         run: |
@@ -269,9 +281,12 @@ jobs:
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.13"
+      - name: Bootstrap Poetry
+        run: |
+          bash .github/scripts/bootstrap-poetry.sh
       - name: Install
         run: |
-          pip install --only-binary=:all: --require-hashes -r python/requirements/ci.txt
+          bash .github/scripts/poetry-install.sh --no-root --with dev
           bash .github/scripts/install-package.sh
       - name: Run performance benchmarks
         run: |
@@ -302,11 +317,13 @@ jobs:
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.13"
+      - name: Bootstrap Poetry
+        run: |
+          bash .github/scripts/bootstrap-poetry.sh
       - name: Install dependencies
         run: |
-          pip install --only-binary=:all: --require-hashes -r python/requirements/ci.txt
+          bash .github/scripts/poetry-install.sh --no-root --with dev --with mutation
           bash .github/scripts/install-package.sh
-          pip install --only-binary=:all: --require-hashes -r python/requirements/mutation.txt
       - name: Remove broken symlinks (mutmut workaround)
         run: |
           BROKEN_LINKS=$(find . -xtype l | wc -l)
@@ -362,10 +379,13 @@ jobs:
         with:
           python-version: "3.15"
           allow-prereleases: true
+      - name: Bootstrap Poetry
+        run: |
+          bash .github/scripts/bootstrap-poetry.sh
       - name: Install
         id: install_prerelease
         run: |
-          if pip install --only-binary=:all: --require-hashes -r python/requirements/ci-pre-release.txt; then
+          if bash .github/scripts/poetry-install.sh --no-root --with dev; then
             bash .github/scripts/install-package.sh
             echo "env_ready=true" >> "$GITHUB_OUTPUT"
           else
@@ -392,9 +412,12 @@ jobs:
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.13"
+      - name: Bootstrap Poetry
+        run: |
+          bash .github/scripts/bootstrap-poetry.sh
       - name: Install
         run: |
-          pip install --only-binary=:all: --require-hashes -r python/requirements/docs.txt
+          bash .github/scripts/poetry-install.sh --no-root --with docs
           bash .github/scripts/install-package.sh
       - name: Build docs (strict)
         run: mkdocs build --strict

@@ -3,6 +3,6 @@
 # Cloudflare build command: bash scripts/build-docs.sh
 set -euo pipefail
 
-pip install --require-hashes -r python/requirements/docs.txt
+poetry install --no-root --with docs
 bash .github/scripts/install-package.sh
-mkdocs build --strict
+poetry run mkdocs build --strict

@@ -1,0 +1,6 @@
+# Pinned Poetry version for CI bootstrap.
+# Regenerate: update the version below to bump Poetry across all workflows.
+# A version-only pin (no hashes) is intentional: a single hash-pinned file
+# cannot cover all platform x Python-version combinations that CI runs on.
+# OpenSSF Scorecard PinnedDependencies considers an exact == pin sufficient.
+poetry==2.4.1
