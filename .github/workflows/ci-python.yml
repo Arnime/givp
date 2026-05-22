@@ -67,7 +67,7 @@ jobs:
           bash .github/scripts/bootstrap-poetry.sh
       - name: Install
         run: |
-          bash .github/scripts/poetry-install.sh --no-root --with dev
+          bash .github/scripts/poetry-install.sh --no-root --only main,dev
           bash .github/scripts/install-package.sh
       - name: Lint
         run: ruff check python/src python/tests
@@ -90,7 +90,7 @@ jobs:
           bash .github/scripts/bootstrap-poetry.sh
       - name: Install
         run: |
-          bash .github/scripts/poetry-install.sh --no-root --with dev
+          bash .github/scripts/poetry-install.sh --no-root --only main,dev
           bash .github/scripts/install-package.sh
       - name: Test with coverage
         run: pytest --cov=givp --cov-report=xml:coverage-python.xml --cov-fail-under=95
@@ -189,7 +189,7 @@ jobs:
           bash .github/scripts/bootstrap-poetry.sh
       - name: Install
         run: |
-          bash .github/scripts/poetry-install.sh --no-root --with dev
+          bash .github/scripts/poetry-install.sh --no-root --only main,dev
           bash .github/scripts/install-package.sh
       - name: Run property tests
         # Run only test_properties.py with a generous timeout; --no-cov keeps it fast.
@@ -216,7 +216,7 @@ jobs:
           bash .github/scripts/bootstrap-poetry.sh
       - name: Install (with benchmark extras)
         run: |
-          bash .github/scripts/poetry-install.sh --no-root --with dev --with benchmarks
+          bash .github/scripts/poetry-install.sh --no-root --only main,dev,benchmarks
           bash .github/scripts/install-package.sh
       - name: Benchmark smoke tests
         run: |
@@ -260,7 +260,7 @@ jobs:
           bash .github/scripts/bootstrap-poetry.sh
       - name: Install
         run: |
-          bash .github/scripts/poetry-install.sh --no-root --with dev
+          bash .github/scripts/poetry-install.sh --no-root --only main,dev
           bash .github/scripts/install-package.sh
       - name: Run convergence quality gate
         run: |
@@ -286,7 +286,7 @@ jobs:
           bash .github/scripts/bootstrap-poetry.sh
       - name: Install
         run: |
-          bash .github/scripts/poetry-install.sh --no-root --with dev
+          bash .github/scripts/poetry-install.sh --no-root --only main,dev
           bash .github/scripts/install-package.sh
       - name: Run performance benchmarks
         run: |
@@ -322,7 +322,7 @@ jobs:
           bash .github/scripts/bootstrap-poetry.sh
       - name: Install dependencies
         run: |
-          bash .github/scripts/poetry-install.sh --no-root --with dev --with mutation
+          bash .github/scripts/poetry-install.sh --no-root --only main,dev,mutation
           bash .github/scripts/install-package.sh
       - name: Remove broken symlinks (mutmut workaround)
         run: |
@@ -385,7 +385,7 @@ jobs:
       - name: Install
         id: install_prerelease
         run: |
-          if bash .github/scripts/poetry-install.sh --no-root --with dev; then
+          if bash .github/scripts/poetry-install.sh --no-root --only main,dev; then
             bash .github/scripts/install-package.sh
             echo "env_ready=true" >> "$GITHUB_OUTPUT"
           else
@@ -417,7 +417,7 @@ jobs:
           bash .github/scripts/bootstrap-poetry.sh
       - name: Install
         run: |
-          bash .github/scripts/poetry-install.sh --no-root --with docs
+          bash .github/scripts/poetry-install.sh --no-root --only main,docs
           bash .github/scripts/install-package.sh
       - name: Build docs (strict)
         run: mkdocs build --strict

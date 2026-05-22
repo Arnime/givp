@@ -41,7 +41,7 @@ jobs:
                   sudo apt-get install -y pkg-config gfortran libopenblas-dev
             - name: Install
               run: |
-                  bash .github/scripts/poetry-install.sh --no-root --with dev --with audit
+                  bash .github/scripts/poetry-install.sh --no-root --only main,audit
                   bash .github/scripts/install-package-editable.sh
             - name: Audit
               run: |

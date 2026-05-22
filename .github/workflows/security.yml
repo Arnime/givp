@@ -30,7 +30,7 @@ jobs:
         run: |
           bash .github/scripts/bootstrap-poetry.sh
       - name: Install Bandit
-        run: bash .github/scripts/poetry-install.sh --no-root --with dev
+        run: bash .github/scripts/poetry-install.sh --no-root --only main,dev
       - name: Run Bandit
         run: bandit -r python/src -lll
 

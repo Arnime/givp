@@ -10,6 +10,7 @@ on:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  POETRY_VIRTUALENVS_CREATE: "false"
 
 permissions:
   contents: read
@@ -26,7 +27,6 @@ permissions:
 # ---------------------------------------------------------------------------
 
 jobs:
-
   build:
     runs-on: ubuntu-latest
     permissions:
@@ -95,7 +95,8 @@ jobs:
 
       - name: Build
         run: |
-          pip install --only-binary=:all: --require-hashes -r python/requirements/release-tools.txt
+          bash .github/scripts/bootstrap-poetry.sh
+          bash .github/scripts/poetry-install.sh --no-root --only main,release
           python -m build
 
       - name: Generate artifact hashes
@@ -150,13 +151,12 @@ jobs:
           done
 
   provenance:
-    needs: [ build ]
+    needs: [build]
     permissions:
       actions: read
       id-token: write
       contents: write
-    # slsa-framework/slsa-github-generator is exempt from hash-pinning per Scorecard policy
-    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.1.0
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@f7dd8c54c2067bafc12ca7a55595d5ee9b75204a # v2.1.0
     with:
       base64-subjects: "${{ needs.build.outputs.hashes }}"
       upload-assets: true
@@ -164,7 +164,7 @@ jobs:
       continue-on-error: true
 
   verify-provenance:
-    needs: [ build, provenance ]
+    needs: [build, provenance]
     runs-on: ubuntu-latest
     if: ${{ always() }}
     permissions:
@@ -197,5 +197,3 @@ jobs:
 
           echo "::error::No provenance .intoto.jsonl asset found on release $TAG_NAME after retries"
           exit 1
-
-
