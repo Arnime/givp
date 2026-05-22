@@ -1,8 +1,8 @@
 {
   "name": "arnime-givp",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "GRASP-ILS-VND with Path Relinking optimizer for continuous and mixed-integer black-box optimization",
-  "homepage": "https://github.com/Arnime/grasp_ils_vnd_pr",
+  "homepage": "https://github.com/Arnime/givp",
   "license": "MIT",
   "supports": "(windows & !arm) | linux | osx | freebsd",
   "dependencies": [

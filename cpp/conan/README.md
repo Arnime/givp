@@ -41,7 +41,7 @@ See [cpp/docs/CONAN_NOTES.md](../docs/CONAN_NOTES.md) for detailed
 
 1. Fork <https://github.com/conan-io/conan-center-index>
 2. Copy `cpp/conan/` contents to `recipes/givp/all/`
-3. Open PR with title: `givp/1.0.0: Add GRASP-ILS-VND with Path Relinking optimizer`
+3. Open PR with title: `givp/1.0.1: Add GRASP-ILS-VND with Path Relinking optimizer`
 4. Address review feedback from maintainers
 5. Merge and package is published
 

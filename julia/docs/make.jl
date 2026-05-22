@@ -22,7 +22,7 @@ makedocs(;
         prettyurls = get(ENV, "CI", nothing) == "true",
         canonical = "https://arnime.github.io/grasp_ils_vnd_pr",
         assets = String[],
-        repolink = "https://github.com/Arnime/grasp_ils_vnd_pr",
+        repolink = "https://github.com/Arnime/givp",
     ),
     pages = [
         "Home" => "index.md",

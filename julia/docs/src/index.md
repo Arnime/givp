@@ -26,7 +26,7 @@ Combines four complementary strategies:
 using Pkg; Pkg.add("GIVPOptimizer")
 
 # Or the latest development version:
-using Pkg; Pkg.develop(url="https://github.com/Arnime/grasp_ils_vnd_pr", subdir="julia")
+using Pkg; Pkg.develop(url="https://github.com/Arnime/givp", subdir="julia")
 ```
 
 ## Minimal example
@@ -52,6 +52,6 @@ If you use GIVPOptimizer in research, please cite:
   title   = {{GIVPOptimizer.jl}: {GRASP-ILS-VND} with Path Relinking},
   year    = {2026},
   url     = {https://github.com/Arnime/grasp_ils_vnd_pr},
-  version = {1.0.0}
+  version = {1.0.1}
 }
 ```

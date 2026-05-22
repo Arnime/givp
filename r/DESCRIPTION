@@ -3,7 +3,7 @@
 Package: givp
 Type: Package
 Title: GRASP-ILS-VND with Path Relinking Optimizer
-Version: 1.0.0
+Version: 1.0.1
 Authors@R: person("Arnaldo Mendes Pires Junior", role = c("aut", "cre"), email = "arnaldo_200@live.com")
 Description: Direction-agnostic metaheuristic optimizer for continuous and mixed-integer black-box optimization.
 License: MIT + file LICENSE
