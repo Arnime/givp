@@ -1,15 +1,15 @@
 #!/bin/sh
 # Install the local package without pulling in any dependencies.
-# Dependencies are already installed by Poetry from poetry.lock.
-# Build a local wheel via `poetry build`, hash it, and install through a
-# one-line requirements file so Scorecard can verify the install is
-# hash-pinned as well.
+# Dependencies are already installed from a requirements file (poetry.lock or
+# fuzz.txt).  Build a local wheel via `python -m build` (PEP 517, no Poetry
+# required), hash it, and install through a one-line requirements file so
+# Scorecard can verify the install is hash-pinned as well.
 set -e
 
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT INT TERM
 
-poetry build --format wheel --output "$TMP_DIR"
+python -m build --wheel --outdir "$TMP_DIR" .
 WHEEL_PATH="$(find "$TMP_DIR" -maxdepth 1 -name '*.whl' | head -n 1)"
 WHEEL_HASH="$(sha256sum "$WHEEL_PATH" | awk '{print $1}')"
 WHEEL_URL="$(python -c 'from pathlib import Path; import sys; print(Path(sys.argv[1]).resolve().as_uri())' "$WHEEL_PATH")"
