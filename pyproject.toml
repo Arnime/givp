@@ -216,11 +216,11 @@ pytest = ">=9.0.3"
 pytest-cov = ">=5"
 pytest-xdist = ">=3.5"
 pytest-benchmark = ">=4.0"
-hypothesis = ">=6.152.8"
+hypothesis = ">=6.152.11"
 tqdm = ">=4.66"
 # Type-checking and linting
 mypy = ">=2.1.0"
-ruff = ">=0.15.13"
+ruff = ">=0.15.14"
 black = ">=26.5.1"
 # Developer tooling
 build = ">=1.4.4"
