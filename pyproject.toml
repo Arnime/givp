@@ -242,7 +242,7 @@ idna = ">=3.15"
 build = ">=1.4.4"
 
 [tool.poetry.group.benchmarks.dependencies]
-optuna = ">=3.0"
+optuna = ">=4.9.0"
 scipy = ">=1.13"
 pymoo = ">=0.6.1"
 matplotlib = ">=3.8"
