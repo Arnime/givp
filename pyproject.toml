@@ -238,7 +238,7 @@ mkdocs-material = ">=9.5"
 mkdocstrings = { version = ">=0.26", extras = ["python"] }
 markdown = ">=3.8.1"
 pymdown-extensions = ">=10.21.3"
-idna = ">=3.15"
+idna = ">=3.18"
 build = ">=1.4.4"
 
 [tool.poetry.group.benchmarks.dependencies]
