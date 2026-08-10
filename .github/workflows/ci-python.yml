@@ -91,7 +91,7 @@ jobs:
         run: |
           bash .github/scripts/poetry-install.sh --only main,dev
       - name: Test with coverage
-        run: pytest --cov=givp --cov-report=xml:coverage-python.xml --cov-fail-under=95
+        run: poetry run pytest --cov=givp --cov-report=xml:coverage-python.xml --cov-fail-under=95
       - name: Check patch coverage on PR (>= 90%)
         if: github.event_name == 'pull_request'
         run: |
