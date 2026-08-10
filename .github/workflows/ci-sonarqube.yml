@@ -77,7 +77,7 @@ jobs:
         run: |
           bash .github/scripts/poetry-install.sh --no-root --only main,dev
           bash .github/scripts/install-package-editable.sh
-          pytest --cov=givp --cov-report=xml:coverage-python.xml python/tests/
+          poetry run pytest --cov=givp --cov-report=xml:coverage-python.xml python/tests/
 
       - name: Set up Rust toolchain
         if: steps.preflight.outputs.enabled == 'true'

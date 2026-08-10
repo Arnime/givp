@@ -209,7 +209,7 @@ max-module-lines = 2000
 packages = [{ include = "givp", from = "python/src" }]
 
 [tool.poetry.group.dev.dependencies]
-# Build backend — required by .github/scripts/install-package.sh
+# Build backend required by [build-system].
 hatchling = ">=1.21"
 # Test suite
 pytest = ">=9.0.3"

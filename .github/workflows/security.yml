@@ -32,7 +32,7 @@ jobs:
       - name: Install Bandit
         run: bash .github/scripts/poetry-install.sh --no-root --only main,dev
       - name: Run Bandit
-        run: bandit -r python/src -lll
+        run: poetry run bandit -r python/src -lll
 
   semgrep:
     name: Semgrep scan

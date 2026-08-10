@@ -43,7 +43,8 @@ jobs:
               run: |
                   bash .github/scripts/poetry-install.sh --no-root --only main,audit
                   bash .github/scripts/install-package-editable.sh
-            - name: Audit
+            - name: Validate lock and audit dependencies
               run: |
-                  python -m pip freeze --exclude-editable | grep -viE '^(pip|setuptools|wheel)==' > /tmp/audit-reqs.txt
-                  python -m pip_audit -r /tmp/audit-reqs.txt
+                  poetry check --lock
+                  poetry run pip-audit --local --skip-editable \
+                    --cache-dir "$RUNNER_TEMP/pip-audit-cache"
