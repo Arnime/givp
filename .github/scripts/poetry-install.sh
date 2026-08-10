@@ -16,6 +16,11 @@
 #      version declared in python/requirements/poetry-bootstrap.txt.
 set -e
 
+# `sync` removes packages that are not in poetry.lock.  It must therefore
+# run inside the project virtualenv: synchronizing the runner's bootstrap
+# interpreter can remove Poetry while Poetry is still executing.
+export POETRY_VIRTUALENVS_CREATE=true
+
 # Fail before installing when pyproject.toml and the reviewed lock disagree.
 poetry check --lock
 
