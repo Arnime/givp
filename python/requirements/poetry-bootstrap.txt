@@ -3,4 +3,5 @@
 # A version-only pin (no hashes) is intentional: a single hash-pinned file
 # cannot cover all platform x Python-version combinations that CI runs on.
 # OpenSSF Scorecard PinnedDependencies considers an exact == pin sufficient.
+pip==26.1.2
 poetry==2.4.1

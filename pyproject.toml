@@ -227,11 +227,6 @@ build = ">=1.4.4"
 bandit = ">=1.9"
 pre-commit = ">=3.7"
 nox = "^2026.4.10"
-# Interactive / notebooks (local dev)
-jupyter-server = ">=2.18.0"
-mistune = ">=3.2.1"
-notebook = "^7.5.6"
-
 [tool.poetry.group.docs.dependencies]
 mkdocs = ">=1.6"
 mkdocs-material = ">=9.5"
@@ -247,6 +242,17 @@ scipy = ">=1.13"
 pymoo = ">=0.6.1"
 matplotlib = ">=3.8"
 pandas = ">=2.2"
+
+[tool.poetry.group.conan.dependencies]
+conan = ">=2.28,<3"
+
+[tool.poetry.group.fuzz.dependencies]
+atheris = { version = ">=2.3.0", markers = "sys_platform == 'linux'" }
+
+[tool.poetry.group.notebooks.dependencies]
+jupyter-server = ">=2.20.0"
+mistune = ">=3.3.0"
+notebook = "^7.5.6"
 
 [tool.poetry.group.audit.dependencies]
 pip-audit = ">=2.7"
