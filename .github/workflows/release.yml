@@ -98,9 +98,6 @@ jobs:
           skip-existing: true
           packages-dir: dist
           attestations: true
-          # The action's bundled metadata checker does not yet accept valid
-          # Core Metadata 2.5 emitted by current Hatchling.
-          verify-metadata: false
 
   provenance:
     needs: [build-and-publish]
