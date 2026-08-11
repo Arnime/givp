@@ -183,8 +183,9 @@ ignore = [
 # Ruff is the canonical linter; Pylint runs only inside IDEs.
 # Keep it quiet for test files and idiomatic pytest patterns.
 # ``ignore-paths`` accepts regexes matched against the *full* path the IDE
-# passes to pylint, so we accept anything containing ``/tests/`` or ``\tests\``.
-ignore-paths = [".*[\\\\/]tests[\\\\/].*"]
+# passes to pylint, so we ignore test and notebook directories regardless of
+# their path separator or the capitalization used for ``Notebooks``.
+ignore-paths = [".*[\\\\/]tests[\\\\/].*", ".*[\\\\/][Nn]otebooks[\\\\/].*"]
 
 [tool.pylint.format]
 max-line-length = 120
