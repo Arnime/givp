@@ -18,11 +18,9 @@ jobs:
                   python-version: "3.12"
             - name: Install package and fuzzers
               run: |
-                  pip install --require-hashes -r python/requirements/fuzz.txt
-                  bash .github/scripts/install-package.sh
+                  bash .github/scripts/bootstrap-poetry.sh
+                  bash .github/scripts/poetry-install.sh --only main,fuzz
             - name: Run fuzz target with atheris (Linux CI run)
               run: |
-                  python python/fuzz/fuzz_givp.py -atheris_runs=1000 -atheris_jobs=1
+                  poetry run python python/fuzz/fuzz_givp.py -atheris_runs=1000 -atheris_jobs=1
               continue-on-error: true
-
-

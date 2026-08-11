@@ -97,7 +97,7 @@ jobs:
         run: |
           bash .github/scripts/bootstrap-poetry.sh
           bash .github/scripts/poetry-install.sh --no-root --only main,release
-          python -m build
+          poetry run python -m build
 
       - name: Generate artifact hashes
         id: hash

@@ -325,7 +325,7 @@ jobs:
           ' coverage.info
 
       - name: Upload to Codecov
-        uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         with:
           files: coverage.info
           flags: cpp
@@ -392,16 +392,17 @@ jobs:
 
       - name: Install Conan
         run: |
-          pip install --only-binary=:all: --require-hashes -r cpp/requirements/conan.txt
+          bash .github/scripts/bootstrap-poetry.sh
+          bash .github/scripts/poetry-install.sh --only main,conan
 
       - name: Detect default profile
-        run: conan profile detect --force
+        run: poetry run conan profile detect --force
 
       - name: Create package from local source
         env:
           GIVP_VERSION: "0.0.0-ci"
         run: |
-          conan create cpp/conan \
+          poetry run conan create cpp/conan \
             --version 0.0.0-ci \
             --build=missing \
             -s build_type=Release

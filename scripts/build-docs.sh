@@ -3,6 +3,5 @@
 # Cloudflare build command: bash scripts/build-docs.sh
 set -euo pipefail
 
-poetry install --no-root --with docs
-bash .github/scripts/install-package.sh
+bash .github/scripts/poetry-install.sh --only main,docs
 poetry run mkdocs build --strict
