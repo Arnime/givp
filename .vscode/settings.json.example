@@ -142,7 +142,7 @@
     },
     "clangd.arguments": [
         "--compile-commands-dir=${workspaceFolder}/cpp/build/default",
-        "--path-mappings=${workspaceFolder}=/mnt/d/Projetos Pessoais/grasp_ils_vnd_pr",
+        "--path-mappings=${workspaceFolder}=/mnt/d/Projetos Pessoais/GIVP",
         "--header-insertion=never",
         "--query-driver=C:/Strawberry/c/bin/*,**/cl.exe,**/g++,**/clang++"
     ],
