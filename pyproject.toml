@@ -93,11 +93,15 @@ Issues = "https://github.com/Arnime/givp/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["python/src/givp"]
+# TestPyPI's upload client does not yet accept Core Metadata 2.5.
+# Version 2.4 fully represents this project's declared metadata.
+core-metadata-version = "2.4"
 
 [tool.hatch.build.targets.wheel.force-include]
 "python/src/givp/py.typed" = "givp/py.typed"
 
 [tool.hatch.build.targets.sdist]
+core-metadata-version = "2.4"
 include = [
     "python/src/givp",
     "python/tests",
