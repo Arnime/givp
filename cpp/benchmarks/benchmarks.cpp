@@ -5,8 +5,8 @@
 
 #if __has_include(<nanobench.h>)
 #include <nanobench.h>
-#elif __has_include("../../build/_deps/nanobench-src/src/include/nanobench.h")
-#include "../../build/_deps/nanobench-src/src/include/nanobench.h"
+#elif __has_include("../build/_deps/nanobench-src/src/include/nanobench.h")
+#include "../build/_deps/nanobench-src/src/include/nanobench.h"
 #else
 #error "nanobench.h not found. Configure CMake to fetch nanobench first."
 #endif

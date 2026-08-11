@@ -50,8 +50,7 @@
         }
     ],
     // ─── Python ──────────────────────────────────────────────────────────────
-    // Interpretador: virtualenv gerenciado pelo Poetry na raiz do projeto
-    "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
+    // O VS Code seleciona o ambiente Poetry detectado, sem fixar um executável.
     "python.analysis.typeCheckingMode": "basic",
     "python.analysis.autoImportCompletions": true,
     // Pacote Python está em python/src/
@@ -74,10 +73,8 @@
     "ruff.lint.enable": true,
     "ruff.format.enable": false,
     "ruff.organizeImports": true,
-    "ruff.importStrategy": "fromEnvironment",
-    "ruff.path": [
-        "${workspaceFolder}/.venv/Scripts/ruff.exe"
-    ],
+    // Evita bloquear .venv/Scripts/ruff.exe durante atualizações do Poetry.
+    "ruff.importStrategy": "useBundled",
     // ─── Rust ────────────────────────────────────────────────────────────────
     // Crate Rust está em rust/; aponta o rust-analyzer para o Cargo.toml correto
     "rust-analyzer.linkedProjects": [
