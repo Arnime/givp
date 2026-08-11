@@ -25,4 +25,4 @@ export POETRY_VIRTUALENVS_CREATE=true
 poetry check --lock
 
 # `sync` installs only the exact locked dependency set, removing stale packages.
-exec poetry sync "$@"
+poetry sync "$@"
