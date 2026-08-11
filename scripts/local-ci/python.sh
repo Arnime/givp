@@ -7,9 +7,8 @@ set -euo pipefail
 cd /workspace
 
 echo "[python] Installing dependencies"
-pip install --require-hashes -r python/requirements/ci.txt
-pip install --require-hashes -r python/requirements/benchmarks.txt
-bash .github/scripts/install-package.sh
+bash .github/scripts/bootstrap-poetry.sh
+bash .github/scripts/poetry-install.sh --only main,dev,benchmarks
 
 echo "[python] Lint"
 ruff check python/src python/tests
@@ -50,7 +49,7 @@ pytest python/benchmarks/test_benchmarks.py \
 
 if [ "${RUN_MUTATION:-false}" = "true" ]; then
   echo "[python] Mutation testing"
-  pip install --require-hashes -r python/requirements/mutation.txt
+  bash .github/scripts/poetry-install.sh --only main,dev,mutation
   BROKEN_LINKS=$(find . -xtype l | wc -l)
   if [ "$BROKEN_LINKS" -gt 0 ]; then
     find . -xtype l -print -delete

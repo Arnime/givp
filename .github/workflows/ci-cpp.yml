@@ -26,7 +26,7 @@ jobs:
     outputs:
       toolchains: ${{ steps.pick.outputs.toolchains }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
       - id: pick
@@ -47,7 +47,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Install clang tools
         run: |
@@ -86,7 +86,7 @@ jobs:
       matrix:
         include: ${{ fromJson(needs.setup.outputs.toolchains) }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set compiler (non-Windows)
         if: matrix.compiler != 'msvc'
@@ -121,7 +121,7 @@ jobs:
       matrix:
         include: ${{ fromJson(needs.setup.outputs.toolchains) }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set compiler (non-Windows)
         if: matrix.compiler != 'msvc'
@@ -213,7 +213,7 @@ jobs:
   coverage:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
@@ -325,7 +325,7 @@ jobs:
           ' coverage.info
 
       - name: Upload to Codecov
-        uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         with:
           files: coverage.info
           flags: cpp
@@ -337,7 +337,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
@@ -384,7 +384,7 @@ jobs:
     name: Validate Conan Recipe
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
@@ -392,16 +392,17 @@ jobs:
 
       - name: Install Conan
         run: |
-          pip install --only-binary=:all: --require-hashes -r cpp/requirements/conan.txt
+          bash .github/scripts/bootstrap-poetry.sh
+          bash .github/scripts/poetry-install.sh --only main,conan
 
       - name: Detect default profile
-        run: conan profile detect --force
+        run: poetry run conan profile detect --force
 
       - name: Create package from local source
         env:
           GIVP_VERSION: "0.0.0-ci"
         run: |
-          conan create cpp/conan \
+          poetry run conan create cpp/conan \
             --version 0.0.0-ci \
             --build=missing \
             -s build_type=Release
@@ -412,7 +413,7 @@ jobs:
     name: Lint vcpkg Port Manifest
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Bootstrap vcpkg
         run: |
