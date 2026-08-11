@@ -13,6 +13,42 @@
     // ─── Theme & Icons ───────────────────────────────────────────────────────
     "workbench.colorTheme": "Dark Modern",
     "workbench.iconTheme": "material-icon-theme",
+    // Exibe os clones Git locais em cpp/ no painel Source Control.
+    "git.autoRepositoryDetection": "subFolders",
+    "git.detectSubmodules": true,
+    // Ícones de pastas do Material Icon Theme para a estrutura deste projeto.
+    "material-icon-theme.folders.customClones": [
+        {
+            "name": "givp-cpp",
+            "base": "include",
+            "color": "#42A5F5",
+            "folderNames": ["cpp"]
+        },
+        {
+            "name": "givp-julia",
+            "base": "project",
+            "color": "#AB47BC",
+            "folderNames": ["julia"]
+        },
+        {
+            "name": "givp-results",
+            "base": "export",
+            "color": "#FFB300",
+            "folderNames": ["results"]
+        },
+        {
+            "name": "givp-conan-registry",
+            "base": "packages",
+            "color": "#5C6BC0",
+            "folderNames": ["conan-center-index"]
+        },
+        {
+            "name": "givp-vcpkg-registry",
+            "base": "packages",
+            "color": "#1E88E5",
+            "folderNames": ["vcpkg"]
+        }
+    ],
     // ─── Python ──────────────────────────────────────────────────────────────
     // Interpretador: virtualenv gerenciado pelo Poetry na raiz do projeto
     "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
