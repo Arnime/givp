@@ -2,18 +2,18 @@ name: CodeQL
 
 on:
     push:
-        branches: [ main ]
+        branches: [main]
         paths:
             - "python/**"
             - "pyproject.toml"
             - ".github/workflows/codeql.yml"
     pull_request:
-        branches: [ main ]
+        branches: [main]
     schedule:
         - cron: "27 4 * * 1"
 
 permissions:
-  contents: read
+    contents: read
 
 jobs:
     analyze:
@@ -31,5 +31,3 @@ jobs:
             - uses: github/codeql-action/analyze@87557b9c84dde89fdd9b10e88954ac2f4248e463 # v4.36.1
               with:
                   category: "/language:python"
-
-
