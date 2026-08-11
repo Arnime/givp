@@ -71,6 +71,10 @@ jobs:
       - name: Lint
         run: poetry run ruff check python/src python/tests
       - name: Type-check
+        # Mypy is configured to validate the package's Python 3.10 baseline.
+        # Run it once on a stable interpreter; the full matrix still exercises
+        # runtime compatibility, including Python 3.14.
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.13'
         run: poetry run mypy
       - name: Test
         run: poetry run python -m pytest --no-cov
