@@ -37,7 +37,7 @@ jobs:
     name: SonarQube monorepo scan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
@@ -77,7 +77,7 @@ jobs:
         run: |
           bash .github/scripts/poetry-install.sh --no-root --only main,dev
           bash .github/scripts/install-package-editable.sh
-          pytest --cov=givp --cov-report=xml:coverage-python.xml python/tests/
+          poetry run pytest --cov=givp --cov-report=xml:coverage-python.xml python/tests/
 
       - name: Set up Rust toolchain
         if: steps.preflight.outputs.enabled == 'true'
@@ -88,7 +88,7 @@ jobs:
 
       - name: Install cargo-llvm-cov
         if: steps.preflight.outputs.enabled == 'true'
-        uses: taiki-e/install-action@213ccc1a076163c093f914550b94feb90fab916d # v2.79.2
+        uses: taiki-e/install-action@6c6fd71fe4fb72c3697d269963d0e15df8adedad # v2.85.10
         with:
           tool: cargo-llvm-cov
 
