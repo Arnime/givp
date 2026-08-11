@@ -5,3 +5,7 @@
 # OpenSSF Scorecard PinnedDependencies considers an exact == pin sufficient.
 pip==26.1.2
 poetry==2.4.1
+# Poetry uses virtualenv to create the project environment.  Pinning this
+# transitive bootstrap dependency ensures newly-created CI environments seed
+# pip 26.1.2 rather than the vulnerable pip 26.1.1 bundled by virtualenv 21.3.
+virtualenv==21.7.4
