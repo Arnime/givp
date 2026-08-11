@@ -8,6 +8,7 @@ on:
             - "mkdocs.yml"
             - "python/src/**"
             - ".github/workflows/docs.yml"
+    pull_request:
     workflow_dispatch:
 
 env:
@@ -27,20 +28,19 @@ jobs:
         permissions:
             contents: read
         steps:
-            - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
             - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
               with:
                   python-version: "3.13"
-            - uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5.0.0
+            - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
               with:
                   enablement: true
             - name: Install
               run: |
                   bash .github/scripts/bootstrap-poetry.sh
-                  bash .github/scripts/poetry-install.sh --no-root --only main,docs
-                  bash .github/scripts/install-package.sh
+                  bash .github/scripts/poetry-install.sh --only main,docs
             - name: Build
-              run: mkdocs build --strict --site-dir _site
+              run: poetry run mkdocs build --strict --site-dir _site
             - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v4.0.0
               with:
                   path: _site
