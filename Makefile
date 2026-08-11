@@ -62,20 +62,18 @@ CPP_BENCH_DIR := cpp/benchmarks
 
 ifeq ($(OS),Windows_NT)
 CPP_WSL_CWD := $(subst \,/,$(CURDIR))
-BUILD_DIR := build_wsl
-BUILD_TIDY_DIR := build_wsl_tidy
-BUILD_COV_DIR := build_wsl_cov
 define cpp_exec
 C:/Windows/System32/wsl.exe bash -lc 'cd "$$(wslpath -a "$(CPP_WSL_CWD)")" && $(1)'
 endef
 else
-BUILD_DIR := build
-BUILD_TIDY_DIR := build_tidy
-BUILD_COV_DIR := build_cov
 define cpp_exec
 $(1)
 endef
 endif
+
+BUILD_DIR := cpp/build/default
+BUILD_TIDY_DIR := cpp/build/tidy
+BUILD_COV_DIR := cpp/build/coverage
 
 .PHONY: cpp-format-check cpp-lint cpp-build cpp-test cpp-coverage cpp-all cpp-clean
 
