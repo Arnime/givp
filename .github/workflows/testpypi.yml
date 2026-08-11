@@ -20,7 +20,7 @@ jobs:
             name: testpypi
             url: https://test.pypi.org/p/givp
         steps:
-            - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
               with:
                   fetch-depth: 0
             - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
@@ -36,8 +36,8 @@ jobs:
                   # Append a .devN suffix derived from commit count so each push uploads
                   # a unique version (TestPyPI rejects duplicates).
                   DEV_SUFFIX=".dev$(git rev-list --count HEAD)"
-                  python -c "import re,pathlib; p=pathlib.Path('pyproject.toml'); s=p.read_text(); p.write_text(re.sub(r'(version\s*=\s*\")([^\"]+)(\")', r'\g<1>\g<2>${DEV_SUFFIX}\g<3>', s, count=1))"
-                  python -m build
+                  poetry run python -c "import re,pathlib; p=pathlib.Path('pyproject.toml'); s=p.read_text(); p.write_text(re.sub(r'(version\s*=\s*\")([^\"]+)(\")', r'\g<1>\g<2>${DEV_SUFFIX}\g<3>', s, count=1))"
+                  poetry run python -m build
             - name: Smoke install
               run: |
                   sh .github/scripts/smoke-install.sh
@@ -47,3 +47,6 @@ jobs:
               with:
                   repository-url: https://test.pypi.org/legacy/
                   skip-existing: true
+                  # The action's bundled metadata checker does not yet accept
+                  # valid Core Metadata 2.5 emitted by current Hatchling.
+                  verify-metadata: false

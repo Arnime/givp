@@ -27,7 +27,7 @@ jobs:
             matrix:
                 python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
         steps:
-            - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
             - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
               with:
                   python-version: ${{ matrix.python-version }}
@@ -43,7 +43,8 @@ jobs:
               run: |
                   bash .github/scripts/poetry-install.sh --no-root --only main,audit
                   bash .github/scripts/install-package-editable.sh
-            - name: Audit
+            - name: Validate lock and audit dependencies
               run: |
-                  python -m pip freeze --exclude-editable | grep -viE '^(pip|setuptools|wheel)==' > /tmp/audit-reqs.txt
-                  python -m pip_audit -r /tmp/audit-reqs.txt
+                  poetry check --lock
+                  poetry run pip-audit --local --skip-editable \
+                    --cache-dir "$RUNNER_TEMP/pip-audit-cache"

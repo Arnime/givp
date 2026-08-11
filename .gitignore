@@ -81,3 +81,9 @@ results/
 # icones locais
 desktop.ini
 *.ico
+
+# claude, gitnexus e codex
+AGENTS.md
+CLAUDE.md
+.claude/
+.codex/
