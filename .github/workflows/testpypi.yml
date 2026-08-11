@@ -47,3 +47,6 @@ jobs:
               with:
                   repository-url: https://test.pypi.org/legacy/
                   skip-existing: true
+                  # The action's bundled metadata checker does not yet accept
+                  # valid Core Metadata 2.5 emitted by current Hatchling.
+                  verify-metadata: false
