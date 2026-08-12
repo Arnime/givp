@@ -33,53 +33,8 @@ jobs:
             - name: Read and validate unified version
               id: version
               run: |
-                  VERSION=$(python3 - <<'PY'
-                  import pathlib
-                  import re
-                  import tomllib
-
-                  root = pathlib.Path('.')
-
-                  py = tomllib.load((root / 'pyproject.toml').open('rb'))['project']['version']
-                  jl = tomllib.load((root / 'julia' / 'Project.toml').open('rb'))['version']
-
-                  cargo_text = (root / 'rust' / 'Cargo.toml').read_text(encoding='utf-8')
-                  cargo_match = re.search(r'^version\s*=\s*"([^"]+)"', cargo_text, re.M)
-                  if not cargo_match:
-                      raise SystemExit('Unable to read version from rust/Cargo.toml')
-                  rs = cargo_match.group(1)
-
-                  r_desc = (root / 'r' / 'DESCRIPTION').read_text(encoding='utf-8')
-                  r_match = re.search(r'^Version:\s*([0-9A-Za-z.+-]+)\s*$', r_desc, re.M)
-                  if not r_match:
-                      raise SystemExit('Unable to read version from r/DESCRIPTION')
-                  r_ver = r_match.group(1)
-
-                  cmake = (root / 'cpp' / 'CMakeLists.txt').read_text(encoding='utf-8')
-                  cpp_match = re.search(r'project\(\s*givp\s+VERSION\s+([0-9A-Za-z.+-]+)', cmake)
-                  if not cpp_match:
-                      raise SystemExit('Unable to read version from cpp/CMakeLists.txt')
-                  cpp_ver = cpp_match.group(1)
-
-                  versions = {
-                      'pyproject.toml': py,
-                      'julia/Project.toml': jl,
-                      'rust/Cargo.toml': rs,
-                      'r/DESCRIPTION': r_ver,
-                      'cpp/CMakeLists.txt': cpp_ver,
-                  }
-
-                  unique = sorted(set(versions.values()))
-                  if len(unique) != 1:
-                      details = '\n'.join(f'  - {k}: {v}' for k, v in versions.items())
-                      raise SystemExit(
-                          'Version mismatch across manifests. Bump all language manifests to the same version.\n'
-                          + details
-                      )
-
-                  print(unique[0])
-                  PY
-                  )
+                  VERSION=$(python3 .github/scripts/validate_unified_version.py \
+                    --root "$GITHUB_WORKSPACE")
                   echo "tag=v${VERSION}" >> "$GITHUB_OUTPUT"
                   echo "Detected version: v${VERSION}"
 
@@ -107,5 +62,4 @@ jobs:
               if: steps.tag_check.outputs.exists == 'false'
               run: |
                   echo "Tag ${{ steps.version.outputs.tag }} pushed — release.yml triggered automatically via push:tags event."
-
 

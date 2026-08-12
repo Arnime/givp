@@ -53,6 +53,7 @@ dev = [
     "mypy>=2.1.0",
     "hypothesis>=6.152.8",
     "pytest-benchmark>=4.0",
+    "tomli>=2.0; python_version < '3.11'",
     "tqdm>=4.66",
 ]
 benchmarks = [
