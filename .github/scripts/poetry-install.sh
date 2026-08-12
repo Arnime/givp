@@ -25,4 +25,7 @@ export POETRY_VIRTUALENVS_CREATE=true
 poetry check --lock
 
 # `sync` installs only the exact locked dependency set, removing stale packages.
+# Let Poetry retry transient PyPI download failures instead of duplicating retry
+# handling in this wrapper. Workflows may override the default when necessary.
+export POETRY_REQUESTS_MAX_RETRIES="${POETRY_REQUESTS_MAX_RETRIES:-3}"
 poetry sync "$@"
