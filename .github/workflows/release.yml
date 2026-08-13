@@ -93,7 +93,8 @@ jobs:
             echo "::warning::One or more badge URLs returned errors. PyPI publish continues but badges may show broken on the PyPI page."
           fi
       - name: Publish to PyPI (trusted publisher)
-        uses: ./.github/actions/publish-pypi
+        # Docker actions cannot run reliably inside a local composite action.
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
         with:
           skip-existing: true
           packages-dir: dist
