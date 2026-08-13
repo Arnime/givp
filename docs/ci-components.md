@@ -16,10 +16,12 @@ pela CI. Um workflow deve fazer checkout antes de chamar uma ação local.
 Para uma automação nova, reutilize primeiro um desses componentes. Não copie
 o pin de uma action centralizada para um workflow. A checagem
 `check-centralized-actions.sh` impede essa regressão nos workflows de CI e
-release das linguagens.
+release que usam o conteúdo da própria revisão.
 
-Pins de `actions/checkout`, da publicação PyPI e de integrações de segurança
-ou especializadas (CodeQL, Sonar, Scorecard e SLSA) permanecem explícitos nos
-workflows. A publicação PyPI é uma Docker Action e não deve ser encapsulada em
-uma ação composta local. O Dependabot, configurado para `github-actions`, abre
-PRs semanais para manter esses pins e os componentes atualizados.
+Pins de `actions/checkout`, da publicação PyPI, do workflow central de release
+e de integrações de segurança ou especializadas (CodeQL, Sonar, Scorecard e
+SLSA) permanecem explícitos nos workflows. O release usa actions externas
+porque pode fazer checkout de uma tag anterior aos componentes locais. A
+publicação PyPI é uma Docker Action e também não deve ser encapsulada em uma
+ação composta local. O Dependabot, configurado para `github-actions`, abre PRs
+semanais para manter esses pins e os componentes atualizados.

@@ -9,7 +9,6 @@ readonly workflows=(
   .github/workflows/ci-r.yml
   .github/workflows/ci-cpp.yml
   .github/workflows/dry-run-crates.yml
-  .github/workflows/release.yml
   .github/workflows/release-cpp.yml
   .github/workflows/testpypi.yml
 )
