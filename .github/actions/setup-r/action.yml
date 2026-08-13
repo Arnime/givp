@@ -28,7 +28,14 @@ runs:
       with:
         r-version: ${{ inputs.r-version }}
         use-public-rspm: true
-    - uses: r-lib/actions/setup-r-dependencies@a51a8012b0aab7c32ef9d19bf54da93f3254335e # v2
+    - if: inputs.dependencies == ''
+      uses: r-lib/actions/setup-r-dependencies@a51a8012b0aab7c32ef9d19bf54da93f3254335e # v2
+      with:
+        working-directory: ${{ inputs.working-directory }}
+        extra-packages: ${{ inputs.extra-packages }}
+        cache: ${{ inputs.cache }}
+    - if: inputs.dependencies != ''
+      uses: r-lib/actions/setup-r-dependencies@a51a8012b0aab7c32ef9d19bf54da93f3254335e # v2
       with:
         working-directory: ${{ inputs.working-directory }}
         dependencies: ${{ inputs.dependencies }}
