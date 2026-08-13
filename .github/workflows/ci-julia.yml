@@ -5,9 +5,13 @@ on:
     branches: [main]
   pull_request:
     paths:
-      - "julia/**"
-      - "!julia/**/*.md"
-      - "!julia/LICENSE"
+      - "julia/src/**"
+      - "julia/test/**"
+      - "julia/Project.toml"
+      - "julia/Manifest.toml"
+      - "julia/test/Project.toml"
+      - "julia/test/Manifest.toml"
+      - ".github/actions/setup-julia/**"
       - ".github/workflows/ci-julia.yml"
       - "codecov.yml"
   workflow_dispatch:
@@ -24,6 +28,9 @@ jobs:
       contents: read
     outputs:
       versions: ${{ steps.pick.outputs.versions }}
+      source_changed: ${{ steps.pick.outputs.source_changed }}
+      config_changed: ${{ steps.pick.outputs.config_changed }}
+      validation_required: ${{ steps.pick.outputs.validation_required }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -36,11 +43,22 @@ jobs:
           if [ "$EVENT_NAME" = "pull_request" ]; then
             if git diff --name-only "$PR_BASE" HEAD -- julia/src julia/test | grep -q .; then
               echo 'versions=["1.9","1.10","1.11","1.12"]' >> "$GITHUB_OUTPUT"
+              echo 'source_changed=true' >> "$GITHUB_OUTPUT"
             else
               echo 'versions=["1"]' >> "$GITHUB_OUTPUT"
+              echo 'source_changed=false' >> "$GITHUB_OUTPUT"
             fi
+            if git diff --name-only "$PR_BASE" HEAD -- julia/Project.toml julia/Manifest.toml julia/test/Project.toml julia/test/Manifest.toml .github/actions/setup-julia .github/workflows/ci-julia.yml codecov.yml | grep -q .; then
+              echo 'config_changed=true' >> "$GITHUB_OUTPUT"
+            else
+              echo 'config_changed=false' >> "$GITHUB_OUTPUT"
+            fi
+            echo 'validation_required=true' >> "$GITHUB_OUTPUT"
           else
             echo 'versions=["1.9","1.10","1.11","1.12"]' >> "$GITHUB_OUTPUT"
+            echo 'source_changed=true' >> "$GITHUB_OUTPUT"
+            echo 'config_changed=true' >> "$GITHUB_OUTPUT"
+            echo 'validation_required=true' >> "$GITHUB_OUTPUT"
           fi
 
   test:
@@ -78,6 +96,8 @@ jobs:
         run: julia --project=julia -e 'using Pkg; Pkg.test()'
 
   coverage:
+    needs: setup
+    if: github.event_name != 'pull_request' || needs.setup.outputs.source_changed == 'true'
     runs-on: ubuntu-latest
     permissions:
       actions: read
@@ -209,6 +229,8 @@ jobs:
           fail_ci_if_error: false
 
   format:
+    needs: setup
+    if: github.event_name != 'pull_request' || needs.setup.outputs.source_changed == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -248,6 +270,8 @@ jobs:
           fi
 
   fuzz:
+    needs: setup
+    if: github.event_name != 'pull_request' || needs.setup.outputs.source_changed == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -276,6 +300,8 @@ jobs:
             --timeout 90
 
   benchmark_smoke:
+    needs: setup
+    if: github.event_name != 'pull_request' || needs.setup.outputs.source_changed == 'true'
     name: Benchmark smoke (Julia)
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -322,6 +348,8 @@ jobs:
             --format both
 
   lint:
+    needs: setup
+    if: github.event_name != 'pull_request' || needs.setup.outputs.source_changed == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -374,6 +402,8 @@ jobs:
           '
 
   audit:
+    needs: setup
+    if: github.event_name != 'pull_request' || needs.setup.outputs.source_changed == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -428,6 +458,8 @@ jobs:
           retention-days: 90
 
   benchmark_regression:
+    needs: setup
+    if: github.event_name != 'pull_request' || needs.setup.outputs.source_changed == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -491,6 +523,8 @@ jobs:
           retention-days: 90
 
   mutation_testing:
+    needs: setup
+    if: github.event_name != 'pull_request' || needs.setup.outputs.source_changed == 'true'
     runs-on: ubuntu-latest
     continue-on-error: true # informational — does not block merge
     permissions:
@@ -560,8 +594,9 @@ jobs:
           ' || true
 
   algorithm-quality-gate:
+    needs: [setup, test]
+    if: github.event_name != 'pull_request' || needs.setup.outputs.source_changed == 'true'
     name: Algorithm quality gate (convergence assertions)
-    needs: test
     runs-on: ubuntu-latest
     # BLOCKING: this job must pass before merging. It verifies that
     # GIVPOptimizer actually converges on standard benchmark functions, not

@@ -7,11 +7,21 @@ on:
   push:
     branches: [ main ]
     paths:
-      - 'rust/**'
+      - 'rust/src/**'
+      - 'rust/tests/**'
+      - 'rust/benches/**'
+      - 'rust/Cargo.toml'
+      - 'rust/Cargo.lock'
+      - '.github/actions/setup-rust/**'
       - '.github/workflows/dry-run-crates.yml'
   pull_request:
     paths:
-      - 'rust/**'
+      - 'rust/src/**'
+      - 'rust/tests/**'
+      - 'rust/benches/**'
+      - 'rust/Cargo.toml'
+      - 'rust/Cargo.lock'
+      - '.github/actions/setup-rust/**'
       - '.github/workflows/dry-run-crates.yml'
   workflow_dispatch:
 
