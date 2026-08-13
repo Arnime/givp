@@ -57,13 +57,10 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: julia-actions/setup-julia@fa02766e078afaaf09b14210362cee14137e6a32 # v3.0.2
-        with:
-          version: ${{ matrix.julia-version }}
-
-      - uses: julia-actions/cache@a45e8fa8be21c18a06b7177052533149e61e9b38 # v3.1.0
+      - uses: ./.github/actions/setup-julia
         continue-on-error: true
         with:
+          version: ${{ matrix.julia-version }}
           delete-old-caches: false
 
       - name: Install dependencies
@@ -90,12 +87,9 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: julia-actions/setup-julia@fa02766e078afaaf09b14210362cee14137e6a32 # v3.0.2
+      - uses: ./.github/actions/setup-julia
         with:
           version: "1"
-
-      - uses: julia-actions/cache@a45e8fa8be21c18a06b7177052533149e61e9b38 # v3.1.0
-        with:
           delete-old-caches: false
 
       - name: Install dependencies
@@ -221,11 +215,9 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: julia-actions/setup-julia@fa02766e078afaaf09b14210362cee14137e6a32 # v3.0.2
+      - uses: ./.github/actions/setup-julia
         with:
           version: "1"
-
-      - uses: julia-actions/cache@a45e8fa8be21c18a06b7177052533149e61e9b38 # v3.1.0
 
       - name: Install dependencies
         run: |
@@ -263,11 +255,9 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: julia-actions/setup-julia@fa02766e078afaaf09b14210362cee14137e6a32 # v3.0.2
+      - uses: ./.github/actions/setup-julia
         with:
           version: "1"
-
-      - uses: julia-actions/cache@a45e8fa8be21c18a06b7177052533149e61e9b38 # v3.1.0
 
       - name: Install dependencies
         run: |
@@ -295,11 +285,9 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: julia-actions/setup-julia@fa02766e078afaaf09b14210362cee14137e6a32 # v3.0.2
+      - uses: ./.github/actions/setup-julia
         with:
           version: "1"
-
-      - uses: julia-actions/cache@a45e8fa8be21c18a06b7177052533149e61e9b38 # v3.1.0
 
       - name: Install benchmark dependencies
         run: |
@@ -340,11 +328,9 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: julia-actions/setup-julia@fa02766e078afaaf09b14210362cee14137e6a32 # v3.0.2
+      - uses: ./.github/actions/setup-julia
         with:
           version: "1"
-
-      - uses: julia-actions/cache@a45e8fa8be21c18a06b7177052533149e61e9b38 # v3.1.0
 
       - name: Install dependencies
         run: |
@@ -394,7 +380,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: julia-actions/setup-julia@fa02766e078afaaf09b14210362cee14137e6a32 # v3.0.2
+      - uses: ./.github/actions/setup-julia
         with:
           version: "1"
 
@@ -448,11 +434,9 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: julia-actions/setup-julia@fa02766e078afaaf09b14210362cee14137e6a32 # v3.0.2
+      - uses: ./.github/actions/setup-julia
         with:
           version: "1"
-
-      - uses: julia-actions/cache@a45e8fa8be21c18a06b7177052533149e61e9b38 # v3.1.0
 
       - name: Install dependencies
         run: |
@@ -514,11 +498,9 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: julia-actions/setup-julia@fa02766e078afaaf09b14210362cee14137e6a32 # v3.0.2
+      - uses: ./.github/actions/setup-julia
         with:
           version: "1"
-
-      - uses: julia-actions/cache@a45e8fa8be21c18a06b7177052533149e61e9b38 # v3.1.0
 
       - name: Install dependencies
         run: |
@@ -591,11 +573,9 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: julia-actions/setup-julia@fa02766e078afaaf09b14210362cee14137e6a32 # v3.0.2
+      - uses: ./.github/actions/setup-julia
         with:
           version: "1"
-
-      - uses: julia-actions/cache@a45e8fa8be21c18a06b7177052533149e61e9b38 # v3.1.0
 
       - name: Install package
         run: |

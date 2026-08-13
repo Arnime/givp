@@ -1,0 +1,41 @@
+name: Release assets
+description: Create or update a GitHub release using the pinned release action.
+inputs:
+  tag-name:
+    description: Git tag receiving the assets.
+    required: true
+  files:
+    description: Newline-separated asset glob(s).
+    required: true
+  name:
+    description: Optional release name.
+    required: false
+    default: ""
+  body:
+    description: Optional release body.
+    required: false
+    default: ""
+  body-path:
+    description: Optional path to a file containing the release body.
+    required: false
+    default: ""
+  generate-release-notes:
+    description: Generate release notes when no body is supplied.
+    required: false
+    default: "false"
+  prerelease:
+    description: Mark the release as a pre-release.
+    required: false
+    default: "false"
+runs:
+  using: composite
+  steps:
+    - uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
+      with:
+        tag_name: ${{ inputs.tag-name }}
+        files: ${{ inputs.files }}
+        name: ${{ inputs.name }}
+        body: ${{ inputs.body }}
+        body_path: ${{ inputs.body-path }}
+        generate_release_notes: ${{ inputs.generate-release-notes }}
+        prerelease: ${{ inputs.prerelease }}

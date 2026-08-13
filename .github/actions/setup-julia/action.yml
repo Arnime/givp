@@ -1,0 +1,30 @@
+name: Setup Julia
+description: Install Julia and optionally restore the Julia package cache.
+inputs:
+  version:
+    description: Julia version or channel.
+    required: false
+    default: "1"
+  project:
+    description: Julia project directory used by the cache action.
+    required: false
+    default: julia
+  cache:
+    description: Restore and save Julia package cache.
+    required: false
+    default: "true"
+  delete-old-caches:
+    description: Ask the cache action to delete obsolete caches.
+    required: false
+    default: ""
+runs:
+  using: composite
+  steps:
+    - uses: julia-actions/setup-julia@fa02766e078afaaf09b14210362cee14137e6a32 # v3.0.2
+      with:
+        version: ${{ inputs.version }}
+    - if: inputs.cache == 'true'
+      uses: julia-actions/cache@a45e8fa8be21c18a06b7177052533149e61e9b38 # v3.1.0
+      with:
+        project: ${{ inputs.project }}
+        delete-old-caches: ${{ inputs.delete-old-caches }}

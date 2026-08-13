@@ -23,7 +23,7 @@ jobs:
             - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
               with:
                   fetch-depth: 0
-            - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+            - uses: ./.github/actions/setup-python
               with:
                   python-version: "3.12"
             - name: Bootstrap Poetry
@@ -43,7 +43,7 @@ jobs:
                   sh .github/scripts/smoke-install.sh
                   /tmp/smoke/bin/python -c "import givp; print(givp.__version__)"
             - name: Publish to TestPyPI
-              uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # release/v1
+              uses: ./.github/actions/publish-pypi
               with:
                   repository-url: https://test.pypi.org/legacy/
                   skip-existing: true

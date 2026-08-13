@@ -272,12 +272,11 @@ jobs:
           echo "notes-file=release-notes.md" >> "$GITHUB_OUTPUT"
 
       - name: Create release and upload assets
-        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
+        uses: ./.github/actions/release-assets
         with:
           tag_name: ${{ needs.validate.outputs.version }}
           name: C++ Release ${{ needs.validate.outputs.version }}
-          body_path: ${{ steps.notes.outputs.notes-file }}
-          draft: false
+          body-path: ${{ steps.notes.outputs.notes-file }}
           prerelease: ${{ contains(needs.validate.outputs.semver, '-') }}
           files: |
             givp-cpp-*.tar.gz

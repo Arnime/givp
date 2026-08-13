@@ -33,7 +33,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event_name == 'workflow_dispatch' && format('refs/tags/{0}', inputs.tag) || github.ref }}
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      - uses: ./.github/actions/setup-python
         with:
           python-version: "3.12"
       - name: Bootstrap Poetry
@@ -60,7 +60,7 @@ jobs:
       - name: Generate SBOM (CycloneDX)
         run: cyclonedx-py environment --of JSON -o sbom.cdx.json
       - name: Attach artifacts to release
-        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
+        uses: ./.github/actions/release-assets
         with:
           tag_name: ${{ inputs.tag || github.ref_name }}
           files: |
@@ -93,7 +93,7 @@ jobs:
             echo "::warning::One or more badge URLs returned errors. PyPI publish continues but badges may show broken on the PyPI page."
           fi
       - name: Publish to PyPI (trusted publisher)
-        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # release/v1
+        uses: ./.github/actions/publish-pypi
         with:
           skip-existing: true
           packages-dir: dist
@@ -126,13 +126,9 @@ jobs:
             ${{ github.event_name == 'workflow_dispatch' && format('refs/tags/{0}',
             inputs.tag) || github.ref }}
 
-      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+      - uses: ./.github/actions/setup-rust
         with:
           toolchain: stable
-
-      - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
-        with:
-          workspaces: "rust -> target"
 
       - name: Verify crate version matches tag
         id: crate_version
@@ -235,12 +231,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y cmake libcurl4-openssl-dev libssl-dev libxml2-dev pandoc
 
-      - uses: r-lib/actions/setup-r@a51a8012b0aab7c32ef9d19bf54da93f3254335e # v2
-        with:
-          r-version: release
-          use-public-rspm: true
-
-      - uses: r-lib/actions/setup-r-dependencies@a51a8012b0aab7c32ef9d19bf54da93f3254335e # v2
+      - uses: ./.github/actions/setup-r
         with:
           working-directory: r
           extra-packages: any::lazyeval
@@ -253,7 +244,7 @@ jobs:
           echo "tarball=$(ls givp_*.tar.gz | head -1)" >> "$GITHUB_OUTPUT"
 
       - name: Attach R tarball to release
-        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
+        uses: ./.github/actions/release-assets
         with:
           tag_name: ${{ inputs.tag || github.ref_name }}
           files: ${{ steps.r_build.outputs.tarball }}
