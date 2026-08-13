@@ -1,0 +1,30 @@
+name: Setup Rust
+description: Install Rust and optionally restore the shared Cargo cache.
+inputs:
+  toolchain:
+    description: Rust toolchain to install.
+    required: false
+    default: stable
+  components:
+    description: Optional comma-separated Rust components.
+    required: false
+    default: ""
+  cache:
+    description: Restore and save Cargo build cache.
+    required: false
+    default: "true"
+  workspaces:
+    description: Workspace mapping accepted by Swatinem/rust-cache.
+    required: false
+    default: "rust -> target"
+runs:
+  using: composite
+  steps:
+    - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+      with:
+        toolchain: ${{ inputs.toolchain }}
+        components: ${{ inputs.components }}
+    - if: inputs.cache == 'true'
+      uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
+      with:
+        workspaces: ${{ inputs.workspaces }}

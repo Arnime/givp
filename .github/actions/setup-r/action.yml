@@ -1,0 +1,43 @@
+name: Setup R
+description: Install R and resolve package dependencies with shared defaults.
+inputs:
+  r-version:
+    description: R version or channel.
+    required: false
+    default: release
+  working-directory:
+    description: Package directory for dependency resolution.
+    required: false
+    default: r
+  extra-packages:
+    description: Comma-separated packages for r-lib/actions setup.
+    required: false
+    default: ""
+  dependencies:
+    description: Dependency level accepted by r-lib/actions setup-r-dependencies.
+    required: false
+    default: ""
+  cache:
+    description: Enable dependency caching.
+    required: false
+    default: "true"
+runs:
+  using: composite
+  steps:
+    - uses: r-lib/actions/setup-r@a51a8012b0aab7c32ef9d19bf54da93f3254335e # v2
+      with:
+        r-version: ${{ inputs.r-version }}
+        use-public-rspm: true
+    - if: inputs.dependencies == ''
+      uses: r-lib/actions/setup-r-dependencies@a51a8012b0aab7c32ef9d19bf54da93f3254335e # v2
+      with:
+        working-directory: ${{ inputs.working-directory }}
+        extra-packages: ${{ inputs.extra-packages }}
+        cache: ${{ inputs.cache }}
+    - if: inputs.dependencies != ''
+      uses: r-lib/actions/setup-r-dependencies@a51a8012b0aab7c32ef9d19bf54da93f3254335e # v2
+      with:
+        working-directory: ${{ inputs.working-directory }}
+        dependencies: ${{ inputs.dependencies }}
+        extra-packages: ${{ inputs.extra-packages }}
+        cache: ${{ inputs.cache }}

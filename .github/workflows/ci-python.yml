@@ -59,7 +59,7 @@ jobs:
         python-version: ${{ fromJson(needs.setup.outputs.versions) }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      - uses: ./.github/actions/setup-python
         with:
           python-version: ${{ matrix.python-version }}
       - name: Bootstrap Poetry
@@ -79,13 +79,21 @@ jobs:
       - name: Test
         run: poetry run python -m pytest --no-cov
 
+  centralized-actions:
+    name: Check centralized action pins
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Prevent copied action pins
+        run: bash .github/scripts/check-centralized-actions.sh
+
   coverage:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      - uses: ./.github/actions/setup-python
         with:
           python-version: "3.13"
       - name: Bootstrap Poetry
@@ -183,7 +191,7 @@ jobs:
     if: needs.setup.outputs.source_changed == 'true'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      - uses: ./.github/actions/setup-python
         with:
           python-version: "3.13"
       - name: Bootstrap Poetry
@@ -209,7 +217,7 @@ jobs:
     continue-on-error: true
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      - uses: ./.github/actions/setup-python
         with:
           python-version: "3.13"
       - name: Bootstrap Poetry
@@ -252,7 +260,7 @@ jobs:
     # GIVP configuration. A failure here indicates an algorithmic regression.
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      - uses: ./.github/actions/setup-python
         with:
           python-version: "3.13"
       - name: Bootstrap Poetry
@@ -277,7 +285,7 @@ jobs:
     continue-on-error: true
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      - uses: ./.github/actions/setup-python
         with:
           python-version: "3.13"
       - name: Bootstrap Poetry
@@ -312,7 +320,7 @@ jobs:
       && github.event.inputs.run_mutation == 'true')
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      - uses: ./.github/actions/setup-python
         with:
           python-version: "3.13"
       - name: Bootstrap Poetry
@@ -372,7 +380,7 @@ jobs:
         os: [ubuntu-latest, macos-latest]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      - uses: ./.github/actions/setup-python
         with:
           python-version: "3.15"
           allow-prereleases: true

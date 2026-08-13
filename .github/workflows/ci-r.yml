@@ -53,13 +53,9 @@ jobs:
             libuv1-dev \
             pandoc
 
-      - uses: r-lib/actions/setup-r@a51a8012b0aab7c32ef9d19bf54da93f3254335e # v2
+      - uses: ./.github/actions/setup-r
         with:
           r-version: ${{ matrix.r-version }}
-          use-public-rspm: true
-
-      - uses: r-lib/actions/setup-r-dependencies@a51a8012b0aab7c32ef9d19bf54da93f3254335e # v2
-        with:
           working-directory: r
           dependencies: '"hard"'
           extra-packages: any::testthat, any::lazyeval
@@ -98,12 +94,7 @@ jobs:
             libuv1-dev \
             pandoc
 
-      - uses: r-lib/actions/setup-r@a51a8012b0aab7c32ef9d19bf54da93f3254335e # v2
-        with:
-          r-version: release
-          use-public-rspm: true
-
-      - uses: r-lib/actions/setup-r-dependencies@a51a8012b0aab7c32ef9d19bf54da93f3254335e # v2
+      - uses: ./.github/actions/setup-r
         with:
           working-directory: r
           extra-packages: any::lintr, any::lazyeval
@@ -151,12 +142,7 @@ jobs:
             libuv1-dev \
             pandoc
 
-      - uses: r-lib/actions/setup-r@a51a8012b0aab7c32ef9d19bf54da93f3254335e # v2
-        with:
-          r-version: release
-          use-public-rspm: true
-
-      - uses: r-lib/actions/setup-r-dependencies@a51a8012b0aab7c32ef9d19bf54da93f3254335e # v2
+      - uses: ./.github/actions/setup-r
         with:
           working-directory: r
           extra-packages: any::covr, any::lazyeval
@@ -295,12 +281,7 @@ jobs:
             libuv1-dev \
             pandoc
 
-      - uses: r-lib/actions/setup-r@a51a8012b0aab7c32ef9d19bf54da93f3254335e # v2
-        with:
-          r-version: release
-          use-public-rspm: true
-
-      - uses: r-lib/actions/setup-r-dependencies@a51a8012b0aab7c32ef9d19bf54da93f3254335e # v2
+      - uses: ./.github/actions/setup-r
         with:
           working-directory: r
           extra-packages: any::lazyeval, any::DEoptim, any::pso, any::GA, any::cmaes
@@ -332,12 +313,7 @@ jobs:
             libuv1-dev \
             pandoc
 
-      - uses: r-lib/actions/setup-r@a51a8012b0aab7c32ef9d19bf54da93f3254335e # v2
-        with:
-          r-version: release
-          use-public-rspm: true
-
-      - uses: r-lib/actions/setup-r-dependencies@a51a8012b0aab7c32ef9d19bf54da93f3254335e # v2
+      - uses: ./.github/actions/setup-r
         with:
           working-directory: r
           extra-packages: any::lazyeval
@@ -373,12 +349,7 @@ jobs:
             libuv1-dev \
             pandoc
 
-      - uses: r-lib/actions/setup-r@a51a8012b0aab7c32ef9d19bf54da93f3254335e # v2
-        with:
-          r-version: release
-          use-public-rspm: true
-
-      - uses: r-lib/actions/setup-r-dependencies@a51a8012b0aab7c32ef9d19bf54da93f3254335e # v2
+      - uses: ./.github/actions/setup-r
         with:
           working-directory: r
           extra-packages: any::lazyeval
@@ -399,7 +370,7 @@ jobs:
             --output r/benchmarks/ci_smoke_results.json \
             --verbose
 
-      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      - uses: ./.github/actions/setup-python
         with:
           python-version: "3.13"
 
