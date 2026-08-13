@@ -9,6 +9,15 @@ on:
             - ".github/workflows/codeql.yml"
     pull_request:
         branches: [main]
+        paths:
+            - "python/src/**"
+            - "python/tests/**"
+            - "pyproject.toml"
+            - "poetry.lock"
+            - "python/requirements/**"
+            - ".github/scripts/bootstrap-poetry.sh"
+            - ".github/scripts/poetry-install.sh"
+            - ".github/workflows/codeql.yml"
     schedule:
         - cron: "27 4 * * 1"
 

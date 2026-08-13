@@ -4,6 +4,16 @@ on:
   push:
     branches: [main]
   pull_request:
+    paths:
+      - "python/src/**"
+      - "python/tests/**"
+      - "pyproject.toml"
+      - "poetry.lock"
+      - "python/requirements/**"
+      - ".github/actions/setup-python/**"
+      - ".github/scripts/bootstrap-poetry.sh"
+      - ".github/scripts/poetry-install.sh"
+      - ".github/workflows/ci-python.yml"
   schedule:
     - cron: "0 5 * * 1"
   workflow_dispatch:
@@ -27,6 +37,8 @@ jobs:
     outputs:
       versions: ${{ steps.pick.outputs.versions }}
       source_changed: ${{ steps.pick.outputs.source_changed }}
+      config_changed: ${{ steps.pick.outputs.config_changed }}
+      validation_required: ${{ steps.pick.outputs.validation_required }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -44,9 +56,17 @@ jobs:
               echo 'versions=["3.13"]' >> "$GITHUB_OUTPUT"
               echo 'source_changed=false' >> "$GITHUB_OUTPUT"
             fi
+            if git diff --name-only "$PR_BASE" HEAD -- pyproject.toml poetry.lock python/requirements .github/actions/setup-python .github/scripts/bootstrap-poetry.sh .github/scripts/poetry-install.sh .github/workflows/ci-python.yml | grep -q .; then
+              echo 'config_changed=true' >> "$GITHUB_OUTPUT"
+            else
+              echo 'config_changed=false' >> "$GITHUB_OUTPUT"
+            fi
+            echo 'validation_required=true' >> "$GITHUB_OUTPUT"
           else
             echo 'versions=["3.10","3.11","3.12","3.13","3.14"]' >> "$GITHUB_OUTPUT"
             echo 'source_changed=true' >> "$GITHUB_OUTPUT"
+            echo 'config_changed=true' >> "$GITHUB_OUTPUT"
+            echo 'validation_required=true' >> "$GITHUB_OUTPUT"
           fi
 
   test:
@@ -86,8 +106,12 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Prevent copied action pins
         run: bash .github/scripts/check-centralized-actions.sh
+      - name: Check selective PR CI filters
+        run: python .github/scripts/check_pr_ci_filters.py
 
   coverage:
+    needs: setup
+    if: github.event_name != 'pull_request' || needs.setup.outputs.source_changed == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -188,7 +212,7 @@ jobs:
     needs: setup
     runs-on: ubuntu-latest
     # Run on source changes only; property tests are slow (50 examples × 5 tests)
-    if: needs.setup.outputs.source_changed == 'true'
+    if: github.event_name != 'pull_request' || needs.setup.outputs.source_changed == 'true'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup-python
@@ -215,6 +239,8 @@ jobs:
     timeout-minutes: 20
     # Informational job: does not block merges, but surfaces regressions
     continue-on-error: true
+    needs: setup
+    if: github.event_name != 'pull_request' || needs.setup.outputs.source_changed == 'true'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup-python
@@ -252,6 +278,7 @@ jobs:
   algorithm-quality-gate:
     name: Algorithm quality gate (convergence assertions)
     needs: setup
+    if: github.event_name != 'pull_request' || needs.setup.outputs.source_changed == 'true'
     runs-on: ubuntu-latest
     # BLOCKING: this job must pass before merging. It verifies that GIVP
     # actually converges on standard benchmark functions, not merely that it
@@ -279,10 +306,11 @@ jobs:
 
   benchmark-regression:
     name: Benchmark regression (informational)
-    needs: setup
     runs-on: ubuntu-latest
     # Informational: surfaces performance regressions but does not block merges
     continue-on-error: true
+    needs: setup
+    if: github.event_name != 'pull_request' || needs.setup.outputs.source_changed == 'true'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup-python
@@ -371,7 +399,7 @@ jobs:
 
   test-pre-release:
     needs: setup
-    if: needs.setup.outputs.source_changed == 'true'
+    if: github.event_name != 'pull_request' || needs.setup.outputs.source_changed == 'true'
     runs-on: ${{ matrix.os }}
     continue-on-error: true
     strategy:

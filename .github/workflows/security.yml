@@ -8,6 +8,15 @@ on:
       - "pyproject.toml"
       - ".github/workflows/security.yml"
   pull_request:
+    paths:
+      - "python/src/**"
+      - "python/tests/**"
+      - "pyproject.toml"
+      - "poetry.lock"
+      - "python/requirements/**"
+      - ".github/scripts/bootstrap-poetry.sh"
+      - ".github/scripts/poetry-install.sh"
+      - ".github/workflows/security.yml"
   schedule:
     - cron: "0 3 * * *"
 
