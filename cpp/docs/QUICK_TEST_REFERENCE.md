@@ -5,7 +5,7 @@ Use this file when you only need the commands.
 ## Recommended
 
 ```powershell
-cd d:\Projetos Pessoais\grasp_ils_vnd_pr
+cd d:\Projetos Pessoais\GIVP
 powershell -File scripts/test-both-local.ps1
 ```
 
@@ -28,9 +28,9 @@ powershell -File scripts/test-vcpkg-local.ps1 -SkipConsumer
 ```powershell
 pip install "conan>=2.0"
 conan --version
-powershell -File scripts/test-conan-local.ps1
-powershell -File scripts/test-conan-local.ps1 -SkipCreate
-powershell -File scripts/test-conan-local.ps1 -Verbose
+powershell -File scripts/test-conan-recipe.ps1
+powershell -File scripts/test-conan-recipe.ps1 -SkipCreate
+powershell -File scripts/test-conan-recipe.ps1 -Verbose
 ```
 
 ## Manual repros
@@ -47,8 +47,8 @@ vcpkg install arnime-givp:x64-windows --overlay-ports=./vcpkg_overlay/ports
 ### Conan recipe
 
 ```powershell
-cd d:\Projetos Pessoais\grasp_ils_vnd_pr\cpp\conan
-conan create . --build=missing -vv
+cd d:\Projetos Pessoais\GIVP
+conan create cpp/conan/conancenter/recipes/givp/all --version 1.0.1 --build=missing -s compiler.cppstd=17 -vv
 ```
 
 ## Next docs

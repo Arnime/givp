@@ -154,6 +154,10 @@ disallow_untyped_defs = true
 show_error_codes = true
 disable_error_code = []
 
+[[tool.mypy.overrides]]
+module = ["conan", "conan.*"]
+ignore_missing_imports = true
+
 [tool.black]
 line-length = 88
 

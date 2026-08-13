@@ -15,12 +15,14 @@ PS> .\test-conan-recipe.ps1
 
 param(
     [switch] $SkipCreate,
-    [string] $ConanVersion = "2.0"
+    [string] $ConanVersion = "2.0",
+    [string] $RecipePath = "cpp\conan\conancenter\recipes\givp\all",
+    [string] $Version = "1.0.1"
 )
 
 $ErrorActionPreference = "Stop"
 $repoRoot = Split-Path -Parent $PSScriptRoot
-$conanDir = Join-Path $repoRoot "cpp\conan"
+$conanDir = Join-Path $repoRoot $RecipePath
 $testPackageDir = Join-Path $conanDir "test_package"
 
 Write-Host "=== Conan 2 Recipe Validation ===" -ForegroundColor Cyan
@@ -76,8 +78,12 @@ if (-not $SkipCreate) {
     Write-Host "`n[4] Testing conan create (this may take a few minutes)..."
     Push-Location $conanDir
     try {
-        Write-Host "  Running: conan create . --build=missing"
-        conan create . --build=missing
+        $createArguments = @("create", ".", "--build=missing")
+        if (-not [string]::IsNullOrWhiteSpace($Version)) {
+            $createArguments += "--version=$Version"
+        }
+        Write-Host "  Running: conan $($createArguments -join ' ')"
+        conan @createArguments
         Write-Host "✓ conan create succeeded" -ForegroundColor Green
     }
     catch {
@@ -96,5 +102,5 @@ Write-Host "`n=== Validation Complete ===" -ForegroundColor Cyan
 Write-Host "Next steps:" -ForegroundColor Yellow
 Write-Host "  1. Review cpp/docs/CONAN_NOTES.md for submission guide"
 Write-Host "  2. Fork conan-center-index repository"
-Write-Host "  3. Copy cpp/conan/ contents to recipes/givp/all/"
+Write-Host "  3. Copy cpp/conan/conancenter/recipes/givp/ to recipes/givp/"
 Write-Host "  4. Create PR with description"

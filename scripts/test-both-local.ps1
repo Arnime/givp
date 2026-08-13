@@ -64,14 +64,17 @@ if (-not $SkipVcpkg) {
 # Run Conan test
 if (-not $SkipConan) {
     Write-Host "`n╔═══════════════════════════════════════════════════════════╗" -ForegroundColor Yellow
-    Write-Host "║  TEST 2: Conan 2 Recipe (Local Create)                   ║" -ForegroundColor Yellow
+    Write-Host "║  TEST 2: ConanCenter Recipe Template                     ║" -ForegroundColor Yellow
     Write-Host "╚═══════════════════════════════════════════════════════════╝" -ForegroundColor Yellow
     
     try {
         $conanArgs = @()
         if ($QuickMode) { $conanArgs += "-SkipCreate" }
         
-        & (Join-Path $scriptsDir "test-conan-local.ps1") @conanArgs
+        & (Join-Path $scriptsDir "test-conan-recipe.ps1") `
+            -RecipePath "cpp\conan\conancenter\recipes\givp\all" `
+            -Version "1.0.1" `
+            @conanArgs
         $results.conan = "PASSED ✓"
         Write-Host "`n✓ Conan test passed" -ForegroundColor Green
     }

@@ -15,7 +15,7 @@ Run the individual scripts only when you need to isolate a failure:
 
 ```powershell
 powershell -File scripts/test-vcpkg-local.ps1
-powershell -File scripts/test-conan-local.ps1
+powershell -File scripts/test-conan-recipe.ps1
 ```
 
 ## Prerequisites
@@ -51,12 +51,11 @@ conan --version
 - Installs the port through an overlay
 - Optionally builds a `find_package(givp)` consumer
 
-### `scripts/test-conan-local.ps1`
+### `scripts/test-conan-recipe.ps1`
 
-- Validates `conanfile.py`
-- Runs `conan create . --build=missing`
-- Verifies `test_package/`
-- Optionally validates a consumer using the local cache
+- Validates the self-contained ConanCenter template
+- Runs `conan create` for the immutable release archive
+- Verifies `all/test_package/`
 
 ## Manual spot checks
 
@@ -74,8 +73,8 @@ vcpkg install arnime-givp:x64-windows --overlay-ports=./vcpkg_overlay/ports
 ### Conan recipe
 
 ```powershell
-cd d:\Projetos Pessoais\grasp_ils_vnd_pr\cpp\conan
-conan create . --build=missing -vv
+cd d:\Projetos Pessoais\GIVP
+conan create cpp/conan/conancenter/recipes/givp/all --version 1.0.1 --build=missing -s compiler.cppstd=17 -vv
 ```
 
 ## Common failures
@@ -93,14 +92,14 @@ conan create . --build=missing -vv
 
 ### `conanfile.py not found`
 
-- Run from `cpp/conan/`
-- Verify `cpp/conan/test_package/` still exists
+- Use `cpp/conan/conancenter/recipes/givp/all/` as the recipe path.
+- Verify `cpp/conan/conancenter/recipes/givp/all/test_package/` still exists.
 
 ### `test_package` compilation failure
 
 - Check headers under `cpp/include/givp/`
-- Check `cpp/conan/test_package/example.cpp`
-- Re-run `conan create . --build=missing -vv`
+- Check `cpp/conan/conancenter/recipes/givp/all/test_package/example.cpp`
+- Re-run the template `conan create` command above
 
 ## After local validation
 

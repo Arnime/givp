@@ -33,7 +33,7 @@
 [![header-only](https://img.shields.io/badge/header--only-yes-brightgreen?logo=cplusplus&logoColor=white)](cpp/include/givp/)
 [![C++17](https://img.shields.io/badge/C%2B%2B-17-blue?logo=cplusplus&logoColor=white)](https://en.cppreference.com/w/cpp/17)
 [![vcpkg port](https://img.shields.io/badge/vcpkg-port%20staging-0078D7?logo=vcpkg&logoColor=white)](cpp/vcpkg_ports/arnime-givp/)
-[![Conan recipe](https://img.shields.io/badge/Conan-recipe%20staging-6699CC?logo=conan&logoColor=white)](cpp/conan/)
+[![Conan recipe](https://img.shields.io/badge/Conan-recipe%20staging-6699CC?logo=conan&logoColor=white)](cpp/conan/conancenter/recipes/givp/)
 [![CI C++](https://github.com/Arnime/givp/actions/workflows/ci-cpp.yml/badge.svg)](https://github.com/Arnime/givp/actions/workflows/ci-cpp.yml)
 [![Codecov (cpp)](https://codecov.io/gh/Arnime/givp/graph/badge.svg?flag=cpp)](https://codecov.io/gh/Arnime/givp/flags/cpp)
 [![clang-format](https://img.shields.io/badge/Formatter-clang--format-blue?logo=llvm&logoColor=white)](https://clang.llvm.org/docs/ClangFormat.html)
@@ -251,8 +251,7 @@ conan install --requires=givp/1.0.1 --build=missing
 For local staging/validation before ConanCenter publication:
 
 ```bash
-cd cpp/conan
-conan create . --version=1.0.1 --build=missing
+conan create cpp/conan/conancenter/recipes/givp/all --version=1.0.1 --build=missing
 ```
 
 Maintainer submission guides:

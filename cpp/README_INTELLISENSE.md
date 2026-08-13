@@ -45,7 +45,7 @@ cpp/
   ├─ include/             (public headers)
   ├─ tests/               (test sources)
   ├─ benchmarks/          (benchmark sources)
-  ├─ conan/               (Conan recipe)
+  ├─ conan/conancenter/   (ConanCenter recipe template)
   ├─ vcpkg_ports/         (vcpkg port staging)
   ├─ consumer_check/      (find_package validation)
   └─ docs/                (operational guides)
@@ -179,7 +179,7 @@ ctest --test-dir cpp/build/coverage --output-on-failure
 - [.clang-tidy](.clang-tidy) — Static analysis rules
 - [.clangd](../.clangd) — clangd IntelliSense configuration (root)
 - [.vscode/settings.json](../.vscode/settings.json) — VS Code CMake config (root)
-- [cpp/conan/conanfile.py](conan/conanfile.py) — Conan recipe
+- [cpp/conan/conancenter/recipes/givp/all/conanfile.py](conan/conancenter/recipes/givp/all/conanfile.py) — ConanCenter recipe template
 - [cpp/vcpkg_ports/arnime-givp/](vcpkg_ports/arnime-givp/) — vcpkg port
 - [docs/RELEASE_AUTOMATION.md](docs/RELEASE_AUTOMATION.md) —
   Release workflow
