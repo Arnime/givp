@@ -53,7 +53,25 @@ def read_unified_version(root: Path) -> str:
         r"project\(\s*givp\s+VERSION\s+([0-9A-Za-z.+-]+)",
         (root / "cpp" / "CMakeLists.txt").read_text(encoding="utf-8"),
     )
-    if not cargo_match or not r_match or not cmake_match:
+    conan_config = root / "cpp" / "conan" / "conancenter" / "recipes" / "givp" / "config.yml"
+    conan_versions = re.findall(
+        r'^\s*["\']?([0-9]+\.[0-9]+\.[0-9]+)["\']?:\s*\n\s+folder:\s+all\s*$',
+        conan_config.read_text(encoding="utf-8"),
+        re.MULTILINE,
+    )
+    conandata = conan_config.parent / "all" / "conandata.yml"
+    conandata_versions = re.findall(
+        r'^\s*["\']?([0-9]+\.[0-9]+\.[0-9]+)["\']?:\s*$',
+        conandata.read_text(encoding="utf-8"),
+        re.MULTILINE,
+    )
+    if (
+        not cargo_match
+        or not r_match
+        or not cmake_match
+        or len(conan_versions) != 1
+        or len(conandata_versions) != 1
+    ):
         raise ValueError("Unable to read a version from a release manifest.")
 
     python_version = pyproject.get("project", {}).get("version")
@@ -67,6 +85,8 @@ def read_unified_version(root: Path) -> str:
         "rust/Cargo.toml": cargo_match.group(1),
         "r/DESCRIPTION": r_match.group(1),
         "cpp/CMakeLists.txt": cmake_match.group(1),
+        "cpp/conan/conancenter/recipes/givp/config.yml": conan_versions[0],
+        "cpp/conan/conancenter/recipes/givp/all/conandata.yml": conandata_versions[0],
     }
     unique_versions = set(versions.values())
     if len(unique_versions) != 1:
@@ -77,7 +97,7 @@ def read_unified_version(root: Path) -> str:
             "Version mismatch across manifests. Bump all language manifests to "
             f"the same version.\n{details}"
         )
-    return next(iter(unique_versions))
+    return str(next(iter(unique_versions)))
 
 
 def parse_args() -> argparse.Namespace:

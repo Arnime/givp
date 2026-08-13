@@ -261,7 +261,7 @@ jobs:
           
           ### Registry Submission Status
           - **vcpkg**: Ready for submission to official registry
-          - **Conan**: Recipe at `cpp/conan/conanfile.py` - ready for ConanCenter
+          - **Conan**: Template at `cpp/conan/conancenter/recipes/givp/` - ready for ConanCenter
           
           ### Checksums
           EOF
@@ -342,8 +342,8 @@ jobs:
           Version: ${{ env.VERSION }}
           
           ### Files Ready for Submission:
-          - Recipe: cpp/conan/conanfile.py
-          - Test package: cpp/conan/test_package/
+          - Recipe: cpp/conan/conancenter/recipes/givp/all/conanfile.py
+          - Test package: cpp/conan/conancenter/recipes/givp/all/test_package/
           
           ### Automated Testing Passed:
           ✅ Multi-platform validation (gcc, clang, msvc)
@@ -404,7 +404,7 @@ jobs:
           - Confirm `vcpkg.json` version is `${{ env.SEMVER }}`
           
           **Conan Center**
-          - Recipe: `cpp/conan/conanfile.py`
+          - Recipe: `cpp/conan/conancenter/recipes/givp/all/conanfile.py`
           - Submit to: [conan-center-index](https://github.com/conan-io/conan-center-index)
           - All tests have passed
           

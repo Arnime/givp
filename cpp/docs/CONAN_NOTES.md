@@ -1,20 +1,21 @@
 # Conan Center Submission Guide
 
 This page is for maintainer operations only. Run local validation first with
-`scripts/test-conan-local.ps1` or `scripts/test-both-local.ps1`.
+`scripts/test-conan-recipe.ps1` or `scripts/test-both-local.ps1`.
 
 ## Recipe contents
 
-The Conan recipe lives in `cpp/conan/`:
+The self-contained recipe submitted to ConanCenter is kept in
+`cpp/conan/conancenter/recipes/givp/`:
 
-- `conanfile.py`
-- `test_package/conanfile.py`
-- `test_package/CMakeLists.txt`
-- `test_package/example.cpp`
+- `config.yml`
+- `all/conanfile.py`
+- `all/conandata.yml`
+- `all/test_package/`
 
 ## Pre-submission checklist
 
-- [ ] `conan create . --build=missing` passes
+- [ ] `conan create cpp/conan/conancenter/recipes/givp/all --version 1.0.1 --build=missing` passes
 - [ ] `test_package/` builds and executes
 - [ ] `package_info()` exports `givp::givp`
 - [ ] Metadata is complete in `conanfile.py`
@@ -23,28 +24,26 @@ The Conan recipe lives in `cpp/conan/`:
 ## Local validation
 
 ```powershell
-powershell -File scripts/test-conan-local.ps1
+powershell -File scripts/test-conan-recipe.ps1
 ```
 
 Manual repro:
 
 ```powershell
-cd d:\Projetos Pessoais\grasp_ils_vnd_pr\cpp\conan
-conan create . --build=missing -vv
+conan create cpp/conan/conancenter/recipes/givp/all --version 1.0.1 --build=missing -s compiler.cppstd=17 -vv
 ```
 
 ## Official submission flow
 
 1. Fork `conan-io/conan-center-index`.
-2. Create a branch such as `add/givp`.
-3. Copy `cpp/conan/conanfile.py` and `cpp/conan/test_package/` into `recipes/givp/all/`.
-4. Add `LICENSE` if required by the target layout.
-5. Open the PR with package metadata and validation notes.
+2. Update the fork from `conan-io/conan-center-index:master` and create a branch such as `add-givp-1.0.1`.
+3. Copy `cpp/conan/conancenter/recipes/givp/` into `recipes/givp/`.
+4. Open the PR with package metadata, source URL, SHA256 validation, and local validation notes.
 
 Suggested PR title:
 
 ```text
-givp/1.0.0: Add GRASP-ILS-VND with Path Relinking optimizer
+givp/1.0.1: Add GRASP-ILS-VND with Path Relinking optimizer
 ```
 
 ## Typical review points
