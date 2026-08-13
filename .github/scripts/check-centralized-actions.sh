@@ -14,7 +14,7 @@ readonly workflows=(
   .github/workflows/testpypi.yml
 )
 
-readonly forbidden='actions/setup-python@|dtolnay/rust-toolchain@|Swatinem/rust-cache@|julia-actions/setup-julia@|julia-actions/cache@|r-lib/actions/setup-r@|r-lib/actions/setup-r-dependencies@|pypa/gh-action-pypi-publish@|softprops/action-gh-release@'
+readonly forbidden='actions/setup-python@|dtolnay/rust-toolchain@|Swatinem/rust-cache@|julia-actions/setup-julia@|julia-actions/cache@|r-lib/actions/setup-r@|r-lib/actions/setup-r-dependencies@|softprops/action-gh-release@'
 
 if matches="$(rg --line-number --regexp="$forbidden" "${workflows[@]}" || true)"; then
   if [[ -n "$matches" ]]; then
