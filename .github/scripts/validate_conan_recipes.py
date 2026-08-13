@@ -7,7 +7,6 @@ import argparse
 import re
 from pathlib import Path
 
-
 CANONICAL_URL = "https://github.com/Arnime/givp"
 TARGET_NAME = "givp::givp"
 PACKAGE_NAME = "givp"
@@ -53,10 +52,12 @@ def main() -> None:
 
     require(cci_content, f'name = "{PACKAGE_NAME}"', cci_recipe, errors)
     require(cci_content, f'homepage = "{CANONICAL_URL}"', cci_recipe, errors)
-    require(cci_content, 'check_min_cppstd(self, 17)', cci_recipe, errors)
+    require(cci_content, "check_min_cppstd(self, 17)", cci_recipe, errors)
     require(cci_content, '"cmake_target_name", "givp::givp"', cci_recipe, errors)
     require(cci_content, 'package_type = "header-library"', cci_recipe, errors)
-    require(test_cmake_content, "find_package(givp CONFIG REQUIRED)", test_cmake, errors)
+    require(
+        test_cmake_content, "find_package(givp CONFIG REQUIRED)", test_cmake, errors
+    )
     require(test_cmake_content, "givp::givp", test_cmake, errors)
     require(conandata_content, f'"{template_version}":', conandata, errors)
     require(
