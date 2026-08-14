@@ -68,7 +68,7 @@ jobs:
 
   lint:
     needs: setup
-    if: github.event_name != 'pull_request' || needs.setup.outputs.source_changed == 'true'
+    if: github.event_name != 'pull_request' || needs.setup.outputs.validation_required == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -457,5 +457,10 @@ jobs:
 
       - name: Validate port manifest JSON (format-manifest)
         run: |
-          /tmp/vcpkg/vcpkg format-manifest cpp/vcpkg_ports/arnime-givp/vcpkg.json
+          /tmp/vcpkg/vcpkg format-manifest cpp/vcpkg_ports/givp/vcpkg.json
           echo "✅ vcpkg.json is valid and correctly formatted."
+
+      - name: Install port through its overlay
+        run: >-
+          /tmp/vcpkg/vcpkg install givp:x64-linux
+          --overlay-ports=${{ github.workspace }}/cpp/vcpkg_ports

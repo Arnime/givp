@@ -32,7 +32,7 @@
 **C++** &nbsp;
 [![header-only](https://img.shields.io/badge/header--only-yes-brightgreen?logo=cplusplus&logoColor=white)](cpp/include/givp/)
 [![C++17](https://img.shields.io/badge/C%2B%2B-17-blue?logo=cplusplus&logoColor=white)](https://en.cppreference.com/w/cpp/17)
-[![vcpkg port](https://img.shields.io/badge/vcpkg-port%20staging-0078D7?logo=vcpkg&logoColor=white)](cpp/vcpkg_ports/arnime-givp/)
+[![vcpkg port](https://img.shields.io/badge/vcpkg-port%20staging-0078D7?logo=vcpkg&logoColor=white)](cpp/vcpkg_ports/givp/)
 [![Conan recipe](https://img.shields.io/badge/Conan-recipe%20staging-6699CC?logo=conan&logoColor=white)](cpp/conan/conancenter/recipes/givp/)
 [![CI C++](https://github.com/Arnime/givp/actions/workflows/ci-cpp.yml/badge.svg)](https://github.com/Arnime/givp/actions/workflows/ci-cpp.yml)
 [![Codecov (cpp)](https://codecov.io/gh/Arnime/givp/graph/badge.svg?flag=cpp)](https://codecov.io/gh/Arnime/givp/flags/cpp)
@@ -224,7 +224,7 @@ Install with vcpkg using the repository overlay port:
 
 ```bash
 git clone https://github.com/Arnime/givp.git
-vcpkg install arnime-givp --overlay-ports=./givp/cpp/vcpkg_ports
+vcpkg install givp --overlay-ports=./givp/cpp/vcpkg_ports
 ```
 
 You can also publish this port in your own vcpkg custom registry and consume it
@@ -233,13 +233,13 @@ from `vcpkg-configuration.json`.
 Install with vcpkg from curated registry (if/when officially published):
 
 ```bash
-vcpkg install arnime-givp
+vcpkg install givp
 ```
 
 For local staging/validation before registry publication, use overlay ports:
 
 ```bash
-vcpkg install arnime-givp:x64-windows --overlay-ports=./cpp/vcpkg_ports
+vcpkg install givp:x64-windows --overlay-ports=./cpp/vcpkg_ports
 ```
 
 Install with Conan (after ConanCenter publication):
