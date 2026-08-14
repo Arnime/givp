@@ -59,7 +59,7 @@ Available in **Python**, **Julia**, **Rust**, **C++** (header-only), and **R**.
 ## Medium-term (3–6 months)
 
 - **C++ package promotion (from October 2026)**: track migration from staging
-  overlays (`cpp/vcpkg_ports/arnime-givp/`,
+  overlays (`cpp/vcpkg_ports/givp/`,
   `cpp/conan/conancenter/recipes/givp/`) to upstream package
   indexes when the external submission window opens (Issue #139).
 

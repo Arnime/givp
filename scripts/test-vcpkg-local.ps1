@@ -69,23 +69,26 @@ if (-not (Test-Path $vcpkgOverlayDir)) {
     New-Item -ItemType Directory -Path $vcpkgOverlayDir | Out-Null
 }
 
-$overlayPortDir = Join-Path $vcpkgOverlayDir "ports" "arnime-givp"
+$overlayPortDir = Join-Path $vcpkgOverlayDir "ports" "givp"
 if (-not (Test-Path $overlayPortDir)) {
     New-Item -ItemType Directory -Path $overlayPortDir -Force | Out-Null
 }
 
 # Copy port files
-Copy-Item (Join-Path $vcpkgPortsDir "arnime-givp" "portfile.cmake") $overlayPortDir -Force
-Copy-Item (Join-Path $vcpkgPortsDir "arnime-givp" "vcpkg.json") $overlayPortDir -Force
+Copy-Item (Join-Path $vcpkgPortsDir "givp" "portfile.cmake") $overlayPortDir -Force
+Copy-Item (Join-Path $vcpkgPortsDir "givp" "vcpkg.json") $overlayPortDir -Force
 
 Write-Host "  ✓ Overlay created at: $overlayPortDir" -ForegroundColor Green
 
 # 3. Install with overlay
-Write-Host "`n[3] Installing arnime-givp with overlay (this may take a few minutes)..." -ForegroundColor Yellow
+Write-Host "`n[3] Installing givp with overlay (this may take a few minutes)..." -ForegroundColor Yellow
 try {
-    & $vcpkgExe install arnime-givp:"$Triplet" `
+    & $vcpkgExe install givp:"$Triplet" `
         --overlay-ports="$vcpkgOverlayDir/ports" `
         --verbose
+    if ($LASTEXITCODE -ne 0) {
+        throw "vcpkg install failed with exit code $LASTEXITCODE"
+    }
     Write-Host "  ✓ Installation successful" -ForegroundColor Green
 }
 catch {
@@ -143,9 +146,6 @@ int main() {
     
     try {
         Push-Location $consumerDir
-        
-        # Generate vcpkg toolchain
-        & $vcpkgExe integrate install | Out-Null
         
         # Configure and build
         cmake -B build `

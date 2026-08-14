@@ -304,11 +304,11 @@ jobs:
           Version: ${{ env.VERSION }}
           
           ### Files Ready for Submission:
-          - Port files: cpp/vcpkg_ports/arnime-givp/
+          - Port files: cpp/vcpkg_ports/givp/
           - Staging location: https://github.com/${{ github.repository }}/tree/main/cpp/vcpkg_ports
           
           ### Manual Steps:
-          1. Extract staging port: cpp/vcpkg_ports/arnime-givp/
+          1. Extract staging port: cpp/vcpkg_ports/givp/
           2. Verify vcpkg.json and portfile.cmake references
           3. Submit to vcpkg via PR to microsoft/vcpkg
           
@@ -399,7 +399,7 @@ jobs:
           ### 🔄 Registry Submission (Manual)
           
           **vcpkg Official Registry**
-          - Port location: `cpp/vcpkg_ports/arnime-givp/`
+          - Port location: `cpp/vcpkg_ports/givp/`
           - Submit to: [microsoft/vcpkg](https://github.com/microsoft/vcpkg)
           - Confirm `vcpkg.json` version is `${{ env.SEMVER }}`
           

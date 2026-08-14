@@ -5,14 +5,14 @@ This page is for maintainer operations only. Run local validation first with
 
 ## Port contents
 
-The staging port lives in `cpp/vcpkg_ports/arnime-givp/`:
+The staging port lives in `cpp/vcpkg_ports/givp/`:
 
 - `portfile.cmake`
 - `vcpkg.json`
 
 ## Pre-submission checklist
 
-- [ ] Update the release SHA512 in `portfile.cmake`
+- [ ] Confirm the release SHA512 in `portfile.cmake`
 - [ ] Validate the overlay locally
 - [ ] Confirm headers install under `include/givp/`
 - [ ] Confirm `givpConfig.cmake` is installed
@@ -21,11 +21,11 @@ The staging port lives in `cpp/vcpkg_ports/arnime-givp/`:
 ## Refresh the release hash
 
 ```bash
-wget https://github.com/Arnime/grasp_ils_vnd_pr/archive/refs/tags/v1.0.0.tar.gz
-sha512sum v1.0.0.tar.gz
+wget https://github.com/Arnime/givp/archive/refs/tags/v1.0.1.tar.gz
+sha512sum v1.0.1.tar.gz
 ```
 
-Replace the placeholder in `vcpkg_from_github(... SHA512 <value>)`.
+Replace the SHA512 in `vcpkg_from_github()` only when publishing a new tag.
 
 ## Local validation
 
@@ -36,15 +36,16 @@ powershell -File scripts/test-vcpkg-local.ps1
 Manual repro:
 
 ```powershell
-vcpkg install arnime-givp:x64-windows --overlay-ports=./cpp/vcpkg_ports
+vcpkg install givp:x64-windows --overlay-ports=./cpp/vcpkg_ports
 ```
 
 ## Official submission flow
 
 1. Fork `microsoft/vcpkg`.
 2. Create a branch such as `add-givp-header-only`.
-3. Copy `cpp/vcpkg_ports/arnime-givp/` into `ports/arnime-givp/`.
-4. Verify `ports/arnime-givp/` contains `portfile.cmake` and `vcpkg.json`.
+3. Copy `cpp/vcpkg_ports/givp/` into `ports/givp/`.
+4. Run `vcpkg x-add-version givp` to update `versions/g-/givp.json` and `versions/baseline.json`.
+5. Verify `ports/givp/` contains `portfile.cmake` and `vcpkg.json`.
 5. Open the PR with the package name, version, license, and repository URL.
 
 If the curated registry review blocks publication due to project maturity, keep
@@ -70,15 +71,15 @@ Add givp: GRASP-ILS-VND with Path Relinking optimizer
 ### Overlay port in this repository
 
 ```powershell
-git clone https://github.com/Arnime/grasp_ils_vnd_pr.git
-vcpkg install arnime-givp --overlay-ports=./grasp_ils_vnd_pr/cpp/vcpkg_ports
+git clone https://github.com/Arnime/givp.git
+vcpkg install givp --overlay-ports=./givp/cpp/vcpkg_ports
 ```
 
 ### Custom git registry
 
 1. Create a dedicated registry repository with `ports/` and `versions/`.
-2. Copy `cpp/vcpkg_ports/arnime-givp` into `ports/arnime-givp`.
-3. Run `vcpkg x-add-version arnime-givp` in the registry.
+2. Copy `cpp/vcpkg_ports/givp` into `ports/givp`.
+3. Run `vcpkg x-add-version givp` in the registry.
 4. Point consumers to the registry in `vcpkg-configuration.json`.
 
 ## References

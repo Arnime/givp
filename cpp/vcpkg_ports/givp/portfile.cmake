@@ -2,10 +2,10 @@ set(VCPKG_BUILD_TYPE release) # header-only library
 
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
-    REPO Arnime/grasp_ils_vnd_pr
+    REPO Arnime/givp
     REF v${VERSION}
-    SHA512 f64004dec9f5913adca5d79ee4c71821aadbc9cd9527680bcfc3d1c6f8511355739fd0b78fa657d2aae0e0f6e2ff47dad1d7e8816e1435e0ae14de7336a5d715
-    FILENAME grasp_ils_vnd_pr-${VERSION}.tar.gz
+    SHA512 e305c166ab1a3d570ba2cb117c399e3013fc6305c8dd95954b51c08e9c17083eaac736266c4c773c96828d06ca5571769901dec4d7c71a2535ee0c2a7406fd7f
+    HEAD_REF main
 )
 
 vcpkg_cmake_configure(
