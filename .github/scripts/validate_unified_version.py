@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import importlib
+import json
 import re
 import sys
 from pathlib import Path
@@ -53,7 +54,9 @@ def read_unified_version(root: Path) -> str:
         r"project\(\s*givp\s+VERSION\s+([0-9A-Za-z.+-]+)",
         (root / "cpp" / "CMakeLists.txt").read_text(encoding="utf-8"),
     )
-    conan_config = root / "cpp" / "conan" / "conancenter" / "recipes" / "givp" / "config.yml"
+    conan_config = (
+        root / "cpp" / "conan" / "conancenter" / "recipes" / "givp" / "config.yml"
+    )
     conan_versions = re.findall(
         r'^\s*["\']?([0-9]+\.[0-9]+\.[0-9]+)["\']?:\s*\n\s+folder:\s+all\s*$',
         conan_config.read_text(encoding="utf-8"),
@@ -64,6 +67,11 @@ def read_unified_version(root: Path) -> str:
         r'^\s*["\']?([0-9]+\.[0-9]+\.[0-9]+)["\']?:\s*$',
         conandata.read_text(encoding="utf-8"),
         re.MULTILINE,
+    )
+    vcpkg_manifest = json.loads(
+        (root / "cpp" / "vcpkg_ports" / "givp" / "vcpkg.json").read_text(
+            encoding="utf-8"
+        )
     )
     if (
         not cargo_match
@@ -78,6 +86,11 @@ def read_unified_version(root: Path) -> str:
     julia_version = julia.get("version")
     if not isinstance(python_version, str) or not isinstance(julia_version, str):
         raise ValueError("Unable to read a version from a release manifest.")
+    vcpkg_version = vcpkg_manifest.get("version")
+    if not isinstance(vcpkg_version, str):
+        raise ValueError(
+            "Unable to read a version from cpp/vcpkg_ports/givp/vcpkg.json."
+        )
 
     versions = {
         "pyproject.toml": python_version,
@@ -87,6 +100,7 @@ def read_unified_version(root: Path) -> str:
         "cpp/CMakeLists.txt": cmake_match.group(1),
         "cpp/conan/conancenter/recipes/givp/config.yml": conan_versions[0],
         "cpp/conan/conancenter/recipes/givp/all/conandata.yml": conandata_versions[0],
+        "cpp/vcpkg_ports/givp/vcpkg.json": vcpkg_version,
     }
     unique_versions = set(versions.values())
     if len(unique_versions) != 1:
