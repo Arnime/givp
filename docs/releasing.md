@@ -8,13 +8,23 @@ packages. A push to `main` that changes a version manifest creates the matching
 
 1. Update the version to the same `X.Y.Z` value in `pyproject.toml`,
    `rust/Cargo.toml`, `julia/Project.toml`, `r/DESCRIPTION`, and
-   `cpp/CMakeLists.txt`.
+   `cpp/CMakeLists.txt`, `cpp/vcpkg_ports/givp/vcpkg.json`, and the
+   ConanCenter template under `cpp/conan/conancenter/recipes/givp/`.
 2. Update release notes as appropriate and merge the change into `main`.
 3. The **Auto Tag on Version Bump** workflow validates that all five manifests
    agree and creates `vX.Y.Z` when that tag does not already exist.
-4. Follow the **Release** workflow for that tag. It publishes Python to PyPI,
-   Rust to crates.io, attaches R and C++ artifacts to the GitHub release, and
-   opens the Julia registration request.
+4. Follow the single **Release** workflow for that tag. It publishes Python to
+   PyPI and Rust to crates.io, attaches R and C++ artifacts to the one GitHub
+   Release, opens the Julia registration request, and updates the external C++
+   registry pull requests.
+
+Do not use GitHub's **Create a new release** interface for normal releases.
+For a manual rerun, use **Actions → Release → Run workflow** and provide the
+existing `vX.Y.Z` tag. The workflow builds all official artifacts, generates
+SLSA provenance before attaching release assets, and only then publishes to
+external registries. If a release is created directly in the GitHub interface,
+the provenance fallback checks it and rebuilds only when its `.intoto.jsonl`
+asset is missing.
 
 ## crates.io credentials and retries
 
@@ -34,10 +44,19 @@ expects (`vX.Y.Z`) on every run. A pull request does not receive an actual Git
 tag; the tag is created only after its merge to `main`, where the central
 release workflow compares that real tag to the Rust manifest.
 
-## Registry boundaries
+## C++ registry synchronization
 
-The tag-triggered C++ workflow builds, tests, and attaches release artifacts.
-Its vcpkg port and Conan recipe remain staging material: official vcpkg and
-ConanCenter publication requires a pull request to their respective upstream
-repositories. Julia registration is also asynchronous after the workflow opens
-the Registrator request.
+`cpp/vcpkg_ports/givp/` and `cpp/conan/conancenter/recipes/givp/` are the
+versioned sources of truth. The central release calls **Sync C++ Registries**
+after C++ artifacts are attached. It updates the branches
+`add-givp-X.Y.Z` in `Arnime/vcpkg` and `Arnime/conan-center-index`, derives
+only the archive hashes in those forks, and creates or updates the upstream
+PRs. A template change on `main` updates an already-open PR only; without a
+matching release tag or PR it succeeds without writing to either fork.
+
+Create `REGISTRY_FORK_TOKEN` as a fine-grained PAT with **Contents: read and
+write** plus **Pull requests: read and write**, restricted to the two Arnime
+forks. Store it in the protected `registry-forks` environment. The forks remain
+ignored local clones, not submodules. vcpkg and ConanCenter still require their
+own CI, CLA where applicable, review, and maintainer merge; this automation
+never merges external PRs.

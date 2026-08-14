@@ -43,12 +43,16 @@ def main() -> None:
     cci_recipe = template_root / "all" / "conanfile.py"
     conandata = template_root / "all" / "conandata.yml"
     test_cmake = template_root / "all" / "test_package" / "CMakeLists.txt"
+    vcpkg_manifest = root / "cpp" / "vcpkg_ports" / "givp" / "vcpkg.json"
+    vcpkg_portfile = vcpkg_manifest.with_name("portfile.cmake")
 
     template_version = read_template_version(template_root / "config.yml")
     errors: list[str] = []
     cci_content = cci_recipe.read_text(encoding="utf-8")
     conandata_content = conandata.read_text(encoding="utf-8")
     test_cmake_content = test_cmake.read_text(encoding="utf-8")
+    vcpkg_manifest_content = vcpkg_manifest.read_text(encoding="utf-8")
+    vcpkg_portfile_content = vcpkg_portfile.read_text(encoding="utf-8")
 
     require(cci_content, f'name = "{PACKAGE_NAME}"', cci_recipe, errors)
     require(cci_content, f'homepage = "{CANONICAL_URL}"', cci_recipe, errors)
@@ -68,6 +72,21 @@ def main() -> None:
     )
     if not re.search(r"sha256:\s*\"?[0-9a-f]{64}\"?", conandata_content):
         errors.append(f"{conandata}: missing a SHA256 source hash")
+    require(vcpkg_manifest_content, '"name": "givp"', vcpkg_manifest, errors)
+    require(
+        vcpkg_manifest_content, f'"homepage": "{CANONICAL_URL}"', vcpkg_manifest, errors
+    )
+    require(
+        vcpkg_manifest_content,
+        f'"version": "{template_version}"',
+        vcpkg_manifest,
+        errors,
+    )
+    require(vcpkg_portfile_content, "REPO Arnime/givp", vcpkg_portfile, errors)
+    require(vcpkg_portfile_content, "REF v${VERSION}", vcpkg_portfile, errors)
+    require(vcpkg_portfile_content, "PACKAGE_NAME givp", vcpkg_portfile, errors)
+    if not re.search(r"SHA512\s+[0-9a-f]{128}", vcpkg_portfile_content):
+        errors.append(f"{vcpkg_portfile}: missing a SHA512 source hash")
 
     if errors:
         raise SystemExit("\n".join(errors))

@@ -18,14 +18,11 @@ permissions:
   contents: read
 
 jobs:
-  build-and-publish:
+  build-python:
     runs-on: ubuntu-latest
-    environment:
-      name: pypi
-      url: https://pypi.org/p/givp
     permissions:
       id-token: write
-      contents: write
+      contents: read
       attestations: write
     outputs:
       hashes: ${{ steps.hash.outputs.hashes }}
@@ -60,65 +57,45 @@ jobs:
         run: for f in dist/*.sigstore.json; do mv "$f" "${f%.json}"; done
       - name: Generate SBOM (CycloneDX)
         run: cyclonedx-py environment --of JSON -o sbom.cdx.json
-      - name: Attach artifacts to release
-        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
-        with:
-          tag_name: ${{ inputs.tag || github.ref_name }}
-          files: |
-            sbom.cdx.json
-            dist/*
       - name: Move sigstore files out of dist
         run: mv dist/*.sigstore .
-      - name: Validate README badge URLs
-        run: |
-          echo "::group::Checking badge URLs"
-          urls=(
-            "https://img.shields.io/pypi/v/givp?cacheSeconds=300"
-            "https://img.shields.io/pypi/pyversions/givp?cacheSeconds=300"
-            "https://img.shields.io/codecov/c/github/Arnime/givp?cacheSeconds=300"
-            "https://img.shields.io/ossf-scorecard/github.com/Arnime/givp?cacheSeconds=300"
-            "https://www.bestpractices.dev/projects/12627/badge?cacheSeconds=300"
-          )
-          failed=0
-          for url in "${urls[@]}"; do
-            code=$(curl -sSL -o /dev/null -w '%{http_code}' --max-time 15 --retry 3 --retry-delay 2 "$url")
-            if [ "$code" -ge 200 ] && [ "$code" -lt 400 ]; then
-              echo "✓ $code $url"
-            else
-              echo "✗ $code $url"
-              failed=1
-            fi
-          done
-          echo "::endgroup::"
-          if [ "$failed" -eq 1 ]; then
-            echo "::warning::One or more badge URLs returned errors. PyPI publish continues but badges may show broken on the PyPI page."
-          fi
-      - name: Publish to PyPI (trusted publisher)
-        # Docker actions cannot run reliably inside a local composite action.
-        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+      - name: Upload Python release artifacts
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          skip-existing: true
-          packages-dir: dist
-          attestations: true
+          name: python-release-artifacts
+          path: |
+            dist
+            *.sigstore
+            sbom.cdx.json
+          if-no-files-found: error
 
   provenance:
-    # The primary artifact attestation is created by actions/attest-build-provenance
-    # above. Keep the additional SLSA asset generation informative: its upstream
-    # final aggregator may fail despite generator and upload-assets succeeding.
-    needs: [build-and-publish]
+    needs: [combine-release-hashes]
     permissions:
       actions: read
       id-token: write
       contents: write
-    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@f7dd8c54c2067bafc12ca7a55595d5ee9b75204a # v2.1.0
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.1.0
     with:
-      base64-subjects: "${{ needs.build-and-publish.outputs.hashes }}"
+      base64-subjects: "${{ needs.combine-release-hashes.outputs.hashes }}"
       upload-assets: true
       upload-tag-name: ${{ inputs.tag || github.ref_name }}
-      continue-on-error: true
+
+  release-cpp:
+    needs: [build-python]
+    uses: ./.github/workflows/release-cpp.yml
+    with:
+      tag: ${{ inputs.tag || github.ref_name }}
+
+  sync-cpp-registries:
+    needs: [attach-release-assets]
+    uses: ./.github/workflows/sync-cpp-registries.yml
+    with:
+      tag: ${{ inputs.tag || github.ref_name }}
+    secrets: inherit
 
   publish-rust:
-    needs: [build-and-publish]
+    needs: [attach-release-assets]
     runs-on: ubuntu-latest
     environment:
       name: crates-io
@@ -250,11 +227,14 @@ jobs:
           head -c 500 /tmp/crates-version.json || true
           exit 1
 
-  publish-r:
-    needs: [build-and-publish]
+  build-r:
+    needs: [build-python]
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
+    outputs:
+      hashes: ${{ steps.r_hash.outputs.hashes }}
+      artifact_name: r-release-artifacts
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -283,14 +263,95 @@ jobs:
           R CMD build r
           echo "tarball=$(ls givp_*.tar.gz | head -1)" >> "$GITHUB_OUTPUT"
 
-      - name: Attach R tarball to release
+      - name: Generate R artifact hash
+        id: r_hash
+        env:
+          TARBALL: ${{ steps.r_build.outputs.tarball }}
+        run: echo "hashes=$(sha256sum \"$TARBALL\" | base64 -w0)" >> "$GITHUB_OUTPUT"
+
+      - name: Upload R release artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: r-release-artifacts
+          path: ${{ steps.r_build.outputs.tarball }}
+          if-no-files-found: error
+
+  combine-release-hashes:
+    needs: [build-python, release-cpp, build-r]
+    runs-on: ubuntu-latest
+    outputs:
+      hashes: ${{ steps.combine.outputs.hashes }}
+    steps:
+      - id: combine
+        env:
+          PYTHON_HASHES: ${{ needs.build-python.outputs.hashes }}
+          CPP_HASHES: ${{ needs.release-cpp.outputs.hashes }}
+          R_HASHES: ${{ needs.build-r.outputs.hashes }}
+        run: |
+          set -euo pipefail
+          {
+            printf '%s' "$PYTHON_HASHES" | base64 --decode
+            printf '%s' "$CPP_HASHES" | base64 --decode
+            printf '%s' "$R_HASHES" | base64 --decode
+          } | base64 -w0 | xargs -I{} echo "hashes={}" >> "$GITHUB_OUTPUT"
+
+  attach-release-assets:
+    needs: [build-python, release-cpp, build-r, provenance]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Verify required SLSA provenance
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          set -euo pipefail
+          gh release view "$TAG" --json assets --jq '.assets[].name' \
+            | grep -Eq '\.intoto\.jsonl$'
+
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: python-release-artifacts
+          path: python-assets
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: ${{ needs.release-cpp.outputs.artifact_name }}
+          path: cpp-assets
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: ${{ needs.build-r.outputs.artifact_name }}
+          path: r-assets
+      - name: Attach all signed release assets
         uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
         with:
           tag_name: ${{ inputs.tag || github.ref_name }}
-          files: ${{ steps.r_build.outputs.tarball }}
+          files: |
+            python-assets/**
+            cpp-assets/**
+            r-assets/**
+
+  publish-python:
+    needs: [attach-release-assets]
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/givp
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: python-release-artifacts
+      - name: Publish to PyPI (trusted publisher)
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+        with:
+          skip-existing: true
+          packages-dir: dist
+          attestations: true
 
   register-julia:
-    needs: [build-and-publish]
+    needs: [attach-release-assets]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -378,7 +439,7 @@ jobs:
             });
 
   verify-r-universe:
-    needs: [publish-r]
+    needs: [build-r]
     runs-on: ubuntu-latest
     continue-on-error: true
     permissions:

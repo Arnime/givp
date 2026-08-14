@@ -4,14 +4,28 @@
 name: Release C++
 
 on:
-  push:
-    tags:
-      - "v*"
+  workflow_call:
+    inputs:
+      tag:
+        description: "Release tag (for example v1.0.1)"
+        required: true
+        type: string
+    outputs:
+      artifact_name:
+        description: "Artifact name containing the C++ release assets"
+        value: ${{ jobs.prepare-artifacts.outputs.artifact_name }}
+      semver:
+        description: "Validated semantic version without the v prefix"
+        value: ${{ jobs.validate.outputs.semver }}
+      hashes:
+        description: "Base64-encoded SHA256 subjects for SLSA provenance"
+        value: ${{ jobs.prepare-artifacts.outputs.hashes }}
   workflow_dispatch:
     inputs:
       tag:
-        description: "Tag to release (e.g. v1.0.0)"
+        description: "Tag to validate (for example v1.0.1)"
         required: true
+        type: string
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -22,408 +36,108 @@ permissions:
 
 jobs:
   validate:
-    name: Validate and Extract Version
+    name: Validate C++ release tag
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     outputs:
-      version: ${{ steps.version.outputs.version }}
       semver: ${{ steps.version.outputs.semver }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.event_name == 'workflow_dispatch' && format('refs/tags/{0}', inputs.tag) || github.ref }}
+          ref: refs/tags/${{ inputs.tag }}
           fetch-depth: 0
-
-      - name: Extract and validate version
-        id: version
+      - id: version
         env:
-          TAG_INPUT: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+          TAG: ${{ inputs.tag }}
         run: |
-          TAG="$TAG_INPUT"
-          # Strip 'v' prefix and validate semantic versioning
+          set -euo pipefail
           VERSION="${TAG#v}"
-          
-          if ! echo "$VERSION" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$' >/dev/null; then
-            echo "❌ Invalid semantic version: $VERSION"
+          if [[ "$TAG" != "v$VERSION" ]] || ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::Expected a vX.Y.Z semantic-version tag, got '$TAG'."
             exit 1
           fi
-          
-          echo "version=$TAG" >> "$GITHUB_OUTPUT"
+          python .github/scripts/validate_unified_version.py --root .
+          if [[ "$(python .github/scripts/validate_unified_version.py --root .)" != "$VERSION" ]]; then
+            echo "::error::Tag $TAG does not match the unified manifest version."
+            exit 1
+          fi
           echo "semver=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "✅ Version validated: $VERSION"
 
   test-multiplatform:
     name: Test on ${{ matrix.os }} (${{ matrix.compiler }})
     needs: validate
     runs-on: ${{ matrix.os }}
-    permissions:
-      contents: read
     strategy:
       fail-fast: true
       matrix:
         include:
-          - os: ubuntu-latest
-            compiler: gcc
-            cc: gcc
-            cxx: g++
-          - os: ubuntu-latest
-            compiler: clang
-            cc: clang
-            cxx: clang++
-          - os: windows-latest
-            compiler: msvc
-            cc: cl
-            cxx: cl
-          - os: macos-latest
-            compiler: clang
-            cc: clang
-            cxx: clang++
+          - { os: ubuntu-latest, compiler: gcc, cc: gcc, cxx: g++ }
+          - { os: ubuntu-latest, compiler: clang, cc: clang, cxx: clang++ }
+          - { os: windows-latest, compiler: msvc, cc: cl, cxx: cl }
+          - { os: macos-latest, compiler: clang, cc: clang, cxx: clang++ }
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.ref }}
-
+          ref: refs/tags/${{ inputs.tag }}
       - name: Set compiler (non-Windows)
         if: matrix.compiler != 'msvc'
         run: |
-          echo "CC=${{ matrix.cc }}"   >> "$GITHUB_ENV"
+          echo "CC=${{ matrix.cc }}" >> "$GITHUB_ENV"
           echo "CXX=${{ matrix.cxx }}" >> "$GITHUB_ENV"
-
-      - name: Configure
+      - name: Configure, build, and test
         run: |
-          cmake -S cpp -B cpp/build/release-test \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DGIVP_BUILD_TESTS=ON \
-            -DGIVP_BUILD_BENCHMARKS=OFF \
-            -DGIVP_BUILD_FUZZ=OFF
-
-      - name: Build
-        run: cmake --build cpp/build/release-test --config Release
-
-      - name: Run Tests
-        run: cmake --build cpp/build/release-test --config Release --target RUN_TESTS
-        if: matrix.os != 'windows-latest'
-
-      - name: Run Tests (Windows)
-        run: cmake --build cpp/build/release-test --config Release --target RUN_TESTS
-        if: matrix.os == 'windows-latest'
+          cmake -S cpp -B cpp/build/release-test -DCMAKE_BUILD_TYPE=Release \
+            -DGIVP_BUILD_TESTS=ON -DGIVP_BUILD_BENCHMARKS=OFF -DGIVP_BUILD_FUZZ=OFF
+          cmake --build cpp/build/release-test --config Release
+          cmake --build cpp/build/release-test --config Release --target RUN_TESTS
 
   validate-package:
-    name: Validate Package Installation
+    name: Validate CMake package installation
     needs: [validate, test-multiplatform]
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.ref }}
-
-      - name: Configure CMake install
+          ref: refs/tags/${{ inputs.tag }}
+      - name: Install and consume the package
         run: |
-          cmake -S cpp -B cpp/build/package-install \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_INSTALL_PREFIX=./install \
-            -DGIVP_BUILD_TESTS=OFF \
-            -DGIVP_BUILD_BENCHMARKS=OFF \
-            -DGIVP_BUILD_FUZZ=OFF
-
-      - name: Install package
-        run: cmake --build cpp/build/package-install --target install
-
-      - name: Verify installed files
-        run: |
-          echo "Checking install directory..."
-          find install -type f | head -20
-          
-          if [ ! -d "install/include/givp" ]; then
-            echo "❌ Error: include/givp not found in install directory"
-            exit 1
-          fi
-          
-          if [ ! -f "install/lib/cmake/givp/givpConfig.cmake" ]; then
-            echo "❌ Error: givpConfig.cmake not found in install directory"
-            exit 1
-          fi
-          
-          echo "✅ Package structure validated"
-
-      - name: Test CMake find_package consumer
-        run: |
+          cmake -S cpp -B cpp/build/package-install -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX="$PWD/install" -DGIVP_BUILD_TESTS=OFF \
+            -DGIVP_BUILD_BENCHMARKS=OFF -DGIVP_BUILD_FUZZ=OFF
+          cmake --build cpp/build/package-install --target install
+          test -d install/include/givp
+          test -f install/lib/cmake/givp/givpConfig.cmake
           cmake -S cpp/consumer_check -B cpp/build/consumer-release \
-            -DCMAKE_PREFIX_PATH="$(pwd)/install" \
-            -DCMAKE_BUILD_TYPE=Release
-          
+            -DCMAKE_PREFIX_PATH="$PWD/install" -DCMAKE_BUILD_TYPE=Release
           cmake --build cpp/build/consumer-release
-          echo "✅ Consumer validation passed"
 
   prepare-artifacts:
-    name: Prepare Release Artifacts
+    name: Prepare C++ release artifacts
     needs: [validate, validate-package]
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     outputs:
-      artifact_sha256: ${{ steps.hash.outputs.sha256 }}
+      artifact_name: ${{ steps.artifact.outputs.name }}
+      hashes: ${{ steps.artifact.outputs.hashes }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.ref }}
+          ref: refs/tags/${{ inputs.tag }}
           fetch-depth: 0
-
-      - name: Create source tarball
-        id: tarball
+      - id: artifact
         env:
           VERSION: ${{ needs.validate.outputs.semver }}
         run: |
+          set -euo pipefail
           TARBALL="givp-cpp-${VERSION}.tar.gz"
-          
-          # Create tarball with relevant C++ files
-          tar --exclude='.git' \
-              --exclude='build*' \
-              --exclude='builds' \
-              --exclude='.venv' \
-              --exclude='target' \
-              --exclude='site' \
-              --exclude='node_modules' \
-              --exclude='.pytest_cache' \
-              --exclude='*.pyc' \
-              -czf "$TARBALL" \
-              cpp/ \
-              LICENSE \
-              CHANGELOG.md \
-              CODE_OF_CONDUCT.md
-          
-          echo "tarball=$TARBALL" >> "$GITHUB_OUTPUT"
-          echo "✅ Created tarball: $TARBALL"
-
-      - name: Compute SHA256 hash
-        id: hash
-        run: |
-          TARBALL="${{ steps.tarball.outputs.tarball }}"
-          SHA256=$(sha256sum "$TARBALL" | cut -d' ' -f1)
-          echo "sha256=$SHA256" >> "$GITHUB_OUTPUT"
-          echo "sha256-file=${TARBALL}.sha256" >> "$GITHUB_OUTPUT"
-          echo "$SHA256 $TARBALL" > "${TARBALL}.sha256"
-          cat "${TARBALL}.sha256"
-
-      - name: Upload artifacts for release
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+          tar --exclude='.git' --exclude='build*' --exclude='.venv' --exclude='target' \
+            --exclude='node_modules' --exclude='*.pyc' -czf "$TARBALL" \
+            cpp/ LICENSE CHANGELOG.md CODE_OF_CONDUCT.md
+          sha256sum "$TARBALL" > "${TARBALL}.sha256"
+          echo "name=cpp-release-artifacts-${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "hashes=$(sha256sum "$TARBALL" | base64 -w0)" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: cpp-release-artifacts
+          name: ${{ steps.artifact.outputs.name }}
           path: |
             givp-cpp-*.tar.gz
             givp-cpp-*.sha256
-
-  create-release:
-    name: Create GitHub Release
-    needs: [validate, prepare-artifacts]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ github.ref }}
-          fetch-depth: 0
-
-      - name: Download artifacts
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: cpp-release-artifacts
-
-      - name: Generate release notes
-        id: notes
-        env:
-          VERSION: ${{ needs.validate.outputs.version }}
-          SEMVER: ${{ needs.validate.outputs.semver }}
-        run: |
-          cat > release-notes.md <<'EOF'
-          ## C++ Header-Only Library - ${{ env.VERSION }}
-          
-          ### Release Information
-          - **Semantic Version**: ${{ env.SEMVER }}
-          - **C++ Standard**: C++17
-          - **Package Type**: Header-only library
-          
-          ### Highlights
-          - GRASP-ILS-VND with Path Relinking optimization algorithm
-          - Cross-platform support (Linux, macOS, Windows)
-          - CMake-based build and installation
-          - FindPackage and Config-based CMake integration
-          - Ready for vcpkg and Conan package managers
-          
-          ### Installation & Verification
-          - Extract the tarball: `tar -xzf givp-cpp-${{ env.SEMVER }}.tar.gz`
-          - Follow `docs/cpp.md` for build and installation instructions
-          - Consumer check test passed on all platforms
-          
-          ### Registry Submission Status
-          - **vcpkg**: Ready for submission to official registry
-          - **Conan**: Template at `cpp/conan/conancenter/recipes/givp/` - ready for ConanCenter
-          
-          ### Checksums
-          EOF
-          
-          SHA256=$(cat givp-cpp-*.sha256 | cut -d' ' -f1 | head -1)
-          cat givp-cpp-*.sha256 >> release-notes.md
-          
-          echo "notes-file=release-notes.md" >> "$GITHUB_OUTPUT"
-
-      - name: Create release and upload assets
-        uses: ./.github/actions/release-assets
-        with:
-          tag_name: ${{ needs.validate.outputs.version }}
-          name: C++ Release ${{ needs.validate.outputs.version }}
-          body-path: ${{ steps.notes.outputs.notes-file }}
-          prerelease: ${{ contains(needs.validate.outputs.semver, '-') }}
-          files: |
-            givp-cpp-*.tar.gz
-            givp-cpp-*.sha256
-
-  vcpkg-registry-notice:
-    name: vcpkg Registry Submission Notice
-    needs: [validate, create-release]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ github.ref }}
-
-      - name: Prepare vcpkg submission info
-        env:
-          VERSION: ${{ needs.validate.outputs.semver }}
-        run: |
-          cat > /tmp/vcpkg-submission.txt <<EOF
-          ## vcpkg Registry Submission Notice
-          
-          Release: ${{ needs.validate.outputs.version }}
-          Version: ${{ env.VERSION }}
-          
-          ### Files Ready for Submission:
-          - Port files: cpp/vcpkg_ports/givp/
-          - Staging location: https://github.com/${{ github.repository }}/tree/main/cpp/vcpkg_ports
-          
-          ### Manual Steps:
-          1. Extract staging port: cpp/vcpkg_ports/givp/
-          2. Verify vcpkg.json and portfile.cmake references
-          3. Submit to vcpkg via PR to microsoft/vcpkg
-          
-          ### Reference:
-          - vcpkg documentation: https://vcpkg.io
-          - Port requirements: https://github.com/microsoft/vcpkg/wiki/Creating-a-port
-          EOF
-          
-          cat /tmp/vcpkg-submission.txt
-          echo "ℹ️  Manual vcpkg submission required. See workflow logs for details."
-
-  conan-registry-notice:
-    name: Conan Registry Submission Notice
-    needs: [validate, create-release]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ github.ref }}
-
-      - name: Prepare Conan submission info
-        env:
-          VERSION: ${{ needs.validate.outputs.semver }}
-        run: |
-          cat > /tmp/conan-submission.txt <<EOF
-          ## Conan Registry Submission Notice
-          
-          Release: ${{ needs.validate.outputs.version }}
-          Version: ${{ env.VERSION }}
-          
-          ### Files Ready for Submission:
-          - Recipe: cpp/conan/conancenter/recipes/givp/all/conanfile.py
-          - Test package: cpp/conan/conancenter/recipes/givp/all/test_package/
-          
-          ### Automated Testing Passed:
-          ✅ Multi-platform validation (gcc, clang, msvc)
-          ✅ CMake package installation
-          ✅ find_package consumer test
-          
-          ### Submission Path:
-          1. Fork conan-center-index: https://github.com/conan-io/conan-center-index
-          2. Create branch: recipes/givp/${{ env.VERSION }}
-          3. Copy recipe files to recipes/givp/ directory
-          4. Create pull request with automated CI validation
-          
-          ### References:
-          - Conan Center: https://conan.io/center
-          - Submission guide: https://docs.conan.io/2.0/conan_center.html
-          - Recipe format: https://docs.conan.io/2.0/reference/conanfile.html
-          EOF
-          
-          cat /tmp/conan-submission.txt
-          echo "ℹ️  Manual Conan submission required. See workflow logs for details."
-
-  release-summary:
-    name: Release Summary
-    needs: [validate, test-multiplatform, validate-package, prepare-artifacts, create-release]
-    runs-on: ubuntu-latest
-    if: always()
-    permissions:
-      contents: read
-    steps:
-      - name: Generate summary
-        env:
-          VERSION: ${{ needs.validate.outputs.version }}
-          SEMVER: ${{ needs.validate.outputs.semver }}
-        run: |
-          cat >> $GITHUB_STEP_SUMMARY <<'EOF'
-          # ✅ C++ Release Pipeline Complete
-          
-          ## Release: ${{ env.VERSION }} (${{ env.SEMVER }})
-          
-          ### ✅ Validation Steps
-          - [x] Semantic version validation
-          - [x] Multi-platform testing (GCC, Clang, MSVC, AppleClang)
-          - [x] Package installation verification
-          - [x] find_package() consumer test
-          - [x] Artifact generation and hashing
-          - [x] GitHub release creation
-          
-          ### 📦 Artifacts
-          - Release page: [Releases](https://github.com/${{ github.repository }}/releases/tag/${{ env.VERSION }})
-          - Source tarball with C++ headers, CMake files, and documentation
-          - SHA256 checksum verification included
-          
-          ### 🔄 Registry Submission (Manual)
-          
-          **vcpkg Official Registry**
-          - Port location: `cpp/vcpkg_ports/givp/`
-          - Submit to: [microsoft/vcpkg](https://github.com/microsoft/vcpkg)
-          - Confirm `vcpkg.json` version is `${{ env.SEMVER }}`
-          
-          **Conan Center**
-          - Recipe: `cpp/conan/conancenter/recipes/givp/all/conanfile.py`
-          - Submit to: [conan-center-index](https://github.com/conan-io/conan-center-index)
-          - All tests have passed
-          
-          ### 📚 Documentation
-          - User guide: [docs/cpp.md](https://github.com/${{ github.repository }}/blob/main/docs/cpp.md)
-          - Operational docs: [cpp/docs/](https://github.com/${{ github.repository }}/tree/main/cpp/docs)
-          EOF
-
-  notification:
-    name: Slack/Email Notification (Optional)
-    needs: [validate, release-summary]
-    runs-on: ubuntu-latest
-    if: always()
-    permissions:
-      contents: read
-    steps:
-      - name: Prepare notification
-        env:
-          VERSION: ${{ needs.validate.outputs.version }}
-        run: |
-          echo "Release ${{ env.VERSION }} completed successfully!"
-          echo "Maintainers: Review registry submission steps in workflow logs."
+          if-no-files-found: error

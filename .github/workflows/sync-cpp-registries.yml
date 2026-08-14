@@ -1,0 +1,227 @@
+# SPDX-FileCopyrightText: 2026 Arnaldo Mendes Pires Junior
+# SPDX-License-Identifier: MIT
+
+name: Sync C++ Registries
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: "Release tag to synchronize"
+        required: true
+        type: string
+    secrets:
+      REGISTRY_FORK_TOKEN:
+        required: true
+  push:
+    tags: ["v*"]
+    branches: [main]
+    paths:
+      - "cpp/vcpkg_ports/**"
+      - "cpp/conan/conancenter/**"
+      - ".github/scripts/sync_cpp_registry_templates.py"
+      - ".github/scripts/validate_conan_recipes.py"
+      - ".github/scripts/validate_unified_version.py"
+      - ".github/workflows/sync-cpp-registries.yml"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Released tag to synchronize (for example v1.0.1)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cpp-registry-sync-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  context:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.release.outputs.tag }}
+      version: ${{ steps.release.outputs.version }}
+      write_enabled: ${{ steps.release.outputs.write_enabled }}
+      tag_exists: ${{ steps.release.outputs.tag_exists }}
+      source_ref: ${{ steps.release.outputs.source_ref }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.tag && format('refs/tags/{0}', inputs.tag) || github.ref }}
+          fetch-depth: 0
+      - id: release
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_TAG: ${{ inputs.tag }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          if [[ "$EVENT_NAME" == "push" && "$REF_NAME" == "main" ]]; then
+            VERSION="$(python .github/scripts/validate_unified_version.py --root .)"
+            TAG="v$VERSION"
+            WRITE_ENABLED=false
+            SOURCE_REF="$GITHUB_SHA"
+          else
+            TAG="${INPUT_TAG:-$REF_NAME}"
+            VERSION="${TAG#v}"
+            WRITE_ENABLED=true
+            SOURCE_REF="refs/tags/$TAG"
+          fi
+          if [[ "$TAG" != "v$VERSION" ]] || ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Expected a stable vX.Y.Z tag, got '$TAG'."
+            exit 1
+          fi
+          python .github/scripts/validate_unified_version.py --root .
+          if [[ "$(python .github/scripts/validate_unified_version.py --root .)" != "$VERSION" ]]; then
+            echo "::error::Tag $TAG does not match the unified manifest version."
+            exit 1
+          fi
+          if ! git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null; then
+            if [[ "$WRITE_ENABLED" == true ]]; then
+              echo "::error::The required release tag $TAG does not exist."
+              exit 1
+            fi
+            echo "::notice::No released tag $TAG exists yet; template update is a no-op."
+            TAG_EXISTS=false
+          else
+            TAG_EXISTS=true
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "write_enabled=$WRITE_ENABLED" >> "$GITHUB_OUTPUT"
+          echo "tag_exists=$TAG_EXISTS" >> "$GITHUB_OUTPUT"
+          echo "source_ref=$SOURCE_REF" >> "$GITHUB_OUTPUT"
+
+  vcpkg:
+    needs: context
+    if: needs.context.outputs.tag_exists == 'true'
+    runs-on: ubuntu-latest
+    environment: registry-forks
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.context.outputs.source_ref }}
+          fetch-depth: 0
+      - name: Synchronize vcpkg fork and pull request
+        env:
+          GH_TOKEN: ${{ secrets.REGISTRY_FORK_TOKEN }}
+          TAG: ${{ needs.context.outputs.tag }}
+          VERSION: ${{ needs.context.outputs.version }}
+          WRITE_ENABLED: ${{ needs.context.outputs.write_enabled }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "$GH_TOKEN" ]]; then
+            echo "::error::REGISTRY_FORK_TOKEN must be configured in the registry-forks environment."
+            exit 1
+          fi
+          BRANCH="add-givp-$VERSION"
+          OPEN_PR="$(gh pr list --repo microsoft/vcpkg --head "Arnime:$BRANCH" --state open --json url --jq '.[0].url')"
+          if [[ "$WRITE_ENABLED" == false && -z "$OPEN_PR" ]]; then
+            echo "::notice::No open vcpkg PR for $BRANCH; template update is a no-op."
+            exit 0
+          fi
+          gh repo clone Arnime/vcpkg "$RUNNER_TEMP/vcpkg"
+          cd "$RUNNER_TEMP/vcpkg"
+          git remote add upstream https://github.com/microsoft/vcpkg.git
+          git fetch --no-tags upstream master
+          git fetch --no-tags origin "$BRANCH" || true
+          if git show-ref --verify --quiet "refs/remotes/origin/$BRANCH"; then
+            git checkout -B "$BRANCH" "origin/$BRANCH"
+            git rebase upstream/master
+          else
+            git checkout -B "$BRANCH" upstream/master
+          fi
+          ARCHIVE="$RUNNER_TEMP/givp-${VERSION}.tar.gz"
+          curl --fail --location --retry 3 --retry-all-errors \
+            --output "$ARCHIVE" "https://github.com/Arnime/givp/archive/refs/tags/$TAG.tar.gz"
+          ./bootstrap-vcpkg.sh -disableMetrics
+          python "$GITHUB_WORKSPACE/.github/scripts/sync_cpp_registry_templates.py" \
+            --registry vcpkg --source "$GITHUB_WORKSPACE" --fork "$PWD" \
+            --archive "$ARCHIVE" --vcpkg "$PWD/vcpkg"
+          if git diff --quiet; then
+            echo "No vcpkg registry changes required."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add ports/givp versions/g-/givp.json versions/baseline.json
+            git commit -m "givp: update to $VERSION"
+            git push origin "HEAD:$BRANCH"
+          fi
+          ALL_PR="$(gh pr list --repo microsoft/vcpkg --head "Arnime:$BRANCH" --state all --json state,url --jq 'if length == 0 then empty else .[0] | "\(.state) \(.url)" end')"
+          if [[ -z "$ALL_PR" ]]; then
+            gh pr create --repo microsoft/vcpkg --base master --head "Arnime:$BRANCH" \
+              --title "[givp] add version $VERSION" \
+              --body "Adds the GIVP $VERSION port from the immutable $TAG release archive."
+          else
+            echo "vcpkg PR already exists: $ALL_PR"
+          fi
+
+  conan:
+    needs: context
+    if: needs.context.outputs.tag_exists == 'true'
+    runs-on: ubuntu-latest
+    environment: registry-forks
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.context.outputs.source_ref }}
+          fetch-depth: 0
+      - name: Synchronize ConanCenter fork and pull request
+        env:
+          GH_TOKEN: ${{ secrets.REGISTRY_FORK_TOKEN }}
+          TAG: ${{ needs.context.outputs.tag }}
+          VERSION: ${{ needs.context.outputs.version }}
+          WRITE_ENABLED: ${{ needs.context.outputs.write_enabled }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "$GH_TOKEN" ]]; then
+            echo "::error::REGISTRY_FORK_TOKEN must be configured in the registry-forks environment."
+            exit 1
+          fi
+          BRANCH="add-givp-$VERSION"
+          OPEN_PR="$(gh pr list --repo conan-io/conan-center-index --head "Arnime:$BRANCH" --state open --json url --jq '.[0].url')"
+          if [[ "$WRITE_ENABLED" == false && -z "$OPEN_PR" ]]; then
+            echo "::notice::No open ConanCenter PR for $BRANCH; template update is a no-op."
+            exit 0
+          fi
+          gh repo clone Arnime/conan-center-index "$RUNNER_TEMP/conan-center-index"
+          cd "$RUNNER_TEMP/conan-center-index"
+          git remote add upstream https://github.com/conan-io/conan-center-index.git
+          git fetch --no-tags upstream master
+          git fetch --no-tags origin "$BRANCH" || true
+          if git show-ref --verify --quiet "refs/remotes/origin/$BRANCH"; then
+            git checkout -B "$BRANCH" "origin/$BRANCH"
+            git rebase upstream/master
+          else
+            git checkout -B "$BRANCH" upstream/master
+          fi
+          ARCHIVE="$RUNNER_TEMP/givp-${VERSION}.tar.gz"
+          curl --fail --location --retry 3 --retry-all-errors \
+            --output "$ARCHIVE" "https://github.com/Arnime/givp/archive/refs/tags/$TAG.tar.gz"
+          python "$GITHUB_WORKSPACE/.github/scripts/sync_cpp_registry_templates.py" \
+            --registry conan --source "$GITHUB_WORKSPACE" --fork "$PWD" --archive "$ARCHIVE"
+          if git diff --quiet; then
+            echo "No ConanCenter registry changes required."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add recipes/givp
+            git commit -m "givp: update to $VERSION"
+            git push origin "HEAD:$BRANCH"
+          fi
+          ALL_PR="$(gh pr list --repo conan-io/conan-center-index --head "Arnime:$BRANCH" --state all --json state,url --jq 'if length == 0 then empty else .[0] | "\(.state) \(.url)" end')"
+          if [[ -z "$ALL_PR" ]]; then
+            gh pr create --repo conan-io/conan-center-index --base master --head "Arnime:$BRANCH" \
+              --title "givp/$VERSION: add recipe" \
+              --body "Adds the GIVP $VERSION recipe from the immutable $TAG release archive."
+          else
+            echo "ConanCenter PR already exists: $ALL_PR"
+          fi

@@ -5,10 +5,8 @@ This page is for maintainers. For library installation and consumer usage, see
 
 ## Trigger
 
-The release workflow runs from `.github/workflows/release-cpp.yml` on:
-
-- Push of a tag matching `v*`
-- Manual `workflow_dispatch` with a tag input
+`.github/workflows/release-cpp.yml` is a reusable/manual C++ build workflow.
+The central `.github/workflows/release.yml` calls it for each release tag.
 
 Accepted tags follow semantic versioning, for example:
 
@@ -23,24 +21,17 @@ Accepted tags follow semantic versioning, for example:
 - CMake install layout under `install/`
 - Consumer validation through `find_package(givp)`
 - Source tarball generation and SHA256 checksum
-- GitHub release creation with attached assets
+- Artifact generation for attachment to the central GitHub release
 
 ## Standard release flow
 
 1. Update release notes in `CHANGELOG.md` if needed.
 2. Make sure local C++ checks are green.
-3. Create an annotated tag.
-4. Push the tag.
-5. Watch the workflow in GitHub Actions.
-6. Confirm the release page contains the tarball and checksum.
-7. If registry publication is needed, continue with `VCPKG_NOTES.md` and `CONAN_NOTES.md`.
-
-Example:
-
-```bash
-git tag -a v1.0.0 -m "Release v1.0.0"
-git push origin v1.0.0
-```
+3. Merge the coordinated version bump into `main`; the tag workflow creates
+   `vX.Y.Z`.
+4. Watch the central **Release** workflow in GitHub Actions.
+5. Confirm the single release page contains the tarball and checksum.
+6. Review the vcpkg and ConanCenter PRs created or updated by **Sync C++ Registries**.
 
 ## Artifacts
 
@@ -70,6 +61,7 @@ The tarball includes the C++ source tree plus the root license and changelog.
 
 ## After a successful release
 
-- Use `VCPKG_NOTES.md` for the vcpkg registry PR
-- Use `CONAN_NOTES.md` for the Conan Center PR
-- Use `cpp/README_INTELLISENSE.md` if the issue is local CMake or IntelliSense setup
+The synchronization uses `add-givp-X.Y.Z` in the two Arnime forks. It copies
+the local templates exactly and derives only SHA512 (vcpkg) and SHA256
+(ConanCenter) from the immutable release archive. External registry review,
+CI, CLA, and merge remain the maintainers' responsibility.
