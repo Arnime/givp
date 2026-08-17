@@ -49,7 +49,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ inputs.tag && format('refs/tags/{0}', inputs.tag) || github.ref }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.sha || inputs.tag && format('refs/tags/{0}', inputs.tag) || github.ref }}
           fetch-depth: 0
       - id: release
         env:
@@ -62,6 +62,11 @@ jobs:
             VERSION="$(python .github/scripts/validate_unified_version.py --root .)"
             TAG="v$VERSION"
             WRITE_ENABLED=false
+            SOURCE_REF="$GITHUB_SHA"
+          elif [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            TAG="$INPUT_TAG"
+            VERSION="${TAG#v}"
+            WRITE_ENABLED=true
             SOURCE_REF="$GITHUB_SHA"
           else
             TAG="${INPUT_TAG:-$REF_NAME}"
@@ -116,6 +121,10 @@ jobs:
         run: |
           set -euo pipefail
           if [[ -z "$GH_TOKEN" ]]; then
+            if [[ "$WRITE_ENABLED" == false ]]; then
+              echo "::notice::REGISTRY_FORK_TOKEN is not configured; template update is a no-op."
+              exit 0
+            fi
             echo "::error::REGISTRY_FORK_TOKEN must be configured in the registry-forks environment."
             exit 1
           fi
@@ -183,6 +192,10 @@ jobs:
         run: |
           set -euo pipefail
           if [[ -z "$GH_TOKEN" ]]; then
+            if [[ "$WRITE_ENABLED" == false ]]; then
+              echo "::notice::REGISTRY_FORK_TOKEN is not configured; template update is a no-op."
+              exit 0
+            fi
             echo "::error::REGISTRY_FORK_TOKEN must be configured in the registry-forks environment."
             exit 1
           fi
