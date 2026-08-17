@@ -7,14 +7,6 @@ on:
   push:
     branches: [main]
   pull_request:
-    paths:
-      - "r/R/**"
-      - "r/tests/**"
-      - "r/inst/**"
-      - "r/DESCRIPTION"
-      - "r/NAMESPACE"
-      - ".github/actions/setup-r/**"
-      - ".github/workflows/ci-r.yml"
   workflow_dispatch:
 
 env:
@@ -42,21 +34,26 @@ jobs:
           PR_BASE: ${{ github.event.pull_request.base.sha }}
         run: |
           if [ "$EVENT_NAME" = "pull_request" ]; then
+            source_changed=false
+            config_changed=false
             if git diff --name-only "$PR_BASE" HEAD -- r/R r/tests r/fuzz r/benchmarks | grep -q .; then
               echo 'os=["ubuntu-latest","windows-latest","macos-latest"]' >> "$GITHUB_OUTPUT"
               echo 'versions=["4.1","4.3","release"]' >> "$GITHUB_OUTPUT"
-              echo 'source_changed=true' >> "$GITHUB_OUTPUT"
+              source_changed=true
             else
               echo 'os=["ubuntu-latest"]' >> "$GITHUB_OUTPUT"
               echo 'versions=["release"]' >> "$GITHUB_OUTPUT"
-              echo 'source_changed=false' >> "$GITHUB_OUTPUT"
             fi
             if git diff --name-only "$PR_BASE" HEAD -- r/DESCRIPTION r/NAMESPACE .github/actions/setup-r .github/workflows/ci-r.yml | grep -q .; then
-              echo 'config_changed=true' >> "$GITHUB_OUTPUT"
-            else
-              echo 'config_changed=false' >> "$GITHUB_OUTPUT"
+              config_changed=true
             fi
-            echo 'validation_required=true' >> "$GITHUB_OUTPUT"
+            echo "source_changed=$source_changed" >> "$GITHUB_OUTPUT"
+            echo "config_changed=$config_changed" >> "$GITHUB_OUTPUT"
+            if [[ "$source_changed" == true || "$config_changed" == true ]]; then
+              echo 'validation_required=true' >> "$GITHUB_OUTPUT"
+            else
+              echo 'validation_required=false' >> "$GITHUB_OUTPUT"
+            fi
           else
             echo 'os=["ubuntu-latest","windows-latest","macos-latest"]' >> "$GITHUB_OUTPUT"
             echo 'versions=["4.1","4.3","release"]' >> "$GITHUB_OUTPUT"
@@ -68,6 +65,7 @@ jobs:
   # ─── 1. Cross-platform unit tests (3 OS × 3 R versions = 9 runs) ──────────
   test:
     needs: setup
+    if: github.event_name != 'pull_request' || needs.setup.outputs.validation_required == 'true'
     name: Test (${{ matrix.os }} / R ${{ matrix.r-version }})
     runs-on: ${{ matrix.os }}
     strategy:
@@ -340,6 +338,32 @@ jobs:
       - name: Build package
         shell: bash
         run: R CMD build r
+
+  coverage-gate:
+    name: coverage-r
+    needs: [setup, coverage]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report R coverage status
+        env:
+          SETUP_RESULT: ${{ needs.setup.result }}
+          SOURCE_CHANGED: ${{ needs.setup.outputs.source_changed }}
+          COVERAGE_RESULT: ${{ needs.coverage.result }}
+        run: |
+          if [ "$SETUP_RESULT" != success ]; then
+            echo "::error::R change detection did not complete successfully."
+            exit 1
+          fi
+          if [ "$SOURCE_CHANGED" != true ]; then
+            echo "R coverage is not applicable: no R source or test changes."
+            exit 0
+          fi
+          if [ "$COVERAGE_RESULT" != success ]; then
+            echo "::error::R coverage job finished with '$COVERAGE_RESULT'."
+            exit 1
+          fi
+          echo "R coverage passed."
 
   # ─── 5. Fuzz driver — informational, does not block merge ────────────────
   fuzz:

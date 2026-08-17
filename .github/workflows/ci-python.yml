@@ -4,16 +4,6 @@ on:
   push:
     branches: [main]
   pull_request:
-    paths:
-      - "python/src/**"
-      - "python/tests/**"
-      - "pyproject.toml"
-      - "poetry.lock"
-      - "python/requirements/**"
-      - ".github/actions/setup-python/**"
-      - ".github/scripts/bootstrap-poetry.sh"
-      - ".github/scripts/poetry-install.sh"
-      - ".github/workflows/ci-python.yml"
   schedule:
     - cron: "0 5 * * 1"
   workflow_dispatch:
@@ -49,19 +39,24 @@ jobs:
           PR_BASE: ${{ github.event.pull_request.base.sha }}
         run: |
           if [ "$EVENT_NAME" = "pull_request" ]; then
+            source_changed=false
+            config_changed=false
             if git diff --name-only "$PR_BASE" HEAD -- python/src python/tests | grep -q .; then
               echo 'versions=["3.10","3.11","3.12","3.13","3.14"]' >> "$GITHUB_OUTPUT"
-              echo 'source_changed=true' >> "$GITHUB_OUTPUT"
+              source_changed=true
             else
               echo 'versions=["3.13"]' >> "$GITHUB_OUTPUT"
-              echo 'source_changed=false' >> "$GITHUB_OUTPUT"
             fi
             if git diff --name-only "$PR_BASE" HEAD -- pyproject.toml poetry.lock python/requirements .github/actions/setup-python .github/scripts/bootstrap-poetry.sh .github/scripts/poetry-install.sh .github/workflows/ci-python.yml | grep -q .; then
-              echo 'config_changed=true' >> "$GITHUB_OUTPUT"
-            else
-              echo 'config_changed=false' >> "$GITHUB_OUTPUT"
+              config_changed=true
             fi
-            echo 'validation_required=true' >> "$GITHUB_OUTPUT"
+            echo "source_changed=$source_changed" >> "$GITHUB_OUTPUT"
+            echo "config_changed=$config_changed" >> "$GITHUB_OUTPUT"
+            if [[ "$source_changed" == true || "$config_changed" == true ]]; then
+              echo 'validation_required=true' >> "$GITHUB_OUTPUT"
+            else
+              echo 'validation_required=false' >> "$GITHUB_OUTPUT"
+            fi
           else
             echo 'versions=["3.10","3.11","3.12","3.13","3.14"]' >> "$GITHUB_OUTPUT"
             echo 'source_changed=true' >> "$GITHUB_OUTPUT"
@@ -71,6 +66,7 @@ jobs:
 
   test:
     needs: setup
+    if: github.event_name != 'pull_request' || needs.setup.outputs.validation_required == 'true'
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -111,25 +107,32 @@ jobs:
 
   coverage:
     needs: setup
-    if: github.event_name != 'pull_request' || needs.setup.outputs.source_changed == 'true'
     runs-on: ubuntu-latest
     steps:
+      - name: Coverage not required for this pull request
+        if: github.event_name == 'pull_request' && needs.setup.outputs.source_changed != 'true'
+        run: echo "No Python source or test changes detected; coverage is not applicable."
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: github.event_name != 'pull_request' || needs.setup.outputs.source_changed == 'true'
         with:
           fetch-depth: 0
       - uses: ./.github/actions/setup-python
+        if: github.event_name != 'pull_request' || needs.setup.outputs.source_changed == 'true'
         with:
           python-version: "3.13"
       - name: Bootstrap Poetry
+        if: github.event_name != 'pull_request' || needs.setup.outputs.source_changed == 'true'
         run: |
           bash .github/scripts/bootstrap-poetry.sh
       - name: Install
+        if: github.event_name != 'pull_request' || needs.setup.outputs.source_changed == 'true'
         run: |
           bash .github/scripts/poetry-install.sh --only main,dev
       - name: Test with coverage
+        if: github.event_name != 'pull_request' || needs.setup.outputs.source_changed == 'true'
         run: poetry run pytest --cov=givp --cov-report=xml:coverage-python.xml --cov-fail-under=95
       - name: Check patch coverage on PR (>= 90%)
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && needs.setup.outputs.source_changed == 'true'
         run: |
           python3 - <<'PY'
           import re
@@ -199,6 +202,7 @@ jobs:
             raise SystemExit(1)
           PY
       - name: Upload coverage to Codecov
+        if: github.event_name != 'pull_request' || needs.setup.outputs.source_changed == 'true'
         uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         with:
           files: coverage-python.xml
