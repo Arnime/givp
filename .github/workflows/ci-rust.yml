@@ -4,15 +4,6 @@ on:
   push:
     branches: [main]
   pull_request:
-    paths:
-      - "rust/src/**"
-      - "rust/tests/**"
-      - "rust/benches/**"
-      - "rust/Cargo.toml"
-      - "rust/Cargo.lock"
-      - ".github/actions/setup-rust/**"
-      - ".github/workflows/ci-rust.yml"
-      - "codecov.yml"
   workflow_dispatch:
 
 env:
@@ -40,19 +31,24 @@ jobs:
           PR_BASE: ${{ github.event.pull_request.base.sha }}
         run: |
           if [ "$EVENT_NAME" = "pull_request" ]; then
+            source_changed=false
+            config_changed=false
             if git diff --name-only "$PR_BASE" HEAD -- rust/src rust/tests rust/benches | grep -q .; then
               echo 'toolchains=["stable","1.85","beta"]' >> "$GITHUB_OUTPUT"
-              echo 'source_changed=true' >> "$GITHUB_OUTPUT"
+              source_changed=true
             else
               echo 'toolchains=["stable"]' >> "$GITHUB_OUTPUT"
-              echo 'source_changed=false' >> "$GITHUB_OUTPUT"
             fi
             if git diff --name-only "$PR_BASE" HEAD -- rust/Cargo.toml rust/Cargo.lock .github/actions/setup-rust .github/workflows/ci-rust.yml codecov.yml | grep -q .; then
-              echo 'config_changed=true' >> "$GITHUB_OUTPUT"
-            else
-              echo 'config_changed=false' >> "$GITHUB_OUTPUT"
+              config_changed=true
             fi
-            echo 'validation_required=true' >> "$GITHUB_OUTPUT"
+            echo "source_changed=$source_changed" >> "$GITHUB_OUTPUT"
+            echo "config_changed=$config_changed" >> "$GITHUB_OUTPUT"
+            if [[ "$source_changed" == true || "$config_changed" == true ]]; then
+              echo 'validation_required=true' >> "$GITHUB_OUTPUT"
+            else
+              echo 'validation_required=false' >> "$GITHUB_OUTPUT"
+            fi
           else
             echo 'toolchains=["stable","1.85","beta"]' >> "$GITHUB_OUTPUT"
             echo 'source_changed=true' >> "$GITHUB_OUTPUT"
@@ -62,6 +58,7 @@ jobs:
 
   test:
     needs: setup
+    if: github.event_name != 'pull_request' || needs.setup.outputs.validation_required == 'true'
     runs-on: ${{ matrix.os }}
     continue-on-error: ${{ matrix.rust == 'beta' }}
     strategy:
@@ -292,6 +289,32 @@ jobs:
           files: rust/lcov.info
           flags: rust
           fail_ci_if_error: true
+
+  coverage-gate:
+    name: coverage-rust
+    needs: [setup, coverage]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report Rust coverage status
+        env:
+          SETUP_RESULT: ${{ needs.setup.result }}
+          SOURCE_CHANGED: ${{ needs.setup.outputs.source_changed }}
+          COVERAGE_RESULT: ${{ needs.coverage.result }}
+        run: |
+          if [ "$SETUP_RESULT" != success ]; then
+            echo "::error::Rust change detection did not complete successfully."
+            exit 1
+          fi
+          if [ "$SOURCE_CHANGED" != true ]; then
+            echo "Rust coverage is not applicable: no Rust source or test changes."
+            exit 0
+          fi
+          if [ "$COVERAGE_RESULT" != success ]; then
+            echo "::error::Rust coverage job finished with '$COVERAGE_RESULT'."
+            exit 1
+          fi
+          echo "Rust coverage passed."
 
   benchmarks:
     needs: setup

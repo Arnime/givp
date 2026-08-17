@@ -7,19 +7,6 @@ on:
   push:
     branches: [main]
   pull_request:
-    paths:
-      - "cpp/include/**"
-      - "cpp/tests/**"
-      - "cpp/benchmarks/**"
-      - "cpp/fuzz/**"
-      - "cpp/CMakeLists.txt"
-      - "cpp/tests/CMakeLists.txt"
-      - "cpp/benchmarks/CMakeLists.txt"
-      - "cpp/conan/**"
-      - "cpp/vcpkg_ports/**"
-      - ".github/scripts/sync_cpp_registry_templates.py"
-      - ".github/scripts/validate_conan_recipes.py"
-      - ".github/workflows/ci-cpp.yml"
   workflow_dispatch:
 
 env:
@@ -47,19 +34,24 @@ jobs:
           PR_BASE: ${{ github.event.pull_request.base.sha }}
         run: |
           if [ "$EVENT_NAME" = "pull_request" ]; then
+            source_changed=false
+            config_changed=false
             if git diff --name-only "$PR_BASE" HEAD -- cpp/include cpp/tests cpp/benchmarks cpp/fuzz | grep -q .; then
               echo 'toolchains=[{"os":"ubuntu-latest","compiler":"gcc","cc":"gcc","cxx":"g++"},{"os":"ubuntu-latest","compiler":"clang","cc":"clang","cxx":"clang++"},{"os":"windows-latest","compiler":"msvc","cc":"cl","cxx":"cl"},{"os":"macos-latest","compiler":"clang","cc":"clang","cxx":"clang++"}]' >> "$GITHUB_OUTPUT"
-              echo 'source_changed=true' >> "$GITHUB_OUTPUT"
+              source_changed=true
             else
               echo 'toolchains=[{"os":"ubuntu-latest","compiler":"gcc","cc":"gcc","cxx":"g++"}]' >> "$GITHUB_OUTPUT"
-              echo 'source_changed=false' >> "$GITHUB_OUTPUT"
             fi
             if git diff --name-only "$PR_BASE" HEAD -- cpp/CMakeLists.txt cpp/tests/CMakeLists.txt cpp/benchmarks/CMakeLists.txt cpp/conan cpp/vcpkg_ports .github/scripts/validate_conan_recipes.py .github/scripts/sync_cpp_registry_templates.py .github/workflows/ci-cpp.yml .github/workflows/sync-cpp-registries.yml | grep -q .; then
-              echo 'config_changed=true' >> "$GITHUB_OUTPUT"
-            else
-              echo 'config_changed=false' >> "$GITHUB_OUTPUT"
+              config_changed=true
             fi
-            echo 'validation_required=true' >> "$GITHUB_OUTPUT"
+            echo "source_changed=$source_changed" >> "$GITHUB_OUTPUT"
+            echo "config_changed=$config_changed" >> "$GITHUB_OUTPUT"
+            if [[ "$source_changed" == true || "$config_changed" == true ]]; then
+              echo 'validation_required=true' >> "$GITHUB_OUTPUT"
+            else
+              echo 'validation_required=false' >> "$GITHUB_OUTPUT"
+            fi
           else
             echo 'toolchains=[{"os":"ubuntu-latest","compiler":"gcc","cc":"gcc","cxx":"g++"},{"os":"ubuntu-latest","compiler":"clang","cc":"clang","cxx":"clang++"},{"os":"windows-latest","compiler":"msvc","cc":"cl","cxx":"cl"},{"os":"macos-latest","compiler":"clang","cc":"clang","cxx":"clang++"}]' >> "$GITHUB_OUTPUT"
             echo 'source_changed=true' >> "$GITHUB_OUTPUT"
@@ -105,6 +97,7 @@ jobs:
 
   test:
     needs: setup
+    if: github.event_name != 'pull_request' || needs.setup.outputs.validation_required == 'true'
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -360,6 +353,32 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           version: v11.2.8
           fail_ci_if_error: false
+
+  coverage-gate:
+    name: coverage-cpp
+    needs: [setup, coverage]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report C++ coverage status
+        env:
+          SETUP_RESULT: ${{ needs.setup.result }}
+          SOURCE_CHANGED: ${{ needs.setup.outputs.source_changed }}
+          COVERAGE_RESULT: ${{ needs.coverage.result }}
+        run: |
+          if [ "$SETUP_RESULT" != success ]; then
+            echo "::error::C++ change detection did not complete successfully."
+            exit 1
+          fi
+          if [ "$SOURCE_CHANGED" != true ]; then
+            echo "C++ coverage is not applicable: no C++ source or test changes."
+            exit 0
+          fi
+          if [ "$COVERAGE_RESULT" != success ]; then
+            echo "::error::C++ coverage job finished with '$COVERAGE_RESULT'."
+            exit 1
+          fi
+          echo "C++ coverage passed."
 
   benchmarks:
     needs: setup
