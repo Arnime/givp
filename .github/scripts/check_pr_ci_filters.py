@@ -45,6 +45,23 @@ def main() -> None:
         missing.append(".github/workflows/codeql.yml: missing immutable init/analyze pins")
     elif len(set(codeql_pins.values())) != 1:
         missing.append(".github/workflows/codeql.yml: init and analyze must use the same pin")
+    slsa_pins: list[str] = []
+    for relative_path in (
+        ".github/workflows/release.yml",
+        ".github/workflows/backfill-provenance.yml",
+    ):
+        content = (ROOT / relative_path).read_text(encoding="utf-8")
+        match = re.search(
+            r"slsa-framework/slsa-github-generator/"
+            r"\.github/workflows/generator_generic_slsa3\.yml@([0-9a-f]{40})",
+            content,
+        )
+        if match is None:
+            missing.append(f"{relative_path}: missing immutable SLSA generator pin")
+        else:
+            slsa_pins.append(match.group(1))
+    if len(slsa_pins) == 2 and len(set(slsa_pins)) != 1:
+        missing.append("SLSA generator pins must match in Release and Backfill Provenance")
     if missing:
         raise SystemExit("\n".join(missing))
     print("PR CI path-filter checks passed.")
