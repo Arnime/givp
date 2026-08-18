@@ -30,3 +30,6 @@ updates:
       codeql-action:
         patterns:
           - "github/codeql-action/*"
+      slsa-github-generator:
+        patterns:
+          - "slsa-framework/slsa-github-generator/*"
