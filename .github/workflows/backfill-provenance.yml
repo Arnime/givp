@@ -108,8 +108,12 @@ jobs:
       - name: Build
         run: |
           bash .github/scripts/bootstrap-poetry.sh
-          bash .github/scripts/poetry-install.sh --no-root --only main,release
-          poetry run python -m build
+          if bash .github/scripts/poetry-install.sh --no-root --only main,release; then
+            poetry run python -m build
+          else
+            echo "::warning::Poetry could not install the historical release dependencies; building with PEP 517 instead."
+            python -m build
+          fi
 
       - name: Generate artifact hashes
         id: hash
