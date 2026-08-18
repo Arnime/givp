@@ -246,7 +246,7 @@ jobs:
           sudo apt-get install -y cmake libcurl4-openssl-dev libssl-dev libxml2-dev pandoc
 
       # Release tags may predate local composite actions, so keep this external.
-      - uses: r-lib/actions/setup-r@a51a8012b0aab7c32ef9d19bf54da93f3254335e # v2
+      - uses: r-lib/actions/setup-r@d3c5be51b12e724e68f33216ca3c148b66d5f0b6 # v2
         with:
           r-version: release
           use-public-rspm: true
