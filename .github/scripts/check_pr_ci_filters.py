@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Check selective CI gates and always-reported language coverage checks."""
 
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -36,6 +37,14 @@ def main() -> None:
             missing.append(f"{relative_path}: coverage must run on every PR")
         if required_name not in content:
             missing.append(f"{relative_path}: missing always-reported coverage check")
+    codeql_ci = (ROOT / ".github/workflows/codeql.yml").read_text(encoding="utf-8")
+    codeql_pins = dict(
+        re.findall(r"github/codeql-action/(init|analyze)@([0-9a-f]{40})", codeql_ci)
+    )
+    if set(codeql_pins) != {"init", "analyze"}:
+        missing.append(".github/workflows/codeql.yml: missing immutable init/analyze pins")
+    elif len(set(codeql_pins.values())) != 1:
+        missing.append(".github/workflows/codeql.yml: init and analyze must use the same pin")
     if missing:
         raise SystemExit("\n".join(missing))
     print("PR CI path-filter checks passed.")
