@@ -40,7 +40,7 @@
 [![clang-tidy](https://img.shields.io/badge/Linter-clang--tidy-blue?logo=llvm&logoColor=white)](https://clang.llvm.org/extra/clang-tidy/)
 
 **R** &nbsp;
-[![R Package givp](https://img.shields.io/badge/R%20Package-givp%201.0.1-276DC3?logo=r&logoColor=white)](https://arnime.r-universe.dev/givp)
+[![R-Universe givp](https://arnime.r-universe.dev/badges/givp)](https://arnime.r-universe.dev/givp)
 [![R](https://img.shields.io/badge/R-4.1%2B-276DC3?logo=r&logoColor=white)](https://www.r-project.org/)
 [![CI R](https://github.com/Arnime/givp/actions/workflows/ci-r.yml/badge.svg)](https://github.com/Arnime/givp/actions/workflows/ci-r.yml)
 [![Codecov (r)](https://codecov.io/gh/Arnime/givp/graph/badge.svg?flag=r)](https://codecov.io/gh/Arnime/givp/flags/r)
