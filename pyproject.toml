@@ -37,7 +37,7 @@ classifiers = [
 dependencies = [
     "numpy>=1.24,<2.3.2; python_version < '3.14'",
     "numpy>=2.3.2,<3; python_version >= '3.14'",
-    "xxhash>=3.0",
+    "xxhash>=4.0.1",
     "scikit-learn>=1.0",
     # SciPy 1.18.0 wheels currently fail to import ``_spropack`` on
     # CPython 3.13. Keep the known-good line for supported pre-3.14 runtimes.
