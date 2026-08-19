@@ -1,0 +1,7 @@
+.venv/
+.pytest_tmp/
+__pycache__/
+*.py[cod]
+*.egg-info/
+output/*
+!output/.gitkeep

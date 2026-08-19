@@ -1,0 +1,70 @@
+{
+  "plants": [
+    {
+      "name": "A",
+      "initial_volume_hm3": 10.8,
+      "min_volume_hm3": 9.5,
+      "max_volume_hm3": 11.7,
+      "maximorum_volume_hm3": 24.5,
+      "min_level_m": 146.8,
+      "max_level_m": 148.2,
+      "head_m": 44.0,
+      "efficiency": 0.94,
+      "min_power_mw": 45.0,
+      "max_power_mw": 128.0,
+      "upstream_level_coefficients": [
+        0.0,
+        2.0,
+        -1.096691,
+        -0.206618,
+        0.303309
+      ],
+      "downstream_base_level_m": 105.6,
+      "downstream_level_range_m": 1.65,
+      "downstream_level_coefficients": [
+        0.0,
+        0.73,
+        0.34,
+        -0.10,
+        0.03
+      ],
+      "sanitary_spill_flow_m3s": 5.0,
+      "spill_response": 0.62,
+      "spill_response_exponent": 1.35,
+      "maximorum_level_m": 152.0
+    },
+    {
+      "name": "B",
+      "initial_volume_hm3": 53.6,
+      "min_volume_hm3": 49.8,
+      "max_volume_hm3": 56.2,
+      "maximorum_volume_hm3": 87.2,
+      "min_level_m": 102.8,
+      "max_level_m": 104.2,
+      "head_m": 35.0,
+      "efficiency": 0.93,
+      "min_power_mw": 32.0,
+      "max_power_mw": 98.0,
+      "upstream_level_coefficients": [
+        0.0,
+        2.0,
+        0.0951,
+        -2.590199,
+        1.4951
+      ],
+      "downstream_base_level_m": 69.1,
+      "downstream_level_range_m": 2.25,
+      "downstream_level_coefficients": [
+        0.0,
+        0.69,
+        0.38,
+        -0.12,
+        0.05
+      ],
+      "sanitary_spill_flow_m3s": 18.0,
+      "spill_response": 0.58,
+      "spill_response_exponent": 1.45,
+      "maximorum_level_m": 107.0
+    }
+  ]
+}

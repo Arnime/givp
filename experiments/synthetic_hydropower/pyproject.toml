@@ -1,0 +1,38 @@
+[build-system]
+requires = ["hatchling>=1.21"]
+build-backend = "hatchling.build"
+
+[project]
+name = "synthetic-hydropower-experiment"
+version = "0.1.0"
+description = "Reproducible fictional two-plant hydropower cascade experiment."
+requires-python = ">=3.10,<3.16"
+dependencies = [
+    "givp>=1.0.1,<2",
+    "numpy>=1.24",
+    "pandas>=2.2",
+    "matplotlib>=3.8",
+]
+
+[project.optional-dependencies]
+dev = ["mypy>=1.10", "pandas-stubs>=2.2", "pytest>=8"]
+notebooks = ["jupyter>=1.1", "ipykernel>=6.29"]
+
+[project.scripts]
+synthetic-hydropower = "synthetic_hydropower.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/synthetic_hydropower"]
+
+[tool.poetry]
+packages = [{ include = "synthetic_hydropower", from = "src" }]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --basetemp=.pytest_tmp"
+
+[tool.mypy]
+files = ["src", "tests"]
+mypy_path = ["src"]
+python_version = "3.10"
+warn_unused_ignores = true
