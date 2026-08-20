@@ -14,9 +14,5 @@ def ackley(x: NDArray | Sequence[float]) -> float:
     squared_mean = np.sum(values * values) / values.size
     cosine_mean = np.sum(np.cos(2.0 * np.pi * values)) / values.size
     return float(
-        -20.0 * np.exp(-0.2 * np.sqrt(squared_mean))
-        - np.exp(cosine_mean)
-        + 20.0
-        + np.e
+        -20.0 * np.exp(-0.2 * np.sqrt(squared_mean)) - np.exp(cosine_mean) + 20.0 + np.e
     )
-

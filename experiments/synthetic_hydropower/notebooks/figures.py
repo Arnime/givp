@@ -5,15 +5,14 @@ from __future__ import annotations
 import json
 import re
 from pathlib import Path
-from typing import Final, Literal
+from typing import Final
 
 import matplotlib.pyplot as plt
 import pandas as pd
-
 from givp.examples.synthetic_hydropower.model import PlantConfig
 
 PERIOD_LABEL = "Período"
-UPPER_RIGHT_LEGEND: Final[Literal["upper right"]] = "upper right"
+UPPER_RIGHT_LEGEND: Final = "upper right"
 
 
 def render_figures(
@@ -35,7 +34,7 @@ def render_figures(
     figures: list[Path] = []
     for scenario_key, scenario_records in records.groupby("scenario", sort=False):
         if not isinstance(scenario_key, str):
-            raise ValueError("scenario values in reference results must be strings")
+            raise TypeError("scenario values in reference results must be strings")
         scenario_slug = _scenario_slug(scenario_key)
         figures.extend(
             (
@@ -152,4 +151,3 @@ def _render_levels(
 def _scenario_slug(scenario_name: str) -> str:
     """Return a filesystem-safe, deterministic figure-name prefix."""
     return re.sub(r"[^a-z0-9]+", "_", scenario_name.lower()).strip("_")
-

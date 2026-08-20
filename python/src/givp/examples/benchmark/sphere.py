@@ -10,4 +10,3 @@ def sphere(x: NDArray | Sequence[float]) -> float:
     """Evaluate the Sphere function, whose global minimum is at the origin."""
     values = np.asarray(x, dtype=float)
     return float(np.sum(values * values))
-

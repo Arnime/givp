@@ -47,4 +47,3 @@ def knapsack_penalty(
     total_weight = float(np.sum(selection * np.asarray(weights)))
     overflow = max(0.0, total_weight - capacity)
     return float(-total_value + overflow_penalty * overflow)
-
