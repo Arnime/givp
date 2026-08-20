@@ -83,7 +83,7 @@ jobs:
           bash .github/scripts/bootstrap-poetry.sh
       - name: Install
         run: |
-          bash .github/scripts/poetry-install.sh --only main,dev
+          bash .github/scripts/poetry-install.sh --only main,dev,benchmarks
       - name: Lint
         run: poetry -C python run ruff check src tests benchmarks fuzz
       - name: Type-check
@@ -127,7 +127,7 @@ jobs:
       - name: Install
         if: github.event_name != 'pull_request' || needs.setup.outputs.source_changed == 'true'
         run: |
-          bash .github/scripts/poetry-install.sh --only main,dev
+          bash .github/scripts/poetry-install.sh --only main,dev,benchmarks
       - name: Test with coverage
         if: github.event_name != 'pull_request' || needs.setup.outputs.source_changed == 'true'
         run: poetry -C python run pytest --cov=givp --cov-report=xml:../coverage-python.xml --cov-fail-under=95

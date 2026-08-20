@@ -89,7 +89,7 @@ jobs:
       - name: Generate Python coverage
         if: steps.preflight.outputs.enabled == 'true'
         run: |
-          bash .github/scripts/poetry-install.sh --no-root --only main,dev
+          bash .github/scripts/poetry-install.sh --no-root --only main,dev,benchmarks
           bash .github/scripts/install-package-editable.sh
           poetry -C python run pytest --cov=givp --cov-report=xml:../coverage-python.xml tests/
 

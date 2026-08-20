@@ -42,7 +42,11 @@ jobs:
                   bash .github/scripts/bootstrap-poetry.sh
                   bash .github/scripts/poetry-install.sh --only main,docs
             - name: Build
-              run: poetry -C python run mkdocs build -f ../mkdocs.yml --strict --site-dir ../_site
+              run: >-
+                  poetry -C python run mkdocs build
+                  -f "$GITHUB_WORKSPACE/mkdocs.yml"
+                  --strict
+                  --site-dir "$GITHUB_WORKSPACE/_site"
             - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v4.0.0
               with:
                   path: _site
