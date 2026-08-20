@@ -50,7 +50,7 @@ Every port exposes the same logical modules:
 | `convergence` | Convergence monitor                                 |
 | `helpers`     | RNG, bounds utilities, shared math                  |
 | `api`         | Public-facing wrapper (direction-agnostic)          |
-| `benchmarks`  | Standard test functions (sphere, rosenbrock, …)     |
+| `examples.benchmark` | Standard test functions and reproducible sweeps |
 
 ---
 

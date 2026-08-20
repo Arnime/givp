@@ -93,14 +93,14 @@ Example command from the `python/` directory:
 
 ```bash
 # Step 1 — run experiment (≈ 30 min on a laptop)
-python benchmarks/run_literature_comparison.py \
+python -m benchmarks.comparison \
   --dims 10 --n-runs 30 --max-iter 200 --time-limit 30.0 \
   --algorithms GIVP-full DE PSO GA CMA-ES SA \
     --traces --verbose \
     --output results/comparison_10d_30runs.json
 
 # Step 2 — generate Markdown + LaTeX tables with Wilcoxon tests
-python benchmarks/generate_report.py \
+python -m benchmarks.reporting \
     --input results/comparison_10d_30runs.json \
     --format both \
     --output-dir paper/tables/
@@ -126,7 +126,7 @@ literature-comparison artifacts instead of being pasted manually into this
 page. Regenerate them from the repository root with:
 
 ```bash
-python benchmarks/publish_docs_artifacts.py
+python -m benchmarks.publishing
 ```
 
 The generated entry point lives at [examples/benchmark-reports/index.md](examples/benchmark-reports/index.md)

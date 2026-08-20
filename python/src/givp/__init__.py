@@ -24,7 +24,6 @@ from givp.exceptions import (
     InvalidConfigError,
     InvalidInitialGuessError,
 )
-from givp.experiment import seed_sweep, sweep_summary
 from givp.result import AlgorithmMeta, OptimizeResult, TerminationReason
 
 __all__ = [
@@ -40,8 +39,6 @@ __all__ = [
     "OptimizeResult",
     "TerminationReason",
     "givp",
-    "seed_sweep",
-    "sweep_summary",
 ]
 
 __version__ = "1.0.1"

@@ -2,6 +2,15 @@
 
 <!-- markdownlint-disable MD024 -->
 
+## Unreleased
+
+### Breaking changes
+
+* remove the obsolete SOG2 compatibility namespace and its candidate evaluator
+* replace internal ``core.grasp`` and ``core.impl`` modules with ``core.engine``
+* move benchmark functions and seed-sweep utilities from the root package to
+  ``givp.examples.benchmark``
+
 ## [1.0.1](https://github.com/Arnime/givp/compare/v1.0.0...v1.0.1) (2026-05-22)
 
 ### Bug Fixes

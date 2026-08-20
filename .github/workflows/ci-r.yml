@@ -457,7 +457,7 @@ jobs:
       - name: Generate canonical benchmark smoke report
         shell: bash
         run: |
-          poetry -C python run python benchmarks/generate_report.py \
+          poetry -C python run python -m benchmarks.reporting \
             --input ../r/benchmarks/ci_smoke_results.json \
             --format markdown \
             --no-plots \

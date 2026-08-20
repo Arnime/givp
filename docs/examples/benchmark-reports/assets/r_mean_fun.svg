@@ -1,133 +1,39 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="906" height="1128" viewBox="0 0 906 1128" role="img" aria-labelledby="title desc">
-<title>r Mean objective value</title>
-<desc>Mean objective value for the generated r benchmark artifact page.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="906" height="420" viewBox="0 0 906 420" role="img" aria-labelledby="title desc">
+<title>R Mean objective value</title>
+<desc>Mean objective value for the generated R benchmark artifact page.</desc>
 <rect x="0" y="0" width="906" height="100%" fill="#fffdf8" />
-<text x="24" y="32" font-size="24" font-family="Arial, sans-serif" fill="#1f2937">r Mean objective value</text>
+<text x="24" y="32" font-size="24" font-family="Arial, sans-serif" fill="#1f2937">R Mean objective value</text>
 <text x="24" y="54" font-size="13" font-family="Arial, sans-serif" fill="#6b7280">log10 scale, lower is better</text>
 <rect x="24" y="60" width="14" height="14" fill="#0f4c5c" rx="3" />
 <text x="44" y="72" font-size="12" font-family="Arial, sans-serif" fill="#374151">GIVP-full</text>
 <rect x="134" y="60" width="14" height="14" fill="#e36414" rx="3" />
-<text x="154" y="72" font-size="12" font-family="Arial, sans-serif" fill="#374151">DE</text>
-<rect x="244" y="60" width="14" height="14" fill="#6a994e" rx="3" />
-<text x="264" y="72" font-size="12" font-family="Arial, sans-serif" fill="#374151">PSO</text>
-<rect x="354" y="60" width="14" height="14" fill="#9a031e" rx="3" />
-<text x="374" y="72" font-size="12" font-family="Arial, sans-serif" fill="#374151">GA</text>
-<rect x="464" y="60" width="14" height="14" fill="#5f0f40" rx="3" />
-<text x="484" y="72" font-size="12" font-family="Arial, sans-serif" fill="#374151">CMA-ES</text>
-<rect x="574" y="60" width="14" height="14" fill="#0f4c5c" rx="3" />
-<text x="594" y="72" font-size="12" font-family="Arial, sans-serif" fill="#374151">SA</text>
-<text x="24" y="121" font-size="13" font-family="Arial, sans-serif" fill="#111827">Sphere</text>
+<text x="154" y="72" font-size="12" font-family="Arial, sans-serif" fill="#374151">GRASP-only</text>
+<text x="24" y="121" font-size="13" font-family="Arial, sans-serif" fill="#111827">Ackley</text>
 <rect x="170" y="109" width="470" height="12" fill="#e5e7eb" rx="6" />
-<rect x="170" y="109" width="303.38" height="12" fill="#0f4c5c" rx="6" />
-<text x="656" y="120" font-size="11" font-family="Arial, sans-serif" fill="#374151">GIVP-full: 0.02412</text>
+<rect x="170" y="109" width="156.73" height="12" fill="#0f4c5c" rx="6" />
+<text x="656" y="120" font-size="11" font-family="Arial, sans-serif" fill="#374151">GIVP-full: 3.7770</text>
 <rect x="170" y="133" width="470" height="12" fill="#e5e7eb" rx="6" />
-<rect x="170" y="133" width="137.52" height="12" fill="#e36414" rx="6" />
-<text x="656" y="144" font-size="11" font-family="Arial, sans-serif" fill="#374151">DE: 1.5795e-07</text>
-<rect x="170" y="157" width="470" height="12" fill="#e5e7eb" rx="6" />
-<rect x="170" y="157" width="128.29" height="12" fill="#6a994e" rx="6" />
-<text x="656" y="168" font-size="11" font-family="Arial, sans-serif" fill="#374151">PSO: 8.1277e-08</text>
-<rect x="170" y="181" width="470" height="12" fill="#e5e7eb" rx="6" />
-<rect x="170" y="181" width="263.21" height="12" fill="#9a031e" rx="6" />
-<text x="656" y="192" font-size="11" font-family="Arial, sans-serif" fill="#374151">GA: 0.001339</text>
-<rect x="170" y="205" width="470" height="12" fill="#e5e7eb" rx="6" />
-<rect x="170" y="205" width="8.00" height="12" fill="#5f0f40" rx="6" />
-<text x="656" y="216" font-size="11" font-family="Arial, sans-serif" fill="#374151">CMA-ES: 1.4141e-11</text>
-<rect x="170" y="229" width="470" height="12" fill="#e5e7eb" rx="6" />
-<rect x="170" y="229" width="383.59" height="12" fill="#0f4c5c" rx="6" />
-<text x="656" y="240" font-size="11" font-family="Arial, sans-serif" fill="#374151">SA: 7.7497</text>
-<text x="24" y="283" font-size="13" font-family="Arial, sans-serif" fill="#111827">Rosenbrock</text>
-<rect x="170" y="271" width="470" height="12" fill="#e5e7eb" rx="6" />
-<rect x="170" y="271" width="397.65" height="12" fill="#0f4c5c" rx="6" />
-<text x="656" y="282" font-size="11" font-family="Arial, sans-serif" fill="#374151">GIVP-full: 21.3172</text>
-<rect x="170" y="295" width="470" height="12" fill="#e5e7eb" rx="6" />
-<rect x="170" y="295" width="378.98" height="12" fill="#e36414" rx="6" />
-<text x="656" y="306" font-size="11" font-family="Arial, sans-serif" fill="#374151">DE: 5.5605</text>
-<rect x="170" y="319" width="470" height="12" fill="#e5e7eb" rx="6" />
-<rect x="170" y="319" width="386.67" height="12" fill="#6a994e" rx="6" />
-<text x="656" y="330" font-size="11" font-family="Arial, sans-serif" fill="#374151">PSO: 9.6750</text>
-<rect x="170" y="343" width="470" height="12" fill="#e5e7eb" rx="6" />
-<rect x="170" y="343" width="391.37" height="12" fill="#9a031e" rx="6" />
-<text x="656" y="354" font-size="11" font-family="Arial, sans-serif" fill="#374151">GA: 13.5630</text>
-<rect x="170" y="367" width="470" height="12" fill="#e5e7eb" rx="6" />
-<rect x="170" y="367" width="390.99" height="12" fill="#5f0f40" rx="6" />
-<text x="656" y="378" font-size="11" font-family="Arial, sans-serif" fill="#374151">CMA-ES: 13.2001</text>
-<rect x="170" y="391" width="470" height="12" fill="#e5e7eb" rx="6" />
-<rect x="170" y="391" width="457.87" height="12" fill="#0f4c5c" rx="6" />
-<text x="656" y="402" font-size="11" font-family="Arial, sans-serif" fill="#374151">SA: 1.6252e+03</text>
-<text x="24" y="445" font-size="13" font-family="Arial, sans-serif" fill="#111827">Rastrigin</text>
-<rect x="170" y="433" width="470" height="12" fill="#e5e7eb" rx="6" />
-<rect x="170" y="433" width="406.64" height="12" fill="#0f4c5c" rx="6" />
-<text x="656" y="444" font-size="11" font-family="Arial, sans-serif" fill="#374151">GIVP-full: 40.6994</text>
-<rect x="170" y="457" width="470" height="12" fill="#e5e7eb" rx="6" />
-<rect x="170" y="457" width="377.79" height="12" fill="#e36414" rx="6" />
-<text x="656" y="468" font-size="11" font-family="Arial, sans-serif" fill="#374151">DE: 5.1061</text>
-<rect x="170" y="481" width="470" height="12" fill="#e5e7eb" rx="6" />
-<rect x="170" y="481" width="391.32" height="12" fill="#6a994e" rx="6" />
-<text x="656" y="492" font-size="11" font-family="Arial, sans-serif" fill="#374151">PSO: 13.5158</text>
-<rect x="170" y="505" width="470" height="12" fill="#e5e7eb" rx="6" />
-<rect x="170" y="505" width="358.05" height="12" fill="#9a031e" rx="6" />
-<text x="656" y="516" font-size="11" font-family="Arial, sans-serif" fill="#374151">GA: 1.2329</text>
-<rect x="170" y="529" width="470" height="12" fill="#e5e7eb" rx="6" />
-<rect x="170" y="529" width="402.18" height="12" fill="#5f0f40" rx="6" />
-<text x="656" y="540" font-size="11" font-family="Arial, sans-serif" fill="#374151">CMA-ES: 29.5283</text>
-<rect x="170" y="553" width="470" height="12" fill="#e5e7eb" rx="6" />
-<rect x="170" y="553" width="420.44" height="12" fill="#0f4c5c" rx="6" />
-<text x="656" y="564" font-size="11" font-family="Arial, sans-serif" fill="#374151">SA: 109.92</text>
-<text x="24" y="607" font-size="13" font-family="Arial, sans-serif" fill="#111827">Ackley</text>
-<rect x="170" y="595" width="470" height="12" fill="#e5e7eb" rx="6" />
-<rect x="170" y="595" width="371.19" height="12" fill="#0f4c5c" rx="6" />
-<text x="656" y="606" font-size="11" font-family="Arial, sans-serif" fill="#374151">GIVP-full: 3.1756</text>
-<rect x="170" y="619" width="470" height="12" fill="#e5e7eb" rx="6" />
-<rect x="170" y="619" width="280.13" height="12" fill="#e36414" rx="6" />
-<text x="656" y="630" font-size="11" font-family="Arial, sans-serif" fill="#374151">DE: 0.004527</text>
-<rect x="170" y="643" width="470" height="12" fill="#e5e7eb" rx="6" />
-<rect x="170" y="643" width="274.38" height="12" fill="#6a994e" rx="6" />
-<text x="656" y="654" font-size="11" font-family="Arial, sans-serif" fill="#374151">PSO: 0.002993</text>
-<rect x="170" y="667" width="470" height="12" fill="#e5e7eb" rx="6" />
-<rect x="170" y="667" width="339.00" height="12" fill="#9a031e" rx="6" />
-<text x="656" y="678" font-size="11" font-family="Arial, sans-serif" fill="#374151">GA: 0.313041</text>
-<rect x="170" y="691" width="470" height="12" fill="#e5e7eb" rx="6" />
-<rect x="170" y="691" width="393.97" height="12" fill="#5f0f40" rx="6" />
-<text x="656" y="702" font-size="11" font-family="Arial, sans-serif" fill="#374151">CMA-ES: 16.3594</text>
-<rect x="170" y="715" width="470" height="12" fill="#e5e7eb" rx="6" />
-<rect x="170" y="715" width="397.08" height="12" fill="#0f4c5c" rx="6" />
-<text x="656" y="726" font-size="11" font-family="Arial, sans-serif" fill="#374151">SA: 20.4637</text>
-<text x="24" y="769" font-size="13" font-family="Arial, sans-serif" fill="#111827">Griewank</text>
-<rect x="170" y="757" width="470" height="12" fill="#e5e7eb" rx="6" />
-<rect x="170" y="757" width="356.27" height="12" fill="#0f4c5c" rx="6" />
-<text x="656" y="768" font-size="11" font-family="Arial, sans-serif" fill="#374151">GIVP-full: 1.0851</text>
-<rect x="170" y="781" width="470" height="12" fill="#e5e7eb" rx="6" />
-<rect x="170" y="781" width="332.20" height="12" fill="#e36414" rx="6" />
-<text x="656" y="792" font-size="11" font-family="Arial, sans-serif" fill="#374151">DE: 0.191954</text>
-<rect x="170" y="805" width="470" height="12" fill="#e5e7eb" rx="6" />
-<rect x="170" y="805" width="337.94" height="12" fill="#6a994e" rx="6" />
-<text x="656" y="816" font-size="11" font-family="Arial, sans-serif" fill="#374151">PSO: 0.290071</text>
-<rect x="170" y="829" width="470" height="12" fill="#e5e7eb" rx="6" />
-<rect x="170" y="829" width="346.81" height="12" fill="#9a031e" rx="6" />
-<text x="656" y="840" font-size="11" font-family="Arial, sans-serif" fill="#374151">GA: 0.549157</text>
-<rect x="170" y="853" width="470" height="12" fill="#e5e7eb" rx="6" />
-<rect x="170" y="853" width="288.08" height="12" fill="#5f0f40" rx="6" />
-<text x="656" y="864" font-size="11" font-family="Arial, sans-serif" fill="#374151">CMA-ES: 0.00802</text>
-<rect x="170" y="877" width="470" height="12" fill="#e5e7eb" rx="6" />
-<rect x="170" y="877" width="436.08" height="12" fill="#0f4c5c" rx="6" />
-<text x="656" y="888" font-size="11" font-family="Arial, sans-serif" fill="#374151">SA: 338.71</text>
-<text x="24" y="931" font-size="13" font-family="Arial, sans-serif" fill="#111827">Schwefel</text>
-<rect x="170" y="919" width="470" height="12" fill="#e5e7eb" rx="6" />
-<rect x="170" y="919" width="450.72" height="12" fill="#0f4c5c" rx="6" />
-<text x="656" y="930" font-size="11" font-family="Arial, sans-serif" fill="#374151">GIVP-full: 971.28</text>
-<rect x="170" y="943" width="470" height="12" fill="#e5e7eb" rx="6" />
-<rect x="170" y="943" width="398.01" height="12" fill="#e36414" rx="6" />
-<text x="656" y="954" font-size="11" font-family="Arial, sans-serif" fill="#374151">DE: 21.8683</text>
-<rect x="170" y="967" width="470" height="12" fill="#e5e7eb" rx="6" />
-<rect x="170" y="967" width="446.29" height="12" fill="#6a994e" rx="6" />
-<text x="656" y="978" font-size="11" font-family="Arial, sans-serif" fill="#374151">PSO: 706.36</text>
-<rect x="170" y="991" width="470" height="12" fill="#e5e7eb" rx="6" />
-<rect x="170" y="991" width="436.34" height="12" fill="#9a031e" rx="6" />
-<text x="656" y="1002" font-size="11" font-family="Arial, sans-serif" fill="#374151">GA: 345.12</text>
-<rect x="170" y="1015" width="470" height="12" fill="#e5e7eb" rx="6" />
-<rect x="170" y="1015" width="458.56" height="12" fill="#5f0f40" rx="6" />
-<text x="656" y="1026" font-size="11" font-family="Arial, sans-serif" fill="#374151">CMA-ES: 1.7080e+03</text>
-<rect x="170" y="1039" width="470" height="12" fill="#e5e7eb" rx="6" />
-<rect x="170" y="1039" width="470.00" height="12" fill="#0f4c5c" rx="6" />
-<text x="656" y="1050" font-size="11" font-family="Arial, sans-serif" fill="#374151">SA: 3.8899e+03</text>
+<rect x="170" y="133" width="210.31" height="12" fill="#e36414" rx="6" />
+<text x="656" y="144" font-size="11" font-family="Arial, sans-serif" fill="#374151">GRASP-only: 19.3834</text>
+<text x="24" y="187" font-size="13" font-family="Arial, sans-serif" fill="#111827">Rastrigin</text>
+<rect x="170" y="175" width="470" height="12" fill="#e5e7eb" rx="6" />
+<rect x="170" y="175" width="240.60" height="12" fill="#0f4c5c" rx="6" />
+<text x="656" y="186" font-size="11" font-family="Arial, sans-serif" fill="#374151">GIVP-full: 48.8712</text>
+<rect x="170" y="199" width="470" height="12" fill="#e5e7eb" rx="6" />
+<rect x="170" y="199" width="258.80" height="12" fill="#e36414" rx="6" />
+<text x="656" y="210" font-size="11" font-family="Arial, sans-serif" fill="#374151">GRASP-only: 85.1809</text>
+<text x="24" y="253" font-size="13" font-family="Arial, sans-serif" fill="#111827">Rosenbrock</text>
+<rect x="170" y="241" width="470" height="12" fill="#e5e7eb" rx="6" />
+<rect x="170" y="241" width="225.43" height="12" fill="#0f4c5c" rx="6" />
+<text x="656" y="252" font-size="11" font-family="Arial, sans-serif" fill="#374151">GIVP-full: 30.7507</text>
+<rect x="170" y="265" width="470" height="12" fill="#e5e7eb" rx="6" />
+<rect x="170" y="265" width="470.00" height="12" fill="#e36414" rx="6" />
+<text x="656" y="276" font-size="11" font-family="Arial, sans-serif" fill="#374151">GRASP-only: 5.3734e+04</text>
+<text x="24" y="319" font-size="13" font-family="Arial, sans-serif" fill="#111827">Sphere</text>
+<rect x="170" y="307" width="470" height="12" fill="#e5e7eb" rx="6" />
+<rect x="170" y="307" width="8.00" height="12" fill="#0f4c5c" rx="6" />
+<text x="656" y="318" font-size="11" font-family="Arial, sans-serif" fill="#374151">GIVP-full: 0.0403</text>
+<rect x="170" y="331" width="470" height="12" fill="#e5e7eb" rx="6" />
+<rect x="170" y="331" width="221.06" height="12" fill="#e36414" rx="6" />
+<text x="656" y="342" font-size="11" font-family="Arial, sans-serif" fill="#374151">GRASP-only: 26.9120</text>
 </svg>

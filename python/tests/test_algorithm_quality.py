@@ -36,6 +36,7 @@ from collections.abc import Callable
 
 import numpy as np
 import pytest
+
 from givp import GIVPConfig, givp
 
 # ---------------------------------------------------------------------------

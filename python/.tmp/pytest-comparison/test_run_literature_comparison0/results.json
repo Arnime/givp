@@ -1,0 +1,155 @@
+{
+  "metadata": {
+    "schema_version": "benchmark-schema-v1",
+    "givp_version": "1.0.1",
+    "dims": 3,
+    "n_runs": 2,
+    "seed_start": 0,
+    "seeds": [
+      0,
+      1
+    ],
+    "max_iter": 10,
+    "time_limit": 5.0,
+    "algorithms": [
+      "GIVP-full",
+      "GRASP-only"
+    ],
+    "functions": [
+      "Sphere"
+    ],
+    "problem_references": {
+      "Sphere": "De Jong (1975)"
+    },
+    "algo_descriptions": {
+      "GIVP-full": "GRASP-ILS-VND-PR -- full hybrid pipeline (this work)",
+      "GRASP-only": "GRASP-only baseline (Feo & Resende 1995)"
+    }
+  },
+  "runs": [
+    {
+      "algorithm": "GIVP-full",
+      "seed": 0,
+      "fun": 6.834043705980398e-05,
+      "nit": 10,
+      "nfev": 36474,
+      "time_s": 1.7935,
+      "trace": null
+    },
+    {
+      "algorithm": "GIVP-full",
+      "seed": 1,
+      "fun": 4.625320823095748e-05,
+      "nit": 10,
+      "nfev": 32053,
+      "time_s": 1.8037,
+      "trace": null
+    },
+    {
+      "algorithm": "GRASP-only",
+      "seed": 0,
+      "fun": 0.3857420611538914,
+      "nit": 10,
+      "nfev": 231,
+      "time_s": 0.0122,
+      "trace": null
+    },
+    {
+      "algorithm": "GRASP-only",
+      "seed": 1,
+      "fun": 0.18209553427779915,
+      "nit": 10,
+      "nfev": 227,
+      "time_s": 0.015,
+      "trace": null
+    }
+  ],
+  "summary": [
+    {
+      "function": "Sphere",
+      "algorithm": "GIVP-full",
+      "n_runs": 2,
+      "mean": 5.729682264538073e-05,
+      "std": 1.561802928249637e-05,
+      "best": 4.625320823095748e-05,
+      "median": 5.729682264538073e-05,
+      "worst": 6.834043705980398e-05,
+      "nfev_mean": 34263.5
+    },
+    {
+      "function": "Sphere",
+      "algorithm": "GRASP-only",
+      "n_runs": 2,
+      "mean": 0.2839187977158453,
+      "std": 0.14399984011917336,
+      "best": 0.18209553427779915,
+      "median": 0.2839187977158453,
+      "worst": 0.3857420611538914,
+      "nfev_mean": 229.0
+    }
+  ],
+  "stats": [
+    {
+      "function": "Sphere",
+      "algorithm": "GIVP-full",
+      "n_runs": 2,
+      "mean": 5.729682264538073e-05,
+      "std": 1.561802928249637e-05,
+      "best": 4.625320823095748e-05,
+      "median": 5.729682264538073e-05,
+      "worst": 6.834043705980398e-05,
+      "nfev_mean": 34263.5
+    },
+    {
+      "function": "Sphere",
+      "algorithm": "GRASP-only",
+      "n_runs": 2,
+      "mean": 0.2839187977158453,
+      "std": 0.14399984011917336,
+      "best": 0.18209553427779915,
+      "median": 0.2839187977158453,
+      "worst": 0.3857420611538914,
+      "nfev_mean": 229.0
+    }
+  ],
+  "records": {
+    "Sphere": [
+      {
+        "algorithm": "GIVP-full",
+        "seed": 0,
+        "fun": 6.834043705980398e-05,
+        "nit": 10,
+        "nfev": 36474,
+        "time_s": 1.7935,
+        "trace": null
+      },
+      {
+        "algorithm": "GIVP-full",
+        "seed": 1,
+        "fun": 4.625320823095748e-05,
+        "nit": 10,
+        "nfev": 32053,
+        "time_s": 1.8037,
+        "trace": null
+      },
+      {
+        "algorithm": "GRASP-only",
+        "seed": 0,
+        "fun": 0.3857420611538914,
+        "nit": 10,
+        "nfev": 231,
+        "time_s": 0.0122,
+        "trace": null
+      },
+      {
+        "algorithm": "GRASP-only",
+        "seed": 1,
+        "fun": 0.18209553427779915,
+        "nit": 10,
+        "nfev": 227,
+        "time_s": 0.015,
+        "trace": null
+      }
+    ]
+  }
+}

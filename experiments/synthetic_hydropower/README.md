@@ -1,8 +1,9 @@
 # Cascata hidrelétrica sintética
 
-Experimento acadêmico autocontido e reproduzível para otimizar a geração de duas
-usinas hidrelétricas fictícias em cascata. Ele existe fora do pacote `givp` e o
-usa apenas como otimizador.
+Experimento acadêmico reproduzível para otimizar a geração de duas usinas
+hidrelétricas fictícias em cascata. Os notebooks e o benchmark pertencem a
+`experiments/`; a implementação reutilizável é disponibilizada como o exemplo
+opcional `givp.examples.synthetic_hydropower` do pacote GIVP.
 
 ## Independência do material proprietário
 
@@ -93,9 +94,11 @@ sensibilidade.
 
 ## Executar
 
-O arquivo `configs/base.json` contém exclusivamente os parâmetros fictícios das
-duas usinas. O horizonte, os sete cenários sintéticos e os parâmetros do GIVP
-ficam declarados no notebook para tornar explícita a configuração do experimento.
+O arquivo empacotado
+`python/src/givp/examples/synthetic_hydropower/configs/base.json` contém
+exclusivamente os parâmetros fictícios das duas usinas. O horizonte, os sete
+cenários sintéticos e os parâmetros do GIVP ficam declarados no notebook para
+tornar explícita a configuração do experimento.
 
 Os parâmetros finais documentados para o GIVP na dissertação são usados no
 notebook: 40 iterações, $\alpha=0{,}17$, VND=15, ILS=5, perturbação=8,
@@ -107,9 +110,9 @@ $\alpha_{min}$, $\alpha_{max}$, limiar de parada e número de trabalhadores não
 foram publicados na tabela de resultados e permanecem nos padrões do GIVP.
 
 ```powershell
-cd experiments/synthetic_hydropower
-python -m pip install -e ".[dev,notebooks]"
-pytest
+cd python
+poetry install -E hydropower -E notebooks
+poetry run pytest tests/examples/synthetic_hydropower
 ```
 
 Abra e execute o notebook para rodar os cenários. Antes da otimização, sua
@@ -121,9 +124,22 @@ configuração física fictícia usada.
 
 ## Notebook
 
-Abra `notebooks/hydropower_two_plant_synthetic.ipynb` a partir da raiz deste
-projeto. Ele usa automaticamente `configs/base.json` e cria `output/` para os
-resultados locais.
+Abra `experiments/synthetic_hydropower/notebooks/hydropower_two_plant_synthetic.ipynb`.
+Ele importa o modelo pelo namespace `givp.examples.synthetic_hydropower`, usa
+automaticamente a configuração-base empacotada e cria
+`experiments/synthetic_hydropower/output/` para os resultados locais.
+
+O módulo experimental `notebooks/figures.py` concentra a geração das três
+figuras de cada cenário (potência, vazões e níveis). Ele permanece junto ao
+notebook porque transforma os resultados apenas para apresentação e não faz
+parte da API nem do wheel do GIVP.
+
+O mesmo modelo pode ser executado sem notebook, sempre com caminhos explícitos:
+
+```powershell
+cd python
+poetry run synthetic-hydropower --config src/givp/examples/synthetic_hydropower/configs/base.json --output-dir ../experiments/synthetic_hydropower/output --seed 42
+```
 
 ## Benchmark público e preservação
 

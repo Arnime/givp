@@ -340,6 +340,7 @@ def test_termination_reason_from_message_unknown() -> None:
 
 def test_optimize_result_to_dict_types() -> None:
     import numpy as np
+
     from givp.result import OptimizeResult
 
     result = OptimizeResult(
@@ -366,6 +367,7 @@ def test_optimize_result_to_dict_types() -> None:
 def test_optimize_result_to_dict_no_meta() -> None:
     """to_dict() must not leak the meta dict (internal details)."""
     import numpy as np
+
     from givp.result import OptimizeResult
 
     result = OptimizeResult(
@@ -400,35 +402,35 @@ def test_termination_reason_from_message_no_feasible() -> None:
 
 
 def test_parse_bounds_valid() -> None:
-    from givp.cli import _parse_bounds
+    from givp.cli.parsing import _parse_bounds
 
     bounds = _parse_bounds("[[-5,5],[0,10]]")
     assert bounds == [(-5.0, 5.0), (0.0, 10.0)]
 
 
 def test_parse_bounds_invalid_json_raises() -> None:
-    from givp.cli import _parse_bounds
+    from givp.cli.parsing import _parse_bounds
 
     with pytest.raises(ValueError, match="valid JSON"):
         _parse_bounds("not-json")
 
 
 def test_parse_bounds_not_list_raises() -> None:
-    from givp.cli import _parse_bounds
+    from givp.cli.parsing import _parse_bounds
 
     with pytest.raises(ValueError, match="JSON array"):
         _parse_bounds('{"a":1}')
 
 
 def test_parse_bounds_bad_pair_raises() -> None:
-    from givp.cli import _parse_bounds
+    from givp.cli.parsing import _parse_bounds
 
     with pytest.raises(ValueError, match="\\[low, high\\]"):
         _parse_bounds("[[1,2,3]]")
 
 
 def test_parse_config_none_returns_default() -> None:
-    from givp.cli import _parse_config
+    from givp.cli.parsing import _parse_config
     from givp.config import GIVPConfig
 
     cfg = _parse_config(None)
@@ -436,28 +438,28 @@ def test_parse_config_none_returns_default() -> None:
 
 
 def test_parse_config_valid_json() -> None:
-    from givp.cli import _parse_config
+    from givp.cli.parsing import _parse_config
 
     cfg = _parse_config('{"max_iterations": 10}')
     assert cfg.max_iterations == 10
 
 
 def test_parse_config_invalid_json_raises() -> None:
-    from givp.cli import _parse_config
+    from givp.cli.parsing import _parse_config
 
     with pytest.raises(ValueError, match="valid JSON"):
         _parse_config("bad")
 
 
 def test_parse_config_not_dict_raises() -> None:
-    from givp.cli import _parse_config
+    from givp.cli.parsing import _parse_config
 
     with pytest.raises(ValueError, match="JSON object"):
         _parse_config("[1,2,3]")
 
 
 def test_load_func_valid() -> None:
-    from givp.cli import _load_func
+    from givp.cli.loader import _load_func
 
     func = _load_func(SPHERE_FILE, "sphere")
     import numpy as np
@@ -466,21 +468,22 @@ def test_load_func_valid() -> None:
 
 
 def test_load_func_file_not_found() -> None:
-    from givp.cli import _load_func
+    from givp.cli.loader import _load_func
 
     with pytest.raises(FileNotFoundError):
         _load_func("nonexistent.py", "sphere")
 
 
 def test_load_func_attr_missing() -> None:
-    from givp.cli import _load_func
+    from givp.cli.loader import _load_func
 
     with pytest.raises(AttributeError, match="no_such_func"):
         _load_func(SPHERE_FILE, "no_such_func")
 
 
 def test_resolve_args_json_merged() -> None:
-    from givp.cli import _build_parser, _resolve_args
+    from givp.cli.parser import _build_parser
+    from givp.cli.parsing import _resolve_args
 
     parser = _build_parser()
     ns = parser.parse_args(
@@ -498,7 +501,8 @@ def test_resolve_args_json_merged() -> None:
 
 
 def test_resolve_args_explicit_overrides_json() -> None:
-    from givp.cli import _build_parser, _resolve_args
+    from givp.cli.parser import _build_parser
+    from givp.cli.parsing import _resolve_args
 
     parser = _build_parser()
     ns = parser.parse_args(
@@ -517,7 +521,8 @@ def test_resolve_args_explicit_overrides_json() -> None:
 
 
 def test_resolve_args_invalid_json_raises() -> None:
-    from givp.cli import _build_parser, _resolve_args
+    from givp.cli.parser import _build_parser
+    from givp.cli.parsing import _resolve_args
 
     parser = _build_parser()
     ns = parser.parse_args(["run", "--json", "bad-json"])
@@ -526,7 +531,8 @@ def test_resolve_args_invalid_json_raises() -> None:
 
 
 def test_cmd_run_missing_args_returns_2() -> None:
-    from givp.cli import _build_parser, _cmd_run
+    from givp.cli.commands import _cmd_run
+    from givp.cli.parser import _build_parser
 
     parser = _build_parser()
     ns = parser.parse_args(["run", "--json", "{}"])
@@ -535,7 +541,8 @@ def test_cmd_run_missing_args_returns_2() -> None:
 
 
 def test_cmd_run_invalid_json_in_json_flag_returns_2() -> None:
-    from givp.cli import _build_parser, _cmd_run
+    from givp.cli.commands import _cmd_run
+    from givp.cli.parser import _build_parser
 
     parser = _build_parser()
     ns = parser.parse_args(["run", "--json", "not-json"])
@@ -544,7 +551,8 @@ def test_cmd_run_invalid_json_in_json_flag_returns_2() -> None:
 
 
 def test_cmd_run_success_returns_0(capsys: pytest.CaptureFixture[str]) -> None:
-    from givp.cli import _build_parser, _cmd_run
+    from givp.cli.commands import _cmd_run
+    from givp.cli.parser import _build_parser
 
     parser = _build_parser()
     ns = parser.parse_args(
@@ -568,7 +576,8 @@ def test_cmd_run_success_returns_0(capsys: pytest.CaptureFixture[str]) -> None:
 
 
 def test_cmd_run_file_not_found_returns_1() -> None:
-    from givp.cli import _build_parser, _cmd_run
+    from givp.cli.commands import _cmd_run
+    from givp.cli.parser import _build_parser
 
     parser = _build_parser()
     ns = parser.parse_args(
@@ -587,7 +596,8 @@ def test_cmd_run_file_not_found_returns_1() -> None:
 
 
 def test_cmd_run_bad_bounds_returns_nonzero() -> None:
-    from givp.cli import _build_parser, _cmd_run
+    from givp.cli.commands import _cmd_run
+    from givp.cli.parser import _build_parser
 
     parser = _build_parser()
     ns = parser.parse_args(
@@ -611,7 +621,8 @@ def test_cmd_run_dict_config_from_json_flag(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     """When --json carries a dict 'config', it should be used as GIVPConfig kwargs."""
-    from givp.cli import _build_parser, _cmd_run
+    from givp.cli.commands import _cmd_run
+    from givp.cli.parser import _build_parser
 
     payload = json.dumps(
         {
@@ -631,7 +642,7 @@ def test_cmd_run_dict_config_from_json_flag(
 
 def test_load_func_spec_none_raises() -> None:
     """Cover the ImportError branch when spec_from_file_location returns None."""
-    from givp.cli import _load_func
+    from givp.cli.loader import _load_func
 
     with (
         patch("importlib.util.spec_from_file_location", return_value=None),
@@ -642,7 +653,7 @@ def test_load_func_spec_none_raises() -> None:
 
 def test_load_func_spec_loader_none_raises() -> None:
     """Cover the ImportError branch when spec.loader is None."""
-    from givp.cli import _load_func
+    from givp.cli.loader import _load_func
 
     fake_spec = MagicMock()
     fake_spec.loader = None
@@ -655,7 +666,8 @@ def test_load_func_spec_loader_none_raises() -> None:
 
 def test_resolve_args_stdin_dash(monkeypatch: pytest.MonkeyPatch) -> None:
     """Cover the sys.stdin.read() branch when json_input == '-'."""
-    from givp.cli import _build_parser, _resolve_args
+    from givp.cli.parser import _build_parser
+    from givp.cli.parsing import _resolve_args
 
     payload = json.dumps(
         {"func_file": SPHERE_FILE, "func_name": "sphere", "bounds": [[-5, 5]]}
@@ -670,7 +682,8 @@ def test_resolve_args_stdin_dash(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_resolve_args_bounds_and_direction_flags() -> None:
     """Cover the bounds, direction, config and seed namespace branches in _resolve_args."""
-    from givp.cli import _build_parser, _resolve_args
+    from givp.cli.parser import _build_parser
+    from givp.cli.parsing import _resolve_args
 
     parser = _build_parser()
     ns = parser.parse_args(
@@ -699,7 +712,8 @@ def test_resolve_args_bounds_and_direction_flags() -> None:
 
 def test_cmd_run_generic_exception_returns_1() -> None:
     """Cover the bare `except Exception` handler in _cmd_run."""
-    from givp.cli import _build_parser, _cmd_run
+    from givp.cli.commands import _cmd_run
+    from givp.cli.parser import _build_parser
 
     parser = _build_parser()
     ns = parser.parse_args(
@@ -715,7 +729,7 @@ def test_cmd_run_generic_exception_returns_1() -> None:
             FAST_CONFIG,
         ]
     )
-    with patch("givp.cli.givp", side_effect=RuntimeError("boom")):
+    with patch("givp.cli.commands.givp", side_effect=RuntimeError("boom")):
         code = _cmd_run(ns)
     assert code == 1
 
@@ -727,7 +741,7 @@ def test_main_calls_sys_exit(monkeypatch: pytest.MonkeyPatch) -> None:
     mock_ns = MagicMock()
     mock_ns.func.return_value = 0
 
-    with patch("givp.cli._build_parser") as mock_build:
+    with patch("givp.cli.main._build_parser") as mock_build:
         mock_build.return_value.parse_args.return_value = mock_ns
         with pytest.raises(SystemExit) as exc_info:
             main()

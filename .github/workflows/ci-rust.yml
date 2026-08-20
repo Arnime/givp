@@ -354,7 +354,7 @@ jobs:
 
       - name: Generate canonical benchmark smoke report
         run: |
-          poetry -C python run python benchmarks/generate_report.py \
+          poetry -C python run python -m benchmarks.reporting \
             --input ../rust/benchmarks/ci_smoke_results.json \
             --format markdown \
             --no-plots \

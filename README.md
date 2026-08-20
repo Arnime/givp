@@ -72,7 +72,7 @@ The library bundles:
 - **ILS** — Iterated Local Search
 - **VND** — Variable Neighborhood Descent (with an adaptive variant)
 - **Path Relinking** between elite solutions
-- LRU evaluation cache, convergence monitor, optional thread-parallel candidate
+- LRU evaluation cache, convergence monitor, parallel candidate
   evaluation, and a wall-clock time budget
 
 Code quality is enforced in CI with language-specific static analysis and
@@ -721,9 +721,8 @@ def make_objective(model):
 result = givp(make_objective(my_model), bounds=my_bounds)
 ```
 
-For an end-to-end example with a mixed continuous/integer hydropower model,
-see the SOG2 adapter in the upstream project repository
-(`givp.py`).
+For an end-to-end mixed continuous/integer hydropower example, see the
+[synthetic hydropower experiment](experiments/synthetic_hydropower/README.md).
 
 ---
 

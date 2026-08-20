@@ -200,7 +200,7 @@ cargo run --bin run_literature_comparison -- \
     --n-runs 30 --dims 10 --output results.json --verbose
 ```
 
-Output JSON is compatible with the Python `generate_report.py` tool.
+Output JSON is compatible with the Python `benchmarks.reporting` tool.
 
 ### Notebook experiment (Rust, reproducible)
 

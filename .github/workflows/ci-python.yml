@@ -85,7 +85,7 @@ jobs:
         run: |
           bash .github/scripts/poetry-install.sh --only main,dev
       - name: Lint
-        run: poetry -C python run ruff check src tests
+        run: poetry -C python run ruff check src tests benchmarks fuzz
       - name: Type-check
         # Mypy is configured to validate the package's Python 3.10 baseline.
         # Run it once on a stable interpreter; the full matrix still exercises
@@ -263,21 +263,21 @@ jobs:
 
       - name: Run literature comparison smoke test
         run: |
-          poetry -C python run python benchmarks/run_literature_comparison.py \
+          poetry -C python run python -m benchmarks.comparison \
             --n-runs 2 \
             --dims 3 \
             --max-iter 10 \
             --time-limit 2 \
             --algorithms GIVP-full DE PSO GA CMA-ES SA \
-            --output python/benchmarks/ci_smoke_results.json
+            --output benchmarks/.results/ci/results.json
 
       - name: Generate literature comparison smoke report
         run: |
-          poetry -C python run python benchmarks/generate_report.py \
-            --input benchmarks/ci_smoke_results.json \
+          poetry -C python run python -m benchmarks.reporting \
+            --input benchmarks/.results/ci/results.json \
             --format markdown \
             --no-plots \
-            --output-dir python/benchmarks
+            --output-dir benchmarks/.results/ci
 
   algorithm-quality-gate:
     name: Algorithm quality gate (convergence assertions)
@@ -329,7 +329,7 @@ jobs:
       - name: Run performance benchmarks
         run: |
           mkdir -p python/benchmarks/.results
-          poetry -C python run pytest benchmarks/test_benchmarks.py \
+          poetry -C python run pytest benchmarks/tests/test_benchmark.py \
             --benchmark-only \
             --benchmark-autosave \
             --benchmark-storage=python/benchmarks/.results \
@@ -373,7 +373,7 @@ jobs:
       - name: Run mutation tests (fast smoke scope)
         run: |
           # Keep CI mutation tests very fast: smoke scope only.
-          MUTATE_PATHS="src/givp/api.py"
+          MUTATE_PATHS="src/givp/api"
           TEST_RUNNER="poetry run python -m pytest tests/test_api.py -q --no-cov -x"
           cd python
           poetry run mutmut run \
@@ -431,7 +431,7 @@ jobs:
           fi
       - name: Lint
         if: steps.install_prerelease.outputs.env_ready == 'true'
-        run: poetry -C python run ruff check src tests
+        run: poetry -C python run ruff check src tests benchmarks fuzz
       - name: Type-check
         if: steps.install_prerelease.outputs.env_ready == 'true'
         run: echo "Skipping mypy on Python pre-release due to upstream dependency resolution issue; type-checking is enforced in the stable matrix."

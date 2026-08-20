@@ -46,7 +46,7 @@ Available in **Python**, **Julia**, **Rust**, **C++** (header-only), and **R**.
 > Rust literature comparison pipeline consolidated with canonical command,
 > benchmark-runner location, schema v1 output, and smoke test coverage.
 > Benchmark chart automation delivered through
-> `python/benchmarks/publish_docs_artifacts.py`, which publishes generated
+> `python -m benchmarks.publishing`, which publishes generated
 > benchmark report pages and reusable SVG charts in `docs/examples/` from the
 > committed Python, Julia, Rust, C++, and R literature-comparison artifacts.
 > Documentation improvements: benchmark comparison charts (`docs/examples/benchmark-reports/`),

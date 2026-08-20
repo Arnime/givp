@@ -57,6 +57,12 @@
     "python.analysis.extraPaths": [
         "${workspaceFolder}/python/src"
     ],
+    // Mypy: usa o projeto Python do monorepo e a venv selecionada pelo Poetry.
+    "mypy-type-checker.cwd": "${nearestConfig}",
+    "mypy-type-checker.args": [
+        "--config-file=${workspaceFolder}/python/pyproject.toml"
+    ],
+    "mypy-type-checker.importStrategy": "fromEnvironment",
     // ─── Black (formatter) + Ruff (linter) ───────────────────────────────────
     "[python]": {
         "editor.defaultFormatter": "charliermarsh.ruff",

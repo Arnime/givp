@@ -1,32 +1,30 @@
 # SPDX-FileCopyrightText: 2026 Arnaldo Mendes Pires Junior
 # SPDX-License-Identifier: MIT
-"""Tests for givp.experiment (seed_sweep, sweep_summary) — PY-4/PY-5.
+"""Tests for benchmark sweeps and parallel objective evaluation.
 
 Also covers the parallel paths in _evaluate_candidates_batch:
   - ProcessPoolExecutor (standard pickle — module-level function)
-  - cloudpickle ProcessPoolExecutor (closure / lambda, optional dep)
+  - cloudpickle ProcessPoolExecutor (closure / lambda, required dependency)
   - ThreadPoolExecutor fallback (cache enabled with n_workers > 1)
 """
 
 from __future__ import annotations
 
-import builtins
 import logging
-import sys
-from types import SimpleNamespace
-from typing import Any, cast
+from typing import Any
 from unittest.mock import patch
 
 import numpy as np
 import pytest
+
 from givp import GIVPConfig, givp
 from givp.core.cache import EvaluationCache
-from givp.core.grasp import (
+from givp.core.engine import evaluation as evaluation_module
+from givp.core.engine.evaluation import (
     _cloudpickle_worker,
     _evaluate_candidates_batch,
-    _try_cloudpickle_process_pool,
 )
-from givp.experiment import seed_sweep, sweep_summary
+from givp.examples.benchmark import seed_sweep, sweep_summary
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -88,42 +86,6 @@ class TestSeedSweep:
         for r in rows:
             assert np.isfinite(r["fun"])
 
-    def test_seed_sweep_structure_when_pandas_available(self) -> None:
-        _ = pytest.importorskip("pandas")
-        result = seed_sweep(_sphere, _BOUNDS, seeds=2, config=_FAST)
-        assert isinstance(result, list)
-        assert result
-        assert set(result[0]) >= {"seed", "fun", "nit", "nfev", "time_s"}
-
-    def test_seed_sweep_without_pandas_import_returns_rows(self) -> None:
-        original_import = builtins.__import__
-
-        def _import_without_pandas(name: str, *args: Any, **kwargs: Any) -> Any:
-            if name == "pandas":
-                raise ImportError("mocked pandas missing")
-            return original_import(name, *args, **kwargs)
-
-        with patch("builtins.__import__", side_effect=_import_without_pandas):
-            result = seed_sweep(_sphere, _BOUNDS, seeds=2, config=_FAST)
-        assert isinstance(result, list)
-        assert len(result) == 2
-
-    def test_seed_sweep_with_fake_pandas_import_path(self) -> None:
-        class FakeDataFrame:
-            def __init__(self, rows: Any) -> None:
-                self._rows = rows
-
-            def to_dict(self, orient: str) -> Any:
-                assert orient == "records"
-                return self._rows
-
-        fake_pd = SimpleNamespace(DataFrame=FakeDataFrame)
-        with patch.dict(sys.modules, {"pandas": fake_pd}):
-            result = seed_sweep(_sphere, _BOUNDS, seeds=2, config=_FAST)
-        assert isinstance(result, list)
-        assert len(result) == 2
-
-
 class TestSweepSummary:
     def _make_rows(self) -> list[dict]:
         return [
@@ -154,49 +116,6 @@ class TestSweepSummary:
         rows = [{"seed": 0, "fun": 1.5, "nit": 10, "nfev": 50, "time_s": 0.05}]
         s = sweep_summary(rows)
         assert s["fun"]["std"] == pytest.approx(0.0)
-
-    def test_accepts_dataframe_like_results(self) -> None:
-        class FakeDataFrame:
-            def __init__(self, rows: Any) -> None:
-                self._rows = rows
-
-            def to_dict(self, orient: str) -> Any:
-                assert orient == "records"
-                return self._rows
-
-        fake_rows = [
-            {"fun": 1.0, "nit": 10, "nfev": 100, "time_s": 0.1},
-            {"fun": 3.0, "nit": 20, "nfev": 300, "time_s": 0.3},
-        ]
-        fake_pd = SimpleNamespace(DataFrame=FakeDataFrame)
-
-        with patch.dict(sys.modules, {"pandas": fake_pd}):
-            dataframe_like: Any = FakeDataFrame(fake_rows)
-            s = sweep_summary(cast(Any, dataframe_like))
-        assert s["fun"]["mean"] == pytest.approx(2.0)
-
-    def test_importerror_branch_without_pandas(self) -> None:
-        original_import = builtins.__import__
-
-        def _import_without_pandas(name: str, *args: Any, **kwargs: Any) -> Any:
-            if name == "pandas":
-                raise ImportError("mocked pandas missing")
-            return original_import(name, *args, **kwargs)
-
-        rows = [{"fun": 1.5, "nit": 10, "nfev": 50, "time_s": 0.05}]
-        with patch("builtins.__import__", side_effect=_import_without_pandas):
-            s = sweep_summary(rows)
-        assert s["fun"]["mean"] == pytest.approx(1.5)
-
-    def test_list_branch_when_pandas_is_importable(self) -> None:
-        class FakeDataFrame:
-            pass
-
-        fake_pd = SimpleNamespace(DataFrame=FakeDataFrame)
-        rows = [{"fun": 2.0, "nit": 11, "nfev": 60, "time_s": 0.06}]
-        with patch.dict(sys.modules, {"pandas": fake_pd}):
-            s = sweep_summary(rows)
-        assert s["fun"]["mean"] == pytest.approx(2.0)
 
     def test_sweep_summary_with_real_pandas_dataframe(self) -> None:
         """PY-8: Test sweep_summary accepts real pandas.DataFrame when available."""
@@ -259,10 +178,6 @@ class TestParallelPaths:
 
     def test_cloudpickle_path_with_closure(self) -> None:
         """cloudpickle path: lambda/closure is not picklable with standard pickle."""
-        _ = pytest.importorskip(
-            "cloudpickle",
-            reason="cloudpickle not installed; install givp[parallel] to test this path",
-        )
         offset = 1.0  # captured in closure
 
         def closure_func(x: np.ndarray) -> float:
@@ -272,24 +187,13 @@ class TestParallelPaths:
         result = givp(closure_func, _BOUNDS, config=cfg, seed=0)
         assert np.isfinite(result.fun)
 
-    def test_thread_fallback_when_cloudpickle_unavailable(self) -> None:
-        """When cloudpickle is absent, falls back silently to ThreadPoolExecutor."""
-        from givp.core import grasp as grasp_module
-
-        # Use a lambda to force PicklingError on ProcessPoolExecutor
-        closure_func = lambda x: float(np.sum(x**2))  # noqa: E731
-
-        cfg = GIVPConfig(**{**_FAST.__dict__, "n_workers": 2, "use_cache": False})
-        with patch.object(grasp_module, "_cloudpickle_worker", side_effect=ImportError):
-            # Will hit ThreadPool fallback
-            result = givp(closure_func, _BOUNDS, config=cfg, seed=0)
-        assert np.isfinite(result.fun)
-
-
 class TestParallelInternals:
     def test_cloudpickle_worker_returns_inf_on_non_finite(self) -> None:
-        fake_cp = SimpleNamespace(loads=lambda _: lambda _x: float("nan"))
-        with patch.dict(sys.modules, {"cloudpickle": fake_cp}):
+        with patch.object(
+            evaluation_module.cloudpickle,
+            "loads",
+            return_value=lambda _x: float("nan"),
+        ):
             value = _cloudpickle_worker((np.array([1.0, 2.0, 3.0]), b"dummy"))
         assert value == float("inf")
 
@@ -297,52 +201,9 @@ class TestParallelInternals:
         def _raiser(_x: Any) -> float:
             raise RuntimeError("boom")
 
-        fake_cp = SimpleNamespace(loads=lambda _: _raiser)
-        with patch.dict(sys.modules, {"cloudpickle": fake_cp}):
+        with patch.object(evaluation_module.cloudpickle, "loads", return_value=_raiser):
             value = _cloudpickle_worker((np.array([1.0, 2.0, 3.0]), b"dummy"))
         assert value == float("inf")
-
-    def test_try_cloudpickle_process_pool_returns_importerror(self) -> None:
-        original_import = builtins.__import__
-
-        def _import_without_cloudpickle(name: str, *args: Any, **kwargs: Any) -> Any:
-            if name == "cloudpickle":
-                raise ImportError("mocked cloudpickle missing")
-            return original_import(name, *args, **kwargs)
-
-        with patch("builtins.__import__", side_effect=_import_without_cloudpickle):
-            result, exc = _try_cloudpickle_process_pool(
-                [np.array([0.0, 0.0, 0.0]), np.array([1.0, 1.0, 1.0])],
-                _sphere,
-                n_workers=2,
-            )
-        assert result is None
-        assert isinstance(exc, ImportError)
-
-    def test_evaluate_candidates_logs_info_when_cloudpickle_missing(
-        self, caplog: pytest.LogCaptureFixture
-    ) -> None:
-        candidates = [np.array([0.1, 0.2, 1.0]), np.array([0.3, 0.4, 2.0])]
-        with (
-            patch(
-                "givp.core.grasp._try_standard_process_pool",
-                return_value=(None, TypeError("pickle failed")),
-            ),
-            patch(
-                "givp.core.grasp._try_cloudpickle_process_pool",
-                return_value=(None, ImportError("cloudpickle missing")),
-            ),
-            caplog.at_level(logging.INFO),
-        ):
-            values = _evaluate_candidates_batch(
-                candidates=candidates,
-                evaluated_count=0,
-                evaluator=_sphere,
-                cache=None,
-                n_workers=2,
-            )
-        assert len(values) == 2
-        assert all(np.isfinite(v) for v in values)
 
     def test_evaluate_candidates_logs_info_when_cloudpickle_serialization_fails(
         self, caplog: pytest.LogCaptureFixture
@@ -350,11 +211,11 @@ class TestParallelInternals:
         candidates = [np.array([0.1, 0.2, 1.0]), np.array([0.3, 0.4, 2.0])]
         with (
             patch(
-                "givp.core.grasp._try_standard_process_pool",
+                "givp.core.engine.evaluation._try_standard_process_pool",
                 return_value=(None, TypeError("pickle failed")),
             ),
             patch(
-                "givp.core.grasp._try_cloudpickle_process_pool",
+                "givp.core.engine.evaluation._try_cloudpickle_process_pool",
                 return_value=(None, TypeError("serialization failed")),
             ),
             caplog.at_level(logging.INFO),
@@ -373,11 +234,11 @@ class TestParallelInternals:
         candidates = [np.array([0.1, 0.2, 1.0]), np.array([0.3, 0.4, 2.0])]
         with (
             patch(
-                "givp.core.grasp._try_standard_process_pool",
+                "givp.core.engine.evaluation._try_standard_process_pool",
                 return_value=(None, TypeError("pickle failed")),
             ),
             patch(
-                "givp.core.grasp._try_cloudpickle_process_pool",
+                "givp.core.engine.evaluation._try_cloudpickle_process_pool",
                 return_value=(None, None),
             ),
         ):

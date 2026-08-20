@@ -1,15 +1,15 @@
 # **Benchmarks — exemplos de uso**
 
 Este documento mostra exemplos de uso das funções clássicas de otimização
-disponibilizadas em `givp.benchmarks`. As funções são úteis para validar e
+disponibilizadas em `givp.examples.benchmark`. As funções são úteis para validar e
 documentar comportamento do otimizador em problemas com ótimo conhecido.
 
 Importação básica:
 
 ```python
-from givp.benchmarks import (
+from givp.examples.benchmark import (
     sphere, rosenbrock, rastrigin, ackley, griewank, schwefel,
-    knapsack_dp, knapsack_penalty, qap_cost, g06
+    constrained_cubic, knapsack_dp, knapsack_penalty, qap_cost
 )
 ```
 
