@@ -162,7 +162,7 @@ jobs:
 
   # ─── 3. Coverage gate — ubuntu/release only, single run ──────────────────
   coverage:
-    needs: [setup, test]
+    needs: setup
     if: github.event_name != 'pull_request' || needs.setup.outputs.source_changed == 'true'
     name: Coverage (R >= 90%)
     runs-on: ubuntu-latest
