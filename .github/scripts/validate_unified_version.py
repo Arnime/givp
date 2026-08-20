@@ -36,7 +36,9 @@ def read_unified_version(root: Path) -> str:
     Raises:
         ValueError: If a manifest version is missing or versions differ.
     """
-    pyproject = toml_reader.loads((root / "pyproject.toml").read_text(encoding="utf-8"))
+    pyproject = toml_reader.loads(
+        (root / "python" / "pyproject.toml").read_text(encoding="utf-8")
+    )
     julia = toml_reader.loads(
         (root / "julia" / "Project.toml").read_text(encoding="utf-8")
     )
@@ -93,7 +95,7 @@ def read_unified_version(root: Path) -> str:
         )
 
     versions = {
-        "pyproject.toml": python_version,
+        "python/pyproject.toml": python_version,
         "julia/Project.toml": julia_version,
         "rust/Cargo.toml": cargo_match.group(1),
         "r/DESCRIPTION": r_match.group(1),

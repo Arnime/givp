@@ -15,4 +15,4 @@ Release secrets (PyPI API tokens) are stored as GitHub Actions repository
 secrets and can be rotated by any future repository admin.
 
 For governance and bus-factor information, see
-[GOVERNANCE.md](GOVERNANCE.md).
+[governance.md](governance.md).

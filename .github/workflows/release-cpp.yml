@@ -130,7 +130,7 @@ jobs:
           TARBALL="givp-cpp-${VERSION}.tar.gz"
           tar --exclude='.git' --exclude='build*' --exclude='.venv' --exclude='target' \
             --exclude='node_modules' --exclude='*.pyc' -czf "$TARBALL" \
-            cpp/ LICENSE CHANGELOG.md CODE_OF_CONDUCT.md
+            cpp/ LICENSE docs/project/changelog.md CODE_OF_CONDUCT.md
           sha256sum "$TARBALL" > "${TARBALL}.sha256"
           echo "name=cpp-release-artifacts-${VERSION}" >> "$GITHUB_OUTPUT"
           echo "hashes=$(sha256sum "$TARBALL" | base64 -w0)" >> "$GITHUB_OUTPUT"

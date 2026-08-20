@@ -53,7 +53,7 @@
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Arnime_grasp_ils_vnd_pr&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=Arnime_grasp_ils_vnd_pr)
 [![CI SonarQube](https://github.com/Arnime/givp/actions/workflows/ci-sonarqube.yml/badge.svg)](https://github.com/Arnime/givp/actions/workflows/ci-sonarqube.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?logo=open-source-initiative&logoColor=white)](https://opensource.org/licenses/MIT)
-[![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?logo=github&logoColor=white)](CONTRIBUTING.md)
+[![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?logo=github&logoColor=white)](docs/project/contributing.md)
 
 A direction-agnostic metaheuristic optimizer for **continuous, integer or
 mixed** black-box problems, available in five languages:
@@ -378,15 +378,15 @@ Install project dependencies for development:
 
 ```bash
 poetry install --with dev,docs,benchmarks
-poetry run pre-commit install
+cd python && poetry run pre-commit install
 ```
 
 Quick checks:
 
 ```bash
-poetry run ruff check python/src python/tests
-poetry run mypy
-poetry run pytest
+cd python && poetry run ruff check src tests
+cd python && poetry run mypy
+cd python && poetry run pytest
 ```
 
 #### Julia development

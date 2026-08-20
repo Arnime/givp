@@ -21,6 +21,15 @@ set -e
 # interpreter can remove Poetry while Poetry is still executing.
 export POETRY_VIRTUALENVS_CREATE=true
 
+REPOSITORY_ROOT="$(CDPATH= cd -- "$(dirname "$0")/../.." && pwd)"
+# Releases before the monorepo reorganization kept the Python manifest at the
+# repository root. Preserve the provenance-backfill path for those tags.
+if [ -f "$REPOSITORY_ROOT/python/pyproject.toml" ]; then
+    cd "$REPOSITORY_ROOT/python"
+else
+    cd "$REPOSITORY_ROOT"
+fi
+
 # Fail before installing when pyproject.toml and the reviewed lock disagree.
 poetry check --lock
 

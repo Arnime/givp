@@ -423,11 +423,11 @@ jobs:
 
       - name: Generate canonical benchmark smoke report
         run: |
-          poetry run python python/benchmarks/generate_report.py \
-            --input cpp/benchmarks/ci_smoke_results.json \
+          poetry -C python run python benchmarks/generate_report.py \
+            --input ../cpp/benchmarks/ci_smoke_results.json \
             --format markdown \
             --no-plots \
-            --output-dir cpp/benchmarks
+            --output-dir ../cpp/benchmarks
 
   conan-validate:
     needs: setup
@@ -447,15 +447,15 @@ jobs:
           bash .github/scripts/poetry-install.sh --only main,conan
 
       - name: Detect default profile
-        run: poetry run conan profile detect --force
+        run: poetry -C python run conan profile detect --force
 
       - name: Validate ConanCenter recipe template
-        run: poetry run python .github/scripts/validate_conan_recipes.py --root .
+        run: poetry -C python run python ../.github/scripts/validate_conan_recipes.py --root ..
 
       - name: Create package from ConanCenter template
         if: github.event_name == 'workflow_dispatch'
         run: |
-          poetry run conan create cpp/conan/conancenter/recipes/givp/all \
+          poetry -C python run conan create ../cpp/conan/conancenter/recipes/givp/all \
             --version 1.0.1 \
             --build=missing \
             -s build_type=Release \

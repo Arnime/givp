@@ -9,7 +9,7 @@ preferred workflow for changes.
 
 ```bash
 git clone https://github.com/Arnime/grasp_ils_vnd_pr
-cd grasp_ils_vnd_pr
+cd grasp_ils_vnd_pr/python
 python -m venv .venv
 .venv/Scripts/activate          # Windows
 # source .venv/bin/activate     # Linux/macOS
@@ -33,7 +33,7 @@ Before opening a PR, please confirm locally that:
 ### Python checks
 
 ```bash
-ruff check python/src python/tests
+ruff check src tests
 mypy
 pytest
 mkdocs build --strict

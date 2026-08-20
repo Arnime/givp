@@ -47,7 +47,7 @@ jobs:
             else
               echo 'versions=["3.13"]' >> "$GITHUB_OUTPUT"
             fi
-            if git diff --name-only "$PR_BASE" HEAD -- pyproject.toml poetry.lock python/requirements .github/actions/setup-python .github/scripts/bootstrap-poetry.sh .github/scripts/poetry-install.sh .github/workflows/ci-python.yml | grep -q .; then
+            if git diff --name-only "$PR_BASE" HEAD -- python/pyproject.toml python/poetry.lock python/requirements .github/actions/setup-python .github/scripts/bootstrap-poetry.sh .github/scripts/poetry-install.sh .github/workflows/ci-python.yml | grep -q .; then
               config_changed=true
             fi
             echo "source_changed=$source_changed" >> "$GITHUB_OUTPUT"
@@ -85,15 +85,15 @@ jobs:
         run: |
           bash .github/scripts/poetry-install.sh --only main,dev
       - name: Lint
-        run: poetry run ruff check python/src python/tests
+        run: poetry -C python run ruff check src tests
       - name: Type-check
         # Mypy is configured to validate the package's Python 3.10 baseline.
         # Run it once on a stable interpreter; the full matrix still exercises
         # runtime compatibility, including Python 3.14.
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.13'
-        run: poetry run mypy
+        run: poetry -C python run mypy
       - name: Test
-        run: poetry run python -m pytest --no-cov
+        run: poetry -C python run python -m pytest --no-cov
 
   centralized-actions:
     name: Check centralized action pins
@@ -130,7 +130,7 @@ jobs:
           bash .github/scripts/poetry-install.sh --only main,dev
       - name: Test with coverage
         if: github.event_name != 'pull_request' || needs.setup.outputs.source_changed == 'true'
-        run: poetry run pytest --cov=givp --cov-report=xml:coverage-python.xml --cov-fail-under=95
+        run: poetry -C python run pytest --cov=givp --cov-report=xml:../coverage-python.xml --cov-fail-under=95
       - name: Check patch coverage on PR (>= 90%)
         if: github.event_name == 'pull_request' && needs.setup.outputs.source_changed == 'true'
         run: |
@@ -232,7 +232,7 @@ jobs:
         # Run only test_properties.py with a generous timeout; --no-cov keeps it fast.
         # The Hypothesis database is ephemeral in CI; this is intentional.
         run: |
-          poetry run pytest python/tests/test_properties.py -v \
+          poetry -C python run pytest tests/test_properties.py -v \
             --no-cov \
             --override-ini="addopts=" \
             -p no:randomly
@@ -258,12 +258,12 @@ jobs:
           bash .github/scripts/poetry-install.sh --only main,dev,benchmarks
       - name: Benchmark smoke tests
         run: |
-          poetry run pytest -m slow python/tests/test_benchmark_scripts.py -v \
+          poetry -C python run pytest -m slow tests/test_benchmark_scripts.py -v \
             --override-ini="addopts="
 
       - name: Run literature comparison smoke test
         run: |
-          poetry run python python/benchmarks/run_literature_comparison.py \
+          poetry -C python run python benchmarks/run_literature_comparison.py \
             --n-runs 2 \
             --dims 3 \
             --max-iter 10 \
@@ -273,8 +273,8 @@ jobs:
 
       - name: Generate literature comparison smoke report
         run: |
-          poetry run python python/benchmarks/generate_report.py \
-            --input python/benchmarks/ci_smoke_results.json \
+          poetry -C python run python benchmarks/generate_report.py \
+            --input benchmarks/ci_smoke_results.json \
             --format markdown \
             --no-plots \
             --output-dir python/benchmarks
@@ -302,7 +302,7 @@ jobs:
           bash .github/scripts/poetry-install.sh --only main,dev
       - name: Run convergence quality gate
         run: |
-          poetry run pytest -m quality_gate python/tests/test_algorithm_quality.py \
+          poetry -C python run pytest -m quality_gate tests/test_algorithm_quality.py \
             -v \
             --no-cov \
             --override-ini="addopts=" \
@@ -329,7 +329,7 @@ jobs:
       - name: Run performance benchmarks
         run: |
           mkdir -p python/benchmarks/.results
-          poetry run pytest python/benchmarks/test_benchmarks.py \
+          poetry -C python run pytest benchmarks/test_benchmarks.py \
             --benchmark-only \
             --benchmark-autosave \
             --benchmark-storage=python/benchmarks/.results \
@@ -373,8 +373,9 @@ jobs:
       - name: Run mutation tests (fast smoke scope)
         run: |
           # Keep CI mutation tests very fast: smoke scope only.
-          MUTATE_PATHS="python/src/givp/api.py"
-          TEST_RUNNER="poetry run python -m pytest python/tests/test_api.py -q --no-cov -x"
+          MUTATE_PATHS="src/givp/api.py"
+          TEST_RUNNER="poetry run python -m pytest tests/test_api.py -q --no-cov -x"
+          cd python
           poetry run mutmut run \
             --paths-to-mutate "$MUTATE_PATHS" \
             --runner "$TEST_RUNNER" \
@@ -385,8 +386,8 @@ jobs:
         # kill rate so that surviving a few edge-case mutants does not block CI,
         # but a large regression in test quality does.
         run: |
-          KILLED=$(poetry run mutmut results 2>/dev/null | grep -cE "^[0-9]+ - [^-]+ - killed" || true)
-          TOTAL=$(poetry run mutmut results 2>/dev/null | grep -cE "^[0-9]+ - [^-]+ - (killed|survived|timeout)" || true)
+          KILLED=$(poetry -C python run mutmut results 2>/dev/null | grep -cE "^[0-9]+ - [^-]+ - killed" || true)
+          TOTAL=$(poetry -C python run mutmut results 2>/dev/null | grep -cE "^[0-9]+ - [^-]+ - (killed|survived|timeout)" || true)
           echo "Killed: ${KILLED}  Total: ${TOTAL}"
           if [ "${TOTAL}" -eq 0 ]; then
             echo "No mutants generated — check mutmut configuration."
@@ -430,13 +431,13 @@ jobs:
           fi
       - name: Lint
         if: steps.install_prerelease.outputs.env_ready == 'true'
-        run: poetry run ruff check python/src python/tests
+        run: poetry -C python run ruff check src tests
       - name: Type-check
         if: steps.install_prerelease.outputs.env_ready == 'true'
         run: echo "Skipping mypy on Python pre-release due to upstream dependency resolution issue; type-checking is enforced in the stable matrix."
       - name: Test
         if: steps.install_prerelease.outputs.env_ready == 'true'
-        run: poetry run pytest
+        run: poetry -C python run pytest
       - name: Skip reason
         if: steps.install_prerelease.outputs.env_ready != 'true'
         run: echo "Pre-release environment skipped (missing upstream wheels)."

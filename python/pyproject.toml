@@ -7,7 +7,8 @@ name = "givp"
 version = "1.0.1"
 description = "GRASP-ILS-VND with Path Relinking — direction-agnostic metaheuristic optimizer."
 readme = "README.md"
-license = { text = "MIT" }
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.10,<3.16"
 authors = [{ name = "Arnaldo Mendes Pires Junior" }]
 keywords = [
@@ -23,7 +24,6 @@ keywords = [
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
@@ -95,26 +95,26 @@ Repository = "https://github.com/Arnime/givp"
 Issues = "https://github.com/Arnime/givp/issues"
 
 [tool.hatch.build.targets.wheel]
-packages = ["python/src/givp"]
+packages = ["src/givp"]
 # TestPyPI's upload client does not yet accept Core Metadata 2.5.
 # Version 2.4 fully represents this project's declared metadata.
 core-metadata-version = "2.4"
 
 [tool.hatch.build.targets.wheel.force-include]
-"python/src/givp/py.typed" = "givp/py.typed"
+"src/givp/py.typed" = "givp/py.typed"
 
 [tool.hatch.build.targets.sdist]
 core-metadata-version = "2.4"
 include = [
-    "python/src/givp",
-    "python/tests",
+    "src/givp",
+    "tests",
     "README.md",
     "LICENSE",
     "pyproject.toml",
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["python/tests"]
+testpaths = ["tests"]
 addopts = "-q --cov=givp --cov-report=term-missing --cov-fail-under=95 --strict-markers -m 'not slow and not quality_gate'"
 markers = [
     "slow: tests that are not run by default; use -m slow to enable",
@@ -122,12 +122,12 @@ markers = [
 ]
 
 [tool.pytest-benchmark]
-storage = "python/benchmarks/.results"
+storage = "benchmarks/.results"
 
 [tool.mutmut]
-paths_to_mutate = "python/src/givp/"
-tests_dir = "python/tests/"
-runner = "python -m pytest python/tests/ -q --no-cov -x"
+paths_to_mutate = "src/givp/"
+tests_dir = "tests/"
+runner = "python -m pytest tests/ -q --no-cov -x"
 
 [tool.coverage.run]
 branch = true
@@ -143,7 +143,7 @@ exclude_also = [
 
 [tool.mypy]
 python_version = "3.10"
-files = ["python/src/givp"]
+files = ["src/givp"]
 # Strict-ish settings: every check that previously needed an opt-out has
 # been resolved. Future regressions show up in CI immediately.
 warn_unused_configs = true
@@ -182,9 +182,7 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["S", "PT"]
-"python/tests/**/*.py" = ["S", "PT"]
 "benchmarks/**/*.py" = ["S", "PT"]
-"python/benchmarks/**/*.py" = ["S", "PT"]
 
 [tool.pylint.main]
 # Ruff is the canonical linter; Pylint runs only inside IDEs.
@@ -218,7 +216,7 @@ max-module-lines = 2000
 # ]
 
 [tool.poetry]
-packages = [{ include = "givp", from = "python/src" }]
+packages = [{ include = "givp", from = "src" }]
 
 [tool.poetry.group.dev.dependencies]
 # Build backend — required by .github/scripts/install-package.sh

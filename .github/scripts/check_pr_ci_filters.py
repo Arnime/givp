@@ -6,13 +6,13 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 EXPECTATIONS = {
-    ".github/workflows/ci-python.yml": ("python/src", "pyproject.toml", "source_changed"),
+    ".github/workflows/ci-python.yml": ("python/src", "python/pyproject.toml", "source_changed"),
     ".github/workflows/ci-rust.yml": ("rust/src", "rust/Cargo.toml", "source_changed"),
     ".github/workflows/ci-julia.yml": ("julia/src", "julia/Project.toml", "source_changed"),
     ".github/workflows/ci-r.yml": ("r/R", "r/DESCRIPTION", "source_changed"),
     ".github/workflows/ci-cpp.yml": ("cpp/include", "cpp/CMakeLists.txt", "source_changed"),
-    ".github/workflows/codeql.yml": ("python/src/**", "poetry.lock"),
-    ".github/workflows/security.yml": ("python/src/**", "poetry.lock"),
+    ".github/workflows/codeql.yml": ("python/src/**", "python/poetry.lock"),
+    ".github/workflows/security.yml": ("python/src/**", "python/poetry.lock"),
 }
 
 

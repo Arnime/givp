@@ -155,7 +155,7 @@ cpp-all: cpp-format-check cpp-lint cpp-build cpp-test cpp-coverage
 
 PY_SRC := python/src
 PY_TESTS := python/tests
-POETRY ?= poetry
+POETRY ?= poetry -C python
 
 .PHONY: python-lint python-lint-fix python-format-check python-format-fix python-fix python-typecheck python-coverage python-all
 
@@ -191,7 +191,7 @@ python-typecheck:
 
 python-coverage:
 	@echo "[Python] Running pytest coverage gate (>=95%)..."
-	$(POETRY) run pytest --cov=givp --cov-report=xml:coverage-python.xml --cov-fail-under=95
+	$(POETRY) run pytest --cov=givp --cov-report=xml:../coverage-python.xml --cov-fail-under=95
 	@echo "[Python] ✓ Coverage gate passed"
 
 python-all: python-lint python-format-check python-typecheck python-coverage

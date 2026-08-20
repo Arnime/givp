@@ -14,4 +14,11 @@ set -e
 # runner's bootstrap interpreter.
 export POETRY_VIRTUALENVS_CREATE=true
 
+REPOSITORY_ROOT="$(CDPATH= cd -- "$(dirname "$0")/../.." && pwd)"
+if [ -f "$REPOSITORY_ROOT/python/pyproject.toml" ]; then
+    cd "$REPOSITORY_ROOT/python"
+else
+    cd "$REPOSITORY_ROOT"
+fi
+
 poetry install --only-root

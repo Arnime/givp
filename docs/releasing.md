@@ -6,7 +6,7 @@ packages. A push to `main` that changes a version manifest creates the matching
 
 ## Prepare a release
 
-1. Update the version to the same `X.Y.Z` value in `pyproject.toml`,
+1. Update the version to the same `X.Y.Z` value in `python/pyproject.toml`,
    `rust/Cargo.toml`, `julia/Project.toml`, `r/DESCRIPTION`, and
    `cpp/CMakeLists.txt`, `cpp/vcpkg_ports/givp/vcpkg.json`, and the
    ConanCenter template under `cpp/conan/conancenter/recipes/givp/`.

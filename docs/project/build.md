@@ -9,6 +9,7 @@ publish artifacts with attestations and an SBOM.
 ### Create and activate a virtual environment
 
 ```bash
+cd python
 python -m venv .venv
 .venv/Scripts/activate      # Windows
 # source .venv/bin/activate # Linux/macOS

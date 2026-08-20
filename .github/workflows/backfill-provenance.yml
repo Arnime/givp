@@ -87,10 +87,14 @@ jobs:
 
           # Support historical layout changes across tags:
           # - v0.5.1 and earlier: src/givp
-          # - v0.5.4 and later:   python/src/givp
-          rm -rf python/src src/givp
+          # - v0.5.4 through v1.0.1: python/src/givp with root pyproject
+          # - v1.0.2 and later: python/src/givp with python/pyproject.toml
+          rm -rf python/src src/givp python/pyproject.toml pyproject.toml
 
-          if git cat-file -e "$EFFECTIVE_TAG:python/src" 2>/dev/null; then
+          if git cat-file -e "$EFFECTIVE_TAG:python/pyproject.toml" 2>/dev/null; then
+            echo "Using self-contained Python layout from tag: python/"
+            git checkout "$EFFECTIVE_TAG" -- python/src python/pyproject.toml
+          elif git cat-file -e "$EFFECTIVE_TAG:python/src" 2>/dev/null; then
             echo "Using source layout from tag: python/src"
             git checkout "$EFFECTIVE_TAG" -- python/src pyproject.toml
           elif git cat-file -e "$EFFECTIVE_TAG:src/givp" 2>/dev/null; then
@@ -109,40 +113,44 @@ jobs:
         run: |
           bash .github/scripts/bootstrap-poetry.sh
           if bash .github/scripts/poetry-install.sh --no-root --only main,release; then
-            poetry run python -m build
+            if [ -f python/pyproject.toml ]; then
+              poetry -C python run python -m build
+            else
+              poetry run python -m build
+            fi
           else
             echo "::warning::Poetry could not install the historical release dependencies; building with PEP 517 instead."
-            python -m build
+            python -m build python
           fi
 
       - name: Generate artifact hashes
         id: hash
-        run: cd dist && echo "hashes=$(sha256sum -- * | base64 -w0)" >> "$GITHUB_OUTPUT"
+        run: cd python/dist && echo "hashes=$(sha256sum -- * | base64 -w0)" >> "$GITHUB_OUTPUT"
 
       - name: Attest build provenance
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
-          subject-path: ./dist/*
+          subject-path: ./python/dist/*
 
       - name: Sign artifacts with Sigstore
         uses: sigstore/gh-action-sigstore-python@04cffa1d795717b140764e8b640de88853c92acc # v3.3.0
         with:
-          inputs: ./dist/*.tar.gz ./dist/*.whl
+          inputs: ./python/dist/*.tar.gz ./python/dist/*.whl
 
       - name: Rename sigstore bundles for Scorecard compatibility
-        run: for f in dist/*.sigstore.json; do mv "$f" "${f%.json}"; done
+        run: for f in python/dist/*.sigstore.json; do mv "$f" "${f%.json}"; done
 
       - name: Attach sigstore files to release
         uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
         with:
           tag_name: ${{ needs.check-existing.outputs.effective_tag }}
-          files: dist/*.sigstore
+          files: python/dist/*.sigstore
 
       - name: Upload dist for SLSA
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: dist-backfill
-          path: dist/
+          path: python/dist/
           retention-days: 1
 
   provenance:

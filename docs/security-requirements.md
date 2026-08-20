@@ -146,7 +146,7 @@ implementation are secure.
 
 - **Bus factor ≥ 2**: multiple independent contributors; fully automated
   release pipeline and access continuity plan documented in
-  [GOVERNANCE.md](https://github.com/Arnime/grasp_ils_vnd_pr/blob/main/GOVERNANCE.md).
+  [governance guide](project/governance.md).
 - **Caller-supplied objective function**: no mitigation possible within
   the library; documented as out-of-scope in the security requirements.
 

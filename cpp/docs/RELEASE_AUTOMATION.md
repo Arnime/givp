@@ -25,7 +25,7 @@ Accepted tags follow semantic versioning, for example:
 
 ## Standard release flow
 
-1. Update release notes in `CHANGELOG.md` if needed.
+1. Update release notes in `../../docs/project/changelog.md` if needed.
 2. Make sure local C++ checks are green.
 3. Merge the coordinated version bump into `main`; the tag workflow creates
    `vX.Y.Z`.

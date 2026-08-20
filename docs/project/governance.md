@@ -11,7 +11,7 @@ Requests.
 | Role | Who | Responsibilities |
 |------|-----|-----------------|
 | **Primary Maintainer** | @Arnime | Reviews and merges PRs, cuts releases, manages repository settings, responds to security reports, and sets project direction. |
-| **Contributor** | Anyone | Opens issues, submits Pull Requests, reviews code, improves documentation. Contributions are welcome from anyone following the [Contributing Guide](CONTRIBUTING.md) and [Code of Conduct](CODE_OF_CONDUCT.md). |
+| **Contributor** | Anyone | Opens issues, submits Pull Requests, reviews code, improves documentation. Contributions are welcome from anyone following the [Contributing Guide](contributing.md) and [Code of Conduct](https://github.com/Arnime/givp/blob/main/CODE_OF_CONDUCT.md). |
 
 ## Decision-making
 

@@ -5,14 +5,14 @@ on:
     branches: [main]
     paths:
       - "python/**"
-      - "pyproject.toml"
+      - "python/pyproject.toml"
       - ".github/workflows/security.yml"
   pull_request:
     paths:
       - "python/src/**"
       - "python/tests/**"
-      - "pyproject.toml"
-      - "poetry.lock"
+      - "python/pyproject.toml"
+      - "python/poetry.lock"
       - "python/requirements/**"
       - ".github/scripts/bootstrap-poetry.sh"
       - ".github/scripts/poetry-install.sh"
@@ -41,7 +41,7 @@ jobs:
       - name: Install Bandit
         run: bash .github/scripts/poetry-install.sh --no-root --only main,dev
       - name: Run Bandit
-        run: poetry run bandit -r python/src -lll
+        run: poetry -C python run bandit -r src -lll
 
   semgrep:
     name: Semgrep scan
