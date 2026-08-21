@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import importlib
 import io
 import json
 import subprocess
@@ -734,14 +735,15 @@ def test_cmd_run_generic_exception_returns_1() -> None:
     assert code == 1
 
 
-def test_main_calls_sys_exit(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_main_calls_sys_exit() -> None:
     """Cover the main() function body."""
     from givp.cli import main
 
+    main_module = importlib.import_module("givp.cli.main")
     mock_ns = MagicMock()
     mock_ns.func.return_value = 0
 
-    with patch("givp.cli.main._build_parser") as mock_build:
+    with patch.object(main_module, "_build_parser") as mock_build:
         mock_build.return_value.parse_args.return_value = mock_ns
         with pytest.raises(SystemExit) as exc_info:
             main()
