@@ -141,6 +141,12 @@ cd python
 poetry run synthetic-hydropower --config src/givp/examples/synthetic_hydropower/configs/base.json --output-dir ../experiments/synthetic_hydropower/output --seed 42
 ```
 
+Por segurança, o comando reproduz somente o caso oficial do benchmark: o
+`base.json` empacotado e a pasta `output/` acima formam uma lista explícita de
+caminhos permitidos. Experimentos com outros arquivos podem usar diretamente
+`load_experiment_config` e `optimize_scenario` pela API Python, sob controle do
+programa chamador.
+
 ## Benchmark público e preservação
 
 Os resultados locais são deliberadamente ignorados pelo Git para não confundir

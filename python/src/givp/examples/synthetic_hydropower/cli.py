@@ -8,6 +8,11 @@ from pathlib import Path
 
 import pandas as pd
 
+from givp.examples.synthetic_hydropower.paths import (
+    default_config_path,
+    default_output_dir,
+    validate_cli_paths,
+)
 from givp.examples.synthetic_hydropower.runner import (
     load_experiment_config,
     optimize_scenario,
@@ -25,8 +30,11 @@ def _build_parser() -> argparse.ArgumentParser:
 def main() -> None:
     """Run configured scenarios and write CSV/JSON results to an explicit directory."""
     args = _build_parser().parse_args()
-    experiment = load_experiment_config(args.config)
-    args.output_dir.mkdir(parents=True, exist_ok=True)
+    validate_cli_paths(args.config, args.output_dir)
+    config_path = default_config_path().resolve(strict=True)
+    output_dir = default_output_dir().resolve(strict=False)
+    experiment = load_experiment_config(config_path)
+    output_dir.mkdir(parents=True, exist_ok=True)
     summaries: list[dict[str, float | str]] = []
     for scenario_index, scenario_name in enumerate(experiment.scenarios):
         result = optimize_scenario(
@@ -66,7 +74,7 @@ def main() -> None:
             }
             for time_index in range(experiment.cascade.periods)
         ]
-        pd.DataFrame(rows).to_csv(args.output_dir / f"{scenario_name}.csv", index=False)
+        pd.DataFrame(rows).to_csv(output_dir / f"{scenario_name}.csv", index=False)
         summaries.append(
             {
                 "scenario": scenario_name,
@@ -75,7 +83,7 @@ def main() -> None:
                 "objective": result.objective,
             }
         )
-    (args.output_dir / "summary.json").write_text(
+    (output_dir / "summary.json").write_text(
         json.dumps(summaries, indent=2), encoding="utf-8"
     )
 

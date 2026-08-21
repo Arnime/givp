@@ -63,6 +63,15 @@
         "--config-file=${workspaceFolder}/python/pyproject.toml"
     ],
     "mypy-type-checker.importStrategy": "fromEnvironment",
+    // Pylint: carrega a configuração do projeto Python e não analisa testes.
+    "pylint.cwd": "${workspaceFolder}/python",
+    "pylint.args": [
+        "--rcfile=${workspaceFolder}/python/pyproject.toml"
+    ],
+    "pylint.ignorePatterns": [
+        "**/python/tests/**/*.py"
+    ],
+    "pylint.importStrategy": "useBundled",
     // ─── Black (formatter) + Ruff (linter) ───────────────────────────────────
     "[python]": {
         "editor.defaultFormatter": "charliermarsh.ruff",
