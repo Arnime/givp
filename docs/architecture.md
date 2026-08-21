@@ -42,7 +42,7 @@ Each language implementation mirrors the same logical modules:
 | `convergence` | Stagnation detection and stop criteria |
 | `helpers` | RNG, bounds handling, shared math |
 | `api` | Public wrapper API |
-| `benchmarks` | Standard benchmark functions and experiment runners |
+| `examples.benchmark` | Reproducible benchmark functions and seed sweeps |
 
 ## Module interaction map
 

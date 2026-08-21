@@ -352,7 +352,7 @@ the best one via a Restricted Candidate List (RCL).
 
 ```python
 import numpy as np
-from givp.core.grasp import construct_grasp
+from givp.core import construct_grasp
 from givp.core.helpers import _set_integer_split
 
 def sphere(x: np.ndarray) -> float:

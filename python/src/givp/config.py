@@ -64,13 +64,10 @@ class GIVPConfig:
             2. **cloudpickle ProcessPoolExecutor** — if the objective is a
                closure, lambda, or locally-defined function (not picklable with
                ``pickle``), a second attempt uses ``cloudpickle`` to serialise
-               it.  Install the optional extra to enable this path::
+               it. ``cloudpickle`` is installed as a required GIVP dependency.
 
-                   pip install "givp[parallel]"
-
-            3. **ThreadPoolExecutor fallback** — used only when both
-               serialisation strategies fail (i.e. cloudpickle is not
-               installed).  Thread-based execution benefits objectives that
+            3. **ThreadPoolExecutor fallback** — used when process
+               serialisation fails. Thread-based execution benefits objectives that
                release the GIL (NumPy-heavy, Cython, Numba-compiled code) but
                provides no speedup for pure-Python objectives due to the GIL.
         time_limit: Wall-clock budget in seconds (0 = unlimited).
@@ -80,8 +77,8 @@ class GIVPConfig:
         direction: ``'minimize'`` (default) or ``'maximize'``. Kept for
             SciPy/Optuna-style API compatibility.
         integer_split: Index where integer variables begin in the decision
-            vector. ``None`` preserves the legacy SOG2 behavior of splitting
-            in half. Set to ``num_vars`` for fully continuous problems or to
+            vector. ``None`` uses the default split in half. Set to ``num_vars``
+            for fully continuous problems or to
             ``0`` for fully integer problems.
     """
 
@@ -106,20 +103,10 @@ class GIVPConfig:
     time_limit: float = 0.0
     minimize: bool | None = None
     direction: Direction = "minimize"
-    integer_split: int | None = (
-        None  # index where integer vars begin; None -> n // 2 (legacy)
-    )
-    # Number of steps per group for the group/block neighbourhoods.
-    # Set this when your problem has structured groups of variables, e.g.
-    # group_size=24 for 3 groups of 24 time-steps each (72 continuous vars).
-    # None disables the group and block neighbourhoods.
+    integer_split: int | None = None
     group_size: int | None = None
 
     def __post_init__(self) -> None:
-        # ``minimize`` is the canonical boolean flag. When the user sets it,
-        # it wins and ``direction`` is rewritten to match. When omitted,
-        # ``minimize`` is derived from ``direction`` so both fields are
-        # always consistent for downstream readers.
         if self.minimize is None:
             if self.direction not in ("minimize", "maximize"):
                 raise InvalidConfigError(

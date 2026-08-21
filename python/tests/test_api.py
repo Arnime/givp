@@ -8,6 +8,7 @@ from collections.abc import Callable
 
 import numpy as np
 import pytest
+
 from givp import (
     GIVPConfig,
     GIVPOptimizer,
@@ -17,8 +18,8 @@ from givp import (
     givp,
 )
 from givp.core.elite import ElitePool
-from givp.core.grasp import _validate_bounds_and_initial
-from givp.core.impl import _maybe_apply_warm_start
+from givp.core.engine.state import _maybe_apply_warm_start
+from givp.core.engine.validation import _validate_bounds_and_initial
 
 
 def sphere(x: np.ndarray) -> float:
@@ -592,7 +593,7 @@ def test_long_run_triggers_path_relinking_and_restart() -> None:
 
 def test_wrap_objective_invalid_direction_raises() -> None:
     """`_wrap_objective` raises ValueError for an unknown direction string."""
-    from givp.api import _wrap_objective
+    from givp.api.objective import _wrap_objective
 
     with pytest.raises(ValueError, match="direction must be"):
         _wrap_objective(sphere, "sideways", [0])
@@ -601,7 +602,7 @@ def test_wrap_objective_invalid_direction_raises() -> None:
 @pytest.mark.parametrize("direction", ["minimize", "maximize"])
 def test_wrap_objective_valid_directions(direction: str) -> None:
     """`_wrap_objective` accepts both valid direction strings."""
-    from givp.api import _wrap_objective
+    from givp.api.objective import _wrap_objective
 
     counter: list[int] = [0]
     wrapped = _wrap_objective(sphere, direction, counter)
@@ -626,7 +627,7 @@ def test_grasp_optimizer_run_second_call_not_better(
     monkeypatch: pytest.MonkeyPatch, fast_config: GIVPConfig
 ) -> None:
     """Line 269->272: second run() result is NOT better -> best_fun/best_x unchanged."""
-    from givp import api as api_mod
+    from givp.api import estimator as estimator_module
     from givp.result import OptimizeResult
 
     call_count = [0]
@@ -656,7 +657,7 @@ def test_grasp_optimizer_run_second_call_not_better(
         call_count[0] += 1
         return r
 
-    monkeypatch.setattr(api_mod, "givp", fake_run)
+    monkeypatch.setattr(estimator_module, "givp", fake_run)
 
     opt = GIVPOptimizer(sphere, [(-1.0, 1.0)] * 2, config=fast_config)
     opt.run()  # best_fun set to 0.5

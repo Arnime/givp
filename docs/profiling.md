@@ -12,7 +12,7 @@ attaches to a running Python process without instrumentation overhead.
 ```powershell
 pip install py-spy
 py-spy record -o profile.svg -- \
-  python -m pytest benchmarks/ --benchmark-only -k "sphere and 30"
+  python -m pytest benchmarks/tests/test_benchmark.py --benchmark-only -k "sphere and 30"
 ```
 
 Open `profile.svg` in a browser to inspect the flamegraph.
@@ -30,11 +30,12 @@ scalene --html --outfile scalene.html benchmarks/runner.py
 
 ## Reproducible benchmark runs
 
-The repository ships a `pytest-benchmark` suite under `benchmarks/`. Use
+The repository ships an opt-in `pytest-benchmark` module at
+`benchmarks/tests/test_benchmark.py`. Use
 `--benchmark-autosave` to compare runs over time:
 
 ```powershell
-pytest benchmarks/ --benchmark-only --benchmark-autosave
+pytest benchmarks/tests/test_benchmark.py --benchmark-only --benchmark-autosave
 pytest-benchmark compare 0001 0002 --columns=mean,stddev,ops
 ```
 

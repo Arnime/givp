@@ -1,0 +1,59 @@
+{
+  "metadata": {
+    "givp_version": "1.0.1",
+    "study_name": "givp_tune_d3_Sphere_s42",
+    "n_trials": 2,
+    "n_completed_trials": 2,
+    "sampler": "TPESampler",
+    "sampler_seed": 42,
+    "dims": 3,
+    "functions": [
+      "Sphere"
+    ],
+    "n_eval_seeds": 1,
+    "max_iter": 10,
+    "time_limit_per_run": 5.0,
+    "best_trial_number": 1,
+    "best_value": 2.0348877918454047,
+    "duration_s": 2.46
+  },
+  "best_params": {
+    "max_iterations": 10,
+    "alpha": 0.2581106602001054,
+    "vnd_iterations": 272,
+    "ils_iterations": 9,
+    "perturbation_strength": 3,
+    "use_elite_pool": true,
+    "elite_size": 6,
+    "path_relink_frequency": 11,
+    "path_relink_strategy": "bidirectional",
+    "adaptive_alpha": true,
+    "alpha_min": 0.06710265791414888,
+    "alpha_max": 0.3344497527417561,
+    "num_candidates_per_step": 20,
+    "use_cache": true,
+    "cache_size": 10000,
+    "early_stop_threshold": 10,
+    "use_convergence_monitor": false,
+    "n_workers": 1,
+    "time_limit": 5.0,
+    "minimize": true,
+    "direction": "minimize",
+    "integer_split": null,
+    "group_size": null
+  },
+  "best_trial_params": {
+    "alpha": 0.2581106602001054,
+    "adaptive_alpha": true,
+    "alpha_min": 0.06710265791414888,
+    "alpha_max": 0.3344497527417561,
+    "vnd_iterations": 272,
+    "ils_iterations": 9,
+    "perturbation_strength": 3,
+    "use_elite_pool": true,
+    "elite_size": 6,
+    "path_relink_frequency": 11,
+    "early_stop_threshold": 10,
+    "use_convergence_monitor": false
+  }
+}

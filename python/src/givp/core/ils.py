@@ -20,11 +20,7 @@ from givp.core.helpers import (
     _new_rng,
 )
 from givp.core.vnd import local_search_vnd
-from givp.core.vnd_moves import _perturb_index
-
-# ---------------------------------------------------------------------------
-# Perturbation
-# ---------------------------------------------------------------------------
+from givp.core.vnd.moves import _perturb_index
 
 
 def perturb_solution_numpy(
@@ -49,17 +45,11 @@ def perturb_solution_numpy(
     """
     perturbed: np.ndarray = solution.copy().astype(float)
     rng = _new_rng(seed)
-    # P15: perturbação mais agressiva — num_vars//5 variáveis para escapar ótimos locais
     n_perturb = min(max(strength, num_vars // 5), num_vars)
     indices = rng.choice(num_vars, size=n_perturb, replace=False)
     for idx in indices:
         _perturb_index(perturbed, idx, strength, rng, lower_arr, upper_arr)
     return perturbed
-
-
-# ---------------------------------------------------------------------------
-# ILS search loop
-# ---------------------------------------------------------------------------
 
 
 def ils_search(
@@ -94,7 +84,6 @@ def ils_search(
     for ils_iter in range(config.ils_iterations):
         if _expired(deadline):
             break
-        # P12: amplitude progressiva suave (5%→12%) em vez de dobrar na metade
         progress = ils_iter / max(1, config.ils_iterations - 1)
         adaptive_strength = max(
             config.perturbation_strength,
@@ -118,15 +107,12 @@ def ils_search(
             deadline=deadline,
         )
         perturbed_cost = cost_fn(perturbed)
-        # P15: aceitar pior com probabilidade maior (max 25%) para escapar ótimos locais
         temperature = 1.0 - progress
         accept_worse = _new_rng().random() < temperature * 0.25
         if perturbed_cost < current_cost or accept_worse:
             solution = perturbed
             current_cost = perturbed_cost
-        # Sempre manter a melhor solução global
         if current_cost < best_cost:
             best_cost = current_cost
             best_solution = solution.copy()
-    # Retornar a melhor encontrada, não a última aceita
     return best_solution, best_cost

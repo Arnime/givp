@@ -10,14 +10,15 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
+from hypothesis import HealthCheck, assume, given, settings
+from hypothesis import strategies as st
+
 from givp import (
     GIVPConfig,
     InvalidBoundsError,
     InvalidInitialGuessError,
     givp,
 )
-from hypothesis import HealthCheck, assume, given, settings
-from hypothesis import strategies as st
 
 _FAST = settings(
     # 50 examples (not the repo-wide default of 15) because property-based

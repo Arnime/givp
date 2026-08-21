@@ -10,9 +10,9 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-from givp import benchmarks
 from numpy.typing import NDArray
 
+from givp.examples import benchmark
 from tests.fixtures import problems as _problems
 
 
@@ -33,7 +33,7 @@ def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
 @pytest.fixture
 def sphere() -> Callable:
     """Return the classic Sphere benchmark callable."""
-    return benchmarks.sphere
+    return benchmark.sphere
 
 
 @pytest.fixture

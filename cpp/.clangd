@@ -1,0 +1,18 @@
+CompileFlags:
+  # Use compile_commands.json from the default build if available,
+  # otherwise fall back to manual include paths below.
+  CompilationDatabase: build/default
+
+  Add:
+    - -std=c++17
+    - -Iinclude
+    - -Iinclude/givp
+  
+  Remove:
+    # Remove -W* flags that clangd handles natively
+    - -W*
+    - -Werror*
+
+  # Clangd fallback behavior when compile_commands.json is not found
+Hover:
+  ShowAKA: true

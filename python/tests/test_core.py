@@ -8,12 +8,12 @@ import contextlib
 import logging
 import time
 from collections.abc import Callable, Generator
-from types import ModuleType
 from typing import Any, cast
 
-import givp.core.pr as pr_module
 import numpy as np
 import pytest
+
+import givp.core.pr as pr_module
 from givp import EmptyPoolError, GIVPConfig, givp
 from givp import InvalidBoundsError as IBE
 from givp.config import GIVPConfig as PublicConfig
@@ -23,7 +23,6 @@ from givp.core import (
     EvaluationCache,
     bidirectional_path_relinking,
     construct_grasp,
-    evaluate_candidates,
     get_current_alpha,
     ils_search,
     local_search_vnd,
@@ -35,18 +34,36 @@ from givp.core import (
 from givp.core import (
     GIVPConfig as CoreConfig,
 )
-from givp.core import (
-    core as core_module,
+from givp.core.engine import callbacks as engine_callbacks
+from givp.core.engine import iteration as engine_iteration
+from givp.core.engine import relinking as engine_relinking
+from givp.core.engine import runner as core_impl
+from givp.core.engine import state as engine_state
+from givp.core.engine.callbacks import (
+    _print_cache_stats,
+    _print_run_footer,
+    _print_run_header,
 )
-from givp.core import impl as core_impl
-from givp.core import vnd as core_vnd
-from givp.core.grasp import (
+from givp.core.engine.candidates import (
     _build_heuristic_candidate,
     _build_random_candidate,
-    _evaluate_with_cache,
     _sample_integer_from_bounds,
-    _select_from_rcl,
 )
+from givp.core.engine.evaluation import (
+    _evaluate_solution_with_cache,
+    _evaluate_with_cache,
+)
+from givp.core.engine.rcl import _select_from_rcl
+from givp.core.engine.relinking import (
+    _apply_path_relinking_to_pair,
+)
+from givp.core.engine.state import (
+    _check_early_stopping,
+    _handle_convergence_monitor,
+    _initialize_optimization_components,
+    _maybe_apply_warm_start,
+)
+from givp.core.engine.validation import _prepare_bounds
 from givp.core.helpers import (
     _VERBOSE_HANDLER_ATTACHED,
     _ensure_verbose_handler,
@@ -57,25 +74,19 @@ from givp.core.helpers import (
     _set_integer_split,
     logger,
 )
-from givp.core.impl import (
-    _apply_path_relinking_to_pair,
-    _check_early_stopping,
-    _evaluate_solution_with_cache,
-    _handle_convergence_monitor,
-    _initialize_optimization_components,
-    _maybe_apply_warm_start,
-    _prepare_bounds,
-    _print_cache_stats,
-    _print_run_footer,
-    _print_run_header,
+from givp.core.vnd import dispatch as core_vnd
+from givp.core.vnd import flip as vnd_flip
+from givp.core.vnd import multiflip as vnd_multiflip
+from givp.core.vnd import pair as vnd_pair
+from givp.core.vnd.cache import _create_cached_cost_fn
+from givp.core.vnd.dispatch import _execute_neighborhood
+from givp.core.vnd.flip import (
+    _search_continuous_flip_module,
+    _search_integer_flip_module,
 )
-from givp.core.vnd import (
-    _create_cached_cost_fn,
-    _execute_neighborhood,
-    _neighborhood_block,
-    _neighborhood_group,
-)
-from givp.core.vnd_moves import _perturb_index
+from givp.core.vnd.layout import _group_layout, _sign_from_delta
+from givp.core.vnd.moves import _modify_indices_for_multiflip, _perturb_index
+from givp.core.vnd.structured import _neighborhood_block, _neighborhood_group
 
 
 @pytest.fixture(autouse=True)
@@ -109,28 +120,6 @@ def _patch_try_neighborhood_noops(
     monkeypatch.setattr(core_vnd, "_neighborhood_swap", _noop_neighborhood)
     monkeypatch.setattr(core_vnd, "_neighborhood_group", group_fn or _noop_neighborhood)
     monkeypatch.setattr(core_vnd, "_neighborhood_block", block_fn or _noop_neighborhood)
-
-
-def test_core_module_getattr_loads_legacy_sog2_lazily(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    sentinel = ModuleType("givp.core.legacy_sog2")
-
-    def _fake_import_module(name: str) -> object:
-        assert name == "givp.core.legacy_sog2"
-        return sentinel
-
-    monkeypatch.setattr(core_module.importlib, "import_module", _fake_import_module)
-    assert core_module.__getattr__("legacy_sog2") is sentinel
-
-
-def test_core_module_getattr_returns_core_module_alias() -> None:
-    assert core_module.__getattr__("core") is core_module
-
-
-def test_core_module_getattr_raises_for_unknown_name() -> None:
-    with pytest.raises(AttributeError, match="no attribute"):
-        core_module.__getattr__("does_not_exist")
 
 
 # ----------------------------- _safe_evaluate -----------------------------
@@ -482,77 +471,6 @@ def test_set_group_size_roundtrip() -> None:
     assert _get_group_size() == 8
 
 
-# ----------------------------- legacy evaluate_candidates -----------------------------
-
-
-def test_evaluate_candidates_legacy_returns_arrays() -> None:
-    available = np.array([0, 1, 2])
-    deps_active = np.zeros(3, dtype=bool)
-    deps_matrix = np.array([[0, 0], [1, 0], [0, 1]], dtype=int)
-    deps_len = np.array([1, 2, 0])
-    c_arr = np.array([10.0, 5.0, 3.0])
-    a_arr = np.array([2.0, 3.0, 1.0])
-    with pytest.warns(DeprecationWarning, match="legacy discrete-packing helper"):
-        ratios, inc_costs, valid = evaluate_candidates(
-            available,
-            deps_active,
-            current_cost=0,
-            deps_matrix=deps_matrix,
-            deps_len=deps_len,
-            c_arr=c_arr,
-            a_arr=a_arr,
-            b=100,
-        )
-    assert ratios.shape == (3,)
-    assert inc_costs.shape == (3,)
-    assert valid.shape == (3,)
-    assert valid.all()
-
-
-def test_evaluate_candidates_respects_budget() -> None:
-    available = np.array([0])
-    deps_active = np.zeros(2, dtype=bool)
-    deps_matrix = np.array([[0, 1]], dtype=int)
-    deps_len = np.array([2])
-    c_arr = np.array([10.0])
-    a_arr = np.array([100.0, 100.0])
-    with pytest.warns(DeprecationWarning, match="legacy discrete-packing helper"):
-        _, _, valid = evaluate_candidates(
-            available,
-            deps_active,
-            current_cost=0,
-            deps_matrix=deps_matrix,
-            deps_len=deps_len,
-            c_arr=c_arr,
-            a_arr=a_arr,
-            b=10,
-        )
-    assert not valid[0]
-
-
-def test_evaluate_candidates_with_active_dependencies() -> None:
-    available = np.array([0])
-    deps_active = np.array([True, False])
-    deps_matrix = np.array([[0, 1]], dtype=int)
-    deps_len = np.array([2])
-    c_arr = np.array([10.0])
-    a_arr = np.array([5.0, 5.0])
-    with pytest.warns(DeprecationWarning, match="legacy discrete-packing helper"):
-        _, inc_costs, valid = evaluate_candidates(
-            available,
-            deps_active,
-            current_cost=0,
-            deps_matrix=deps_matrix,
-            deps_len=deps_len,
-            c_arr=c_arr,
-            a_arr=a_arr,
-            b=100,
-        )
-    assert valid[0]
-    # only the inactive dep counts
-    assert inc_costs[0] == pytest.approx(5)
-
-
 # ----------------------------- path relinking -----------------------------
 
 
@@ -649,8 +567,8 @@ def test_apply_path_relinking_to_pair_bidirectional_strategy(
         called["path"] += 1
         return np.array([2.0, 2.0, 2.0]), 12.0
 
-    monkeypatch.setattr(core_impl, "bidirectional_path_relinking", fake_bidirectional)
-    monkeypatch.setattr(core_impl, "path_relinking", fake_path)
+    monkeypatch.setattr(engine_relinking, "bidirectional_path_relinking", fake_bidirectional)
+    monkeypatch.setattr(engine_relinking, "path_relinking", fake_path)
     out, cost = _apply_path_relinking_to_pair(
         np.array([0.0, 0.0, 0.0]),
         np.array([1.0, 1.0, 1.0]),
@@ -681,9 +599,9 @@ def test_apply_path_relinking_to_pair_forward_and_backward_strategies(
         calls.append((source.copy(), target.copy(), strategy))
         return np.array([4.0, 4.0, 4.0]), 48.0
 
-    monkeypatch.setattr(core_impl, "path_relinking", fake_path)
+    monkeypatch.setattr(engine_relinking, "path_relinking", fake_path)
     monkeypatch.setattr(
-        core_impl, "bidirectional_path_relinking", lambda *a, **k: pytest.fail()
+        engine_relinking, "bidirectional_path_relinking", lambda *a, **k: pytest.fail()
     )
 
     forward_cfg = CoreConfig(path_relink_strategy="forward", vnd_iterations=4)
@@ -736,11 +654,11 @@ def test_apply_path_relinking_to_pair_randomized_strategy(
         calls.append((source.copy(), target.copy()))
         return np.array([6.0, 6.0, 6.0]), 108.0
 
-    monkeypatch.setattr(core_impl, "path_relinking", fake_path)
+    monkeypatch.setattr(engine_relinking, "path_relinking", fake_path)
     monkeypatch.setattr(
-        core_impl, "bidirectional_path_relinking", lambda *a, **k: pytest.fail()
+        engine_relinking, "bidirectional_path_relinking", lambda *a, **k: pytest.fail()
     )
-    monkeypatch.setattr(core_impl, "_new_rng", lambda seed=None: FakeRng(0))
+    monkeypatch.setattr(engine_relinking, "_new_rng", lambda seed=None: FakeRng(0))
     random_cfg = CoreConfig(path_relink_strategy="randomized", vnd_iterations=4)
     _apply_path_relinking_to_pair(
         np.array([1.0, 2.0, 3.0]),
@@ -774,11 +692,11 @@ def test_apply_path_relinking_to_pair_randomized_strategy_reversed_branch(
         calls.append((source.copy(), target.copy()))
         return np.array([6.0, 6.0, 6.0]), 108.0
 
-    monkeypatch.setattr(core_impl, "path_relinking", fake_path)
+    monkeypatch.setattr(engine_relinking, "path_relinking", fake_path)
     monkeypatch.setattr(
-        core_impl, "bidirectional_path_relinking", lambda *a, **k: pytest.fail()
+        engine_relinking, "bidirectional_path_relinking", lambda *a, **k: pytest.fail()
     )
-    monkeypatch.setattr(core_impl, "_new_rng", lambda seed=None: FakeRng())
+    monkeypatch.setattr(engine_relinking, "_new_rng", lambda seed=None: FakeRng())
     random_cfg = CoreConfig(path_relink_strategy="randomized", vnd_iterations=4)
     _apply_path_relinking_to_pair(
         np.array([1.0, 2.0, 3.0]),
@@ -812,11 +730,11 @@ def test_apply_path_relinking_to_pair_random_alias_kept_compatible(
         calls.append((source.copy(), target.copy()))
         return np.array([6.0, 6.0, 6.0]), 108.0
 
-    monkeypatch.setattr(core_impl, "path_relinking", fake_path)
+    monkeypatch.setattr(engine_relinking, "path_relinking", fake_path)
     monkeypatch.setattr(
-        core_impl, "bidirectional_path_relinking", lambda *a, **k: pytest.fail()
+        engine_relinking, "bidirectional_path_relinking", lambda *a, **k: pytest.fail()
     )
-    monkeypatch.setattr(core_impl, "_new_rng", lambda seed=None: FakeRng())
+    monkeypatch.setattr(engine_relinking, "_new_rng", lambda seed=None: FakeRng())
     random_cfg = CoreConfig(path_relink_strategy="random", vnd_iterations=4)
     _apply_path_relinking_to_pair(
         np.array([1.0, 2.0, 3.0]),
@@ -1382,17 +1300,17 @@ def test_safe_iteration_callback_logs_info_when_verbose_and_callback_raises(
         raise RuntimeError("boom")
 
     monkeypatch.setattr(
-        core_impl.logger,
+        engine_callbacks.logger,
         "warning",
         lambda *a, **k: calls.__setitem__("warning", calls["warning"] + 1),
     )
     monkeypatch.setattr(
-        core_impl.logger,
+        engine_callbacks.logger,
         "info",
         lambda *a, **k: calls.__setitem__("info", calls["info"] + 1),
     )
 
-    core_impl._safe_iteration_callback(
+    engine_callbacks._safe_iteration_callback(
         _boom,
         iter_idx=0,
         benefit=1.0,
@@ -1404,7 +1322,7 @@ def test_safe_iteration_callback_logs_info_when_verbose_and_callback_raises(
 
 
 def test_prepare_initial_array_prefers_first_warm_start_seed() -> None:
-    arr = core_impl._prepare_initial_array(
+    arr = engine_state._prepare_initial_array(
         initial_guesses=[[1.0, 2.0], [3.0, 4.0]],
         lower_arr=np.array([0.0, 0.0]),
         upper_arr=np.array([5.0, 5.0]),
@@ -1426,9 +1344,9 @@ def test_run_iteration_step_restart_updates_best_with_better_restart(
     )
 
     monkeypatch.setattr(
-        core_impl, "construct_grasp", lambda *a, **k: np.array([1.0, 1.0])
+        engine_iteration, "construct_grasp", lambda *a, **k: np.array([1.0, 1.0])
     )
-    monkeypatch.setattr(core_impl, "local_search_vnd", lambda *a, **k: a[1].copy())
+    monkeypatch.setattr(engine_iteration, "local_search_vnd", lambda *a, **k: a[1].copy())
 
     def _fake_ils(
         sol: np.ndarray, cur: float, *args: Any, **kwargs: Any
@@ -1437,9 +1355,9 @@ def test_run_iteration_step_restart_updates_best_with_better_restart(
             return sol, -1.0
         return sol, cur
 
-    monkeypatch.setattr(core_impl, "ils_search", _fake_ils)
+    monkeypatch.setattr(engine_iteration, "ils_search", _fake_ils)
     monkeypatch.setattr(
-        core_impl,
+        engine_iteration,
         "do_path_relinking",
         lambda *a, **k: (a[1], a[2], a[3]),
     )
@@ -1448,11 +1366,11 @@ def test_run_iteration_step_restart_updates_best_with_better_restart(
         def random(self, size: int) -> np.ndarray:
             return np.zeros(size)
 
-    monkeypatch.setattr(core_impl, "_new_rng", lambda seed=None: _ZeroRng())
+    monkeypatch.setattr(engine_iteration, "_new_rng", lambda seed=None: _ZeroRng())
 
     monitor = ConvergenceMonitor(restart_threshold=999)
 
-    best_cost, best_solution, stagnation = core_impl._run_iteration_step(
+    best_cost, best_solution, stagnation = engine_iteration._run_iteration_step(
         iter_idx=0,
         cost_fn=quad,
         num_vars=2,
@@ -1664,12 +1582,12 @@ def test_process_path_relinking_pairs_updates_best_when_pr_improves(
         pool.add(s, c)
 
     monkeypatch.setattr(
-        core_impl,
+        engine_relinking,
         "_apply_path_relinking_to_pair",
         lambda *a, **k: (np.array([0.0, 0.0, 0.0, 0.0]), -1.0),
     )
 
-    best_cost, best_solution, stagnation = core_impl._process_path_relinking_pairs(
+    best_cost, best_solution, stagnation = engine_relinking._process_path_relinking_pairs(
         elite_solutions,
         quad,
         num_vars=4,
@@ -1972,9 +1890,9 @@ def test_verbose_output_contains_iter_and_best() -> None:
 
 def test_sign_from_delta_all_branches() -> None:
     """Lines 1234, 1244: cover negative (-1) and zero (0) return branches."""
-    assert core_vnd._sign_from_delta(2.0) == 1
-    assert core_vnd._sign_from_delta(-0.5) == -1
-    assert core_vnd._sign_from_delta(0.0) == 0
+    assert _sign_from_delta(2.0) == 1
+    assert _sign_from_delta(-0.5) == -1
+    assert _sign_from_delta(0.0) == 0
 
 
 # ----------------------------- _neighborhood_pair invalid split -----------
@@ -1996,7 +1914,7 @@ def test_group_layout_returns_none_when_indivisible() -> None:
     """Lines 1162->1165: half not divisible by n_steps -> return None."""
     _set_integer_split(5)
     _set_group_size(3)  # 5 // 3 = 1; 1 * 3 = 3 != 5 -> None
-    assert core_vnd._group_layout(10) is None
+    assert _group_layout(10) is None
 
 
 # ----------------------------- _modify_indices_for_multiflip no-bounds ---
@@ -2008,7 +1926,7 @@ def test_modify_indices_continuous_no_bounds() -> None:
     sol = np.array([0.5, 0.5, 1.0, 1.0])
     indices = np.array([0, 1])
     rng = np.random.default_rng(99)
-    core_vnd._modify_indices_for_multiflip(
+    _modify_indices_for_multiflip(
         sol, indices, rng, lower_arr=None, upper_arr=None
     )
     assert sol.shape == (4,)
@@ -2093,7 +2011,7 @@ def test_safe_iteration_callback_exception_verbose_false() -> None:
         raise RuntimeError("oops")
 
     # Must not raise; the False branch of `if verbose:` is taken
-    core_impl._safe_iteration_callback(
+    engine_callbacks._safe_iteration_callback(
         boom, iter_idx=0, benefit=1.0, sol=np.zeros(2), verbose=False
     )
 
@@ -2109,7 +2027,7 @@ def test_search_integer_flip_module_first_improvement() -> None:
     initial_cost = quad(sol)
     lower = np.array([0.0, 0.0, 0.0, 0.0])
     upper = np.array([1.0, 1.0, 10.0, 10.0])
-    out, cost = core_vnd._search_integer_flip_module(
+    out, cost = _search_integer_flip_module(
         sol,
         initial_cost,
         np.arange(2, 4),  # integer indices
@@ -2128,7 +2046,7 @@ def test_search_continuous_flip_module_first_improvement(
     """Line 550: early return when first_improvement=True and move improves cost."""
     # Patch _try_continuous_move_module to guarantee an improvement on first call
     monkeypatch.setattr(
-        core_vnd,
+        vnd_flip,
         "_try_continuous_move_module",
         lambda *_args, **_kwargs: (True, 0.0),
     )
@@ -2137,7 +2055,7 @@ def test_search_continuous_flip_module_first_improvement(
     lower = np.array([-5.0, -5.0, 0.0, 0.0])
     upper = np.array([5.0, 5.0, 3.0, 3.0])
     rng = np.random.default_rng(0)
-    out, cost = core_vnd._search_continuous_flip_module(
+    out, cost = _search_continuous_flip_module(
         sol,
         quad(sol),
         np.arange(0, 2),  # continuous indices
@@ -2149,67 +2067,6 @@ def test_search_continuous_flip_module_first_improvement(
     )
     assert out.shape == sol.shape
     assert cost == pytest.approx(0.0)
-
-
-# ----------------------------- _compute_ratios_numpy dependency branch ---
-
-
-def test_evaluate_candidates_with_new_deps() -> None:
-    """Line 146->148: branch where a package has new (inactive) dependencies."""
-    # Package 0 depends on package 1; package 1 has no dependencies
-    available = np.array([0, 1])
-    deps_active = np.array([False, False])  # no dep active yet
-    current_cost = 0
-    deps_matrix = np.zeros((2, 2), dtype=int)
-    deps_matrix[0, 0] = 1  # pkg 0's first dep is pkg 1
-    deps_len = np.array([1, 0])  # pkg 0 has 1 dep; pkg 1 has 0
-    c_arr = np.array([20, 15])  # package benefits
-    a_arr = np.array([10, 5])  # dependency costs
-    b = 100  # budget
-
-    with pytest.warns(DeprecationWarning, match="legacy discrete-packing helper"):
-        _, inc_costs, valid = evaluate_candidates(
-            available,
-            deps_active,
-            current_cost,
-            deps_matrix,
-            deps_len,
-            c_arr,
-            a_arr,
-            b,
-        )
-    # pkg 0: n_deps=1, dep 1 not active -> incremental_cost = a_arr[1] = 5
-    assert valid[0]
-    assert inc_costs[0] == 5
-
-
-# ---- evaluate_candidates: all deps already active (146->148 False branch) ----
-
-
-def test_evaluate_candidates_all_deps_already_active() -> None:
-    """Line 146->148: n_deps > 0 but all deps already active -> incremental_cost = 0."""
-    available = np.array([0])
-    deps_active = np.array([False, True])  # dep pkg 1 is already active
-    current_cost = 0
-    deps_matrix = np.zeros((2, 2), dtype=int)
-    deps_matrix[0, 0] = 1  # pkg 0 depends on pkg 1
-    deps_len = np.array([1, 0])
-    c_arr = np.array([20, 15])
-    a_arr = np.array([10, 5])
-    b = 100
-    with pytest.warns(DeprecationWarning, match="legacy discrete-packing helper"):
-        _, inc_costs, valid = evaluate_candidates(
-            available,
-            deps_active,
-            current_cost,
-            deps_matrix,
-            deps_len,
-            c_arr,
-            a_arr,
-            b,
-        )
-    assert valid[0]
-    assert inc_costs[0] == 0  # dep already active -> no incremental cost
 
 
 # ---- _select_from_rcl: all-inf costs returns None (line 246) ----
@@ -2243,13 +2100,13 @@ def test_search_integer_flip_module_deadline_break(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Line 515: break fires when _expired returns True on first loop iteration."""
-    monkeypatch.setattr(core_vnd, "_expired", lambda _: True)
+    monkeypatch.setattr(vnd_flip, "_expired", lambda _: True)
     _set_integer_split(2)
     sol = np.array([0.0, 0.0, 5.0, 5.0])
     initial_cost = quad(sol)
     lower = np.array([0.0, 0.0, 0.0, 0.0])
     upper = np.array([1.0, 1.0, 10.0, 10.0])
-    out, cost = core_vnd._search_integer_flip_module(
+    out, cost = _search_integer_flip_module(
         sol,
         initial_cost,
         np.arange(2, 4),
@@ -2273,7 +2130,7 @@ def test_search_integer_flip_module_no_first_improvement() -> None:
     initial_cost = quad(sol)
     lower = np.array([0.0, 0.0, 0.0, 0.0])
     upper = np.array([1.0, 1.0, 10.0, 10.0])
-    _, cost = core_vnd._search_integer_flip_module(
+    _, cost = _search_integer_flip_module(
         sol,
         initial_cost,
         np.arange(2, 4),
@@ -2298,13 +2155,13 @@ def test_search_continuous_flip_module_no_first_improvement(
         call_count[0] += 1
         return (True, 0.0)
 
-    monkeypatch.setattr(core_vnd, "_try_continuous_move_module", always_improve)
+    monkeypatch.setattr(vnd_flip, "_try_continuous_move_module", always_improve)
     _set_integer_split(2)
     sol = np.array([3.0, 3.0, 0.0, 0.0])
     lower = np.array([-5.0, -5.0, 0.0, 0.0])
     upper = np.array([5.0, 5.0, 3.0, 3.0])
     rng = np.random.default_rng(0)
-    _, cost = core_vnd._search_continuous_flip_module(
+    _, cost = _search_continuous_flip_module(
         sol,
         quad(sol),
         np.arange(0, 2),
@@ -2326,7 +2183,7 @@ def test_modify_indices_integer_no_bounds() -> None:
     _set_integer_split(2)
     sol = np.array([0.5, 0.5, 3.0, 5.0])
     rng = np.random.default_rng(0)
-    old_vals = core_vnd._modify_indices_for_multiflip(
+    old_vals = _modify_indices_for_multiflip(
         sol, indices=np.array([2, 3]), rng=rng, lower_arr=None, upper_arr=None
     )
     assert old_vals.shape == (2,)
@@ -2512,7 +2369,7 @@ def test_try_neighborhoods_expired_in_multiflip_check(
 
 def test_neighborhood_swap_deadline_break(monkeypatch: pytest.MonkeyPatch) -> None:
     """Line 1132: break fires when _expired True inside the for-loop."""
-    monkeypatch.setattr(core_vnd, "_expired", lambda _: True)
+    monkeypatch.setattr(vnd_pair, "_expired", lambda _: True)
     _set_integer_split(2)  # half=2 < num_vars=4 -> we enter the loop
     sol = np.array([1.0, 1.0, 2.0, 2.0])
     out, _ = core_vnd._neighborhood_swap(
@@ -2692,7 +2549,7 @@ def test_find_best_move_deadline_break(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_neighborhood_multiflip_deadline_break(monkeypatch: pytest.MonkeyPatch) -> None:
     """Line 1204: break fires when _expired True inside the for-loop."""
-    monkeypatch.setattr(core_vnd, "_expired", lambda _: True)
+    monkeypatch.setattr(vnd_multiflip, "_expired", lambda _: True)
     _set_integer_split(2)
     sol = np.array([1.0, 1.0, 2.0, 2.0])
     out, _ = core_vnd._neighborhood_multiflip(
@@ -2725,7 +2582,7 @@ def test_process_path_relinking_pairs_expired_break(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Line 2011: break in inner j-loop when _expired fires."""
-    monkeypatch.setattr(core_impl, "_expired", lambda _: True)
+    monkeypatch.setattr(engine_relinking, "_expired", lambda _: True)
     _set_integer_split(2)
     sol1 = np.array([1.0, 1.0, 0.0, 0.0])
     sol2 = np.array([0.0, 0.0, 1.0, 1.0])
@@ -2735,7 +2592,7 @@ def test_process_path_relinking_pairs_expired_break(
     pool = ElitePool(max_size=5)
     for s, c in elite_solutions:
         pool.add(s, c)
-    best_cost, _, _ = core_impl._process_path_relinking_pairs(
+    best_cost, _, _ = engine_relinking._process_path_relinking_pairs(
         elite_solutions,
         quad,
         num_vars=4,
@@ -2828,7 +2685,7 @@ def _sphere_for_pickle(x: np.ndarray) -> float:
 
 def test_parallel_worker_picklable_function() -> None:
     """_parallel_worker returns correct value for a picklable module-level fn."""
-    from givp.core.grasp import _parallel_worker
+    from givp.core.engine.evaluation import _parallel_worker
 
     x = np.array([1.0, 2.0, 3.0])
     result = _parallel_worker((x, _sphere_for_pickle))
@@ -2837,7 +2694,7 @@ def test_parallel_worker_picklable_function() -> None:
 
 def test_parallel_worker_returns_inf_on_exception() -> None:
     """_parallel_worker returns inf when the evaluator raises."""
-    from givp.core.grasp import _parallel_worker
+    from givp.core.engine.evaluation import _parallel_worker
 
     def bad_eval(x: np.ndarray) -> float:
         raise ValueError("boom")
@@ -2848,7 +2705,7 @@ def test_parallel_worker_returns_inf_on_exception() -> None:
 
 def test_parallel_worker_returns_inf_for_nonfinite() -> None:
     """_parallel_worker coerces NaN / inf results to float('inf')."""
-    from givp.core.grasp import _parallel_worker
+    from givp.core.engine.evaluation import _parallel_worker
 
     result = _parallel_worker((np.array([1.0]), lambda _x: float("nan")))
     assert result == float("inf")
@@ -2856,7 +2713,7 @@ def test_parallel_worker_returns_inf_for_nonfinite() -> None:
 
 def test_evaluate_candidates_batch_closure_fallback_uses_threads() -> None:
     """Non-picklable closure must not raise — falls back to ThreadPoolExecutor."""
-    from givp.core.grasp import _evaluate_candidates_batch
+    from givp.core.engine.evaluation import _evaluate_candidates_batch
 
     counter = [0]
 
@@ -2873,7 +2730,7 @@ def test_evaluate_candidates_batch_closure_fallback_uses_threads() -> None:
 
 def test_evaluate_candidates_batch_single_candidate_skips_parallel() -> None:
     """A single unevaluated candidate must not spin up a pool."""
-    from givp.core.grasp import _evaluate_candidates_batch
+    from givp.core.engine.evaluation import _evaluate_candidates_batch
 
     results = _evaluate_candidates_batch(
         [np.array([1.0, 2.0])], 0, lambda x: float(np.sum(x**2)), None, n_workers=4

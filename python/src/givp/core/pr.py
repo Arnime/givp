@@ -19,10 +19,6 @@ from givp.core.helpers import (
     _new_rng,
 )
 
-# ---------------------------------------------------------------------------
-# Internal move helpers
-# ---------------------------------------------------------------------------
-
 
 def _find_best_move(
     cost_fn: Callable,
@@ -106,11 +102,6 @@ def _path_relinking_forward(
     return best_solution, best_benefit
 
 
-# ---------------------------------------------------------------------------
-# Public path relinking entry-points
-# ---------------------------------------------------------------------------
-
-
 def path_relinking(
     cost_fn: Callable,
     source: np.ndarray,
@@ -139,7 +130,6 @@ def path_relinking(
     if len(diff_indices) == 0:
         return source.copy(), cost_fn(source)
 
-    # Restrict to the top-K most-differing variables to avoid O(n²) path relinking cost.
     max_pr_vars = 25
     if len(diff_indices) > max_pr_vars:
         diffs = np.abs(source[diff_indices] - target[diff_indices])

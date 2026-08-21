@@ -162,7 +162,7 @@ jobs:
 
   # ─── 3. Coverage gate — ubuntu/release only, single run ──────────────────
   coverage:
-    needs: [setup, test]
+    needs: setup
     if: github.event_name != 'pull_request' || needs.setup.outputs.source_changed == 'true'
     name: Coverage (R >= 90%)
     runs-on: ubuntu-latest
@@ -457,8 +457,8 @@ jobs:
       - name: Generate canonical benchmark smoke report
         shell: bash
         run: |
-          poetry run python python/benchmarks/generate_report.py \
-            --input r/benchmarks/ci_smoke_results.json \
+          poetry -C python run python -m benchmarks.reporting \
+            --input ../r/benchmarks/ci_smoke_results.json \
             --format markdown \
             --no-plots \
-            --output-dir r/benchmarks
+            --output-dir ../r/benchmarks

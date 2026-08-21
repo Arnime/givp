@@ -8,8 +8,8 @@ on:
         paths:
             - "python/src/**"
             - "python/tests/**"
-            - "pyproject.toml"
-            - "poetry.lock"
+            - "python/pyproject.toml"
+            - "python/poetry.lock"
             - "python/requirements/**"
             - ".github/scripts/bootstrap-poetry.sh"
             - ".github/scripts/poetry-install.sh"

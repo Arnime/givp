@@ -18,7 +18,6 @@ from typing import Literal, Protocol
 
 import numpy as np
 
-# Type alias for the user-supplied objective function.
 EvaluatorFn = Callable[[np.ndarray], float]
 PathRelinkStrategy = Literal[
     "bidirectional",
@@ -28,23 +27,11 @@ PathRelinkStrategy = Literal[
     "random",
 ]
 
-# Keep the legacy logger name so tests and external callers that listen to
-# "givp._core" continue receiving messages even after the package rename.
 logger = logging.getLogger("givp.core")
 _VERBOSE_HANDLER_ATTACHED: list[bool] = [False]
 
-# Per-context runtime configuration shared across helpers.
-#
-# Stored in :class:`contextvars.ContextVar` so concurrent calls (threads /
-# asyncio tasks) cannot clobber each other's settings.
 _INTEGER_SPLIT: ContextVar[int | None] = ContextVar("givp_integer_split", default=None)
 _GROUP_SIZE: ContextVar[int | None] = ContextVar("givp_group_size", default=None)
-# Master RNG used by ``_new_rng`` to spawn child generators when a seed has
-# been pinned via :func:`_set_seed`. ``None`` means "use OS entropy", which
-# is the legacy non-deterministic behaviour. We store a :class:`SeedSequence`
-# (rather than a :class:`Generator`) so child seeds are produced via the
-# numpy-recommended :meth:`SeedSequence.spawn` API, which is the canonical
-# way to derive statistically independent streams from a single root seed.
 _MASTER_SEED_SEQ: ContextVar[np.random.SeedSequence | None] = ContextVar(
     "givp_master_seed_seq", default=None
 )
@@ -117,8 +104,6 @@ def _new_rng(seed: int | None = None) -> np.random.Generator:
         return np.random.default_rng(seed)
     master = _MASTER_SEED_SEQ.get()
     if master is not None:
-        # ``spawn(1)`` mutates the master to advance its internal counter,
-        # so successive calls return statistically independent streams.
         (child,) = master.spawn(1)
         return np.random.default_rng(child)
     return np.random.default_rng(secrets.randbits(64))
@@ -141,7 +126,7 @@ def _safe_evaluate(evaluator: EvaluatorFn, candidate: np.ndarray) -> float:
     """
     try:
         cost = float(evaluator(candidate))
-    except Exception:  # pylint: disable=broad-except
+    except Exception:  # pylint: disable=broad-exception-caught
         logger.warning(
             "evaluator raised an exception; treating candidate as infeasible",
             exc_info=True,

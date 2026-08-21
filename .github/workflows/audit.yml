@@ -4,9 +4,9 @@ on:
     push:
         branches: [main]
         paths:
-            - "poetry.lock"
+            - "python/poetry.lock"
             - "python/requirements/poetry-bootstrap.txt"
-            - "pyproject.toml"
+            - "python/pyproject.toml"
             - ".github/workflows/audit.yml"
     pull_request:
     schedule:
@@ -45,6 +45,6 @@ jobs:
                   bash .github/scripts/install-package-editable.sh
             - name: Validate lock and audit dependencies
               run: |
-                  poetry check --lock
-                  poetry run pip-audit --local --skip-editable \
+                  poetry -C python check --lock
+                  poetry -C python run pip-audit --local --skip-editable \
                     --cache-dir "$RUNNER_TEMP/pip-audit-cache"

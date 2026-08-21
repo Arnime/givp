@@ -130,7 +130,8 @@ Rscript r/benchmarks/run_literature_comparison.R \
   --n-runs 2 --dims 10 --max-iter 20 \
   --algorithms GIVP-full DE PSO GA CMA-ES SA \
   --output r/benchmarks/reference_results_quick.json
-python python/benchmarks/generate_report.py \
+cd python
+python -m benchmarks.reporting \
   --input r/benchmarks/reference_results_quick.json \
   --format both --output-dir r/benchmarks
 ```

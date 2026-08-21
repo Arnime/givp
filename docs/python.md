@@ -9,11 +9,8 @@ to PyPI as the `givp` package.
 pip install givp
 ```
 
-For process-based parallel evaluation of closures/lambdas (bypasses the GIL):
-
-```bash
-pip install "givp[parallel]"   # adds cloudpickle
-```
+Process-based parallel evaluation of closures and lambdas is included in the
+standard installation through the required `cloudpickle` dependency.
 
 Requires Python 3.10+.
 
@@ -112,7 +109,7 @@ are tried in order:
 1. **ProcessPoolExecutor** — used when the objective is picklable.
    Provides true multi-core speedup, bypasses the GIL.
 2. **cloudpickle ProcessPoolExecutor** — used when the objective is a closure.
-   Requires `pip install "givp[parallel]"`.
+   `cloudpickle` is installed automatically with GIVP.
 3. **ThreadPoolExecutor** — fallback when neither process strategy works, or when
    `use_cache=True` (cache cannot be shared across processes).
 
@@ -150,17 +147,18 @@ Use `seed_sweep` to run the optimizer over many independent seeds and collect
 metrics suitable for academic reporting:
 
 ```python
-from givp import seed_sweep, sweep_summary
-from givp.benchmarks import sphere
+from givp.examples.benchmark import seed_sweep, sphere, sweep_summary
 
 bounds = [(-5.12, 5.12)] * 10
-rows = seed_sweep(sphere, bounds, seeds=30)      # list[dict] or pd.DataFrame
+rows = seed_sweep(sphere, bounds, seeds=30)
 stats = sweep_summary(rows)
 # {'fun': {'mean': ..., 'std': ..., 'min': ..., 'max': ...}, 'nit': ..., ...}
 print(f"fun: {stats['fun']['mean']:.4e} ± {stats['fun']['std']:.4e}")
 ```
 
-Requires `pandas` for DataFrame output; works without it returning `list[dict]`.
+Install the `benchmarks` extra before importing this example package. The
+runner returns `list[dict]`, while `sweep_summary` also accepts a Pandas
+`DataFrame`.
 
 ## Full experimental pipeline (30-seed protocol)
 
@@ -174,11 +172,11 @@ cd python/
 poetry install --with dev,benchmarks
 
 # 30 independent runs × 10-D on all 6 benchmark functions (default)
-poetry run python benchmarks/run_literature_comparison.py \
+poetry run python -m benchmarks.comparison \
     --n-runs 30 --output results.json
 
 # Include external baselines
-poetry run python benchmarks/run_literature_comparison.py \
+poetry run python -m benchmarks.comparison \
     --algorithms GIVP-full DE PSO GA CMA-ES SA \
     --dims 30 --n-runs 30 --output results_30d.json
 ```
@@ -191,14 +189,14 @@ run via `np.random.default_rng(seed_start + k)`.
 
 ```bash
 # Console + Markdown tables + boxplot PNG
-poetry run python benchmarks/generate_report.py --input results.json
+poetry run python -m benchmarks.reporting --input results.json
 
 # LaTeX tables only (booktabs, ready for SBPO / BRACIS)
-poetry run python benchmarks/generate_report.py \
+poetry run python -m benchmarks.reporting \
     --input results.json --format latex --no-plots
 
 # Compare all algorithms against Differential Evolution as the reference
-poetry run python benchmarks/generate_report.py \
+poetry run python -m benchmarks.reporting \
     --input results.json --reference DE --output-dir paper/tables/
 ```
 
@@ -208,20 +206,21 @@ Command used:
 
 ```bash
 cd python/
-poetry run python benchmarks/run_literature_comparison.py \
+poetry run python -m benchmarks.comparison \
     --dims 10 --n-runs 2 --max-iter 20 --time-limit 5 \
     --algorithms GIVP-full DE PSO GA CMA-ES SA \
-    --output benchmarks/reference_results_quick.json
-poetry run python benchmarks/generate_report.py \
-    --input benchmarks/reference_results_quick.json --format both --output-dir benchmarks/
+    --output benchmarks/artifacts/reference/quick/results.json
+poetry run python -m benchmarks.reporting \
+    --input benchmarks/artifacts/reference/quick/results.json --format both \
+    --output-dir benchmarks/artifacts/reference/quick/
 ```
 
 Artifacts:
 
-- `python/benchmarks/reference_results_quick.json`
-- `python/benchmarks/reference_results_quick_report.md`
-- `python/benchmarks/reference_results_quick_report.tex`
-- `python/benchmarks/reference_results_quick_boxplot.png`
+- `python/benchmarks/artifacts/reference/quick/results.json`
+- `python/benchmarks/artifacts/reference/quick/report.md`
+- `python/benchmarks/artifacts/reference/quick/report.tex`
+- `python/benchmarks/artifacts/reference/quick/boxplot.png`
 
 Mean objective value (lower is better):
 
@@ -234,7 +233,7 @@ Mean objective value (lower is better):
 | Griewank | 3.0773e-01 | 5.1732e-02 | 1.7419e+00 | 2.4009e+00 | 2.0254e+01 | 1.1063e-02 |
 | Schwefel | 1.0218e+03 | 1.1450e+03 | 1.9300e+03 | 2.7745e+02 | 2.2649e+03 | 1.2728e-04 |
 
-`generate_report.py` applies the **Wilcoxon signed-rank test** (α = 0.05) on
+`benchmarks.reporting` applies the **Wilcoxon signed-rank test** (α = 0.05) on
 matched pairs from the 30 seeds and reports rank-biserial correlation as effect
 size.  Requires `scipy` for the statistical tests and `matplotlib` for plots
 (both optional; the script degrades gracefully without them).
@@ -311,7 +310,15 @@ givp version
 ## Fuzzing
 
 ```bash
-python python/fuzz/fuzz_givp.py --n-trials 200 --verbose
+cd python
+
+# Cross-platform, using Hypothesis
+poetry install --with dev
+poetry run python -m fuzz
+
+# Linux, using coverage-guided Atheris
+poetry install --with fuzz
+poetry run python -m fuzz.atheris -atheris_runs=1000 -atheris_jobs=1
 ```
 
 ## API parity with other ports

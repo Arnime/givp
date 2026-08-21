@@ -7,6 +7,7 @@ from __future__ import annotations
 from typing import Any, cast
 
 import pytest
+
 from givp import GIVPConfig, InvalidConfigError
 
 

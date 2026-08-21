@@ -29,6 +29,7 @@ import math
 
 import numpy as np
 import pytest
+
 from givp import GIVPConfig, OptimizeResult, TerminationReason, givp
 
 # ---------------------------------------------------------------------------

@@ -15,7 +15,7 @@ try:
     import xxhash as _xxhash
 
     _FAST_HASH = True
-except ImportError:  # pragma: no cover
+except ImportError:
     _FAST_HASH = False
 
 
@@ -57,7 +57,7 @@ class EvaluationCache:
         rounded[half:] = np.round(solution[half:], decimals=0)
         data = rounded.tobytes()
         if _FAST_HASH:
-            return int(_xxhash.xxh64_intdigest(data))  # type: ignore[union-attr]
+            return int(_xxhash.xxh64_intdigest(data))
         return int.from_bytes(
             hashlib.sha1(data, usedforsecurity=False).digest()[:8], "big"
         )

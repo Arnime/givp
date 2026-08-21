@@ -36,11 +36,12 @@ jobs:
                   # Append a .devN suffix derived from commit count so each push uploads
                   # a unique version (TestPyPI rejects duplicates).
                   DEV_SUFFIX=".dev$(git rev-list --count HEAD)"
+                  cd python
                   poetry run python -c "import re,pathlib; p=pathlib.Path('pyproject.toml'); s=p.read_text(); p.write_text(re.sub(r'(version\s*=\s*\")([^\"]+)(\")', r'\g<1>\g<2>${DEV_SUFFIX}\g<3>', s, count=1))"
                   poetry run python -m build
             - name: Smoke install
               run: |
-                  sh .github/scripts/smoke-install.sh
+                  sh .github/scripts/smoke-install.sh python/dist
                   /tmp/smoke/bin/python -c "import givp; print(givp.__version__)"
             - name: Publish to TestPyPI
               # Docker actions cannot run reliably inside a local composite action.
@@ -48,5 +49,5 @@ jobs:
               with:
                   repository-url: https://test.pypi.org/legacy/
                   skip-existing: true
-                  packages-dir: dist
+                  packages-dir: python/dist
                   attestations: false

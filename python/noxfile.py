@@ -24,7 +24,7 @@ def tests(session: nox.Session) -> None:
 def lint(session: nox.Session) -> None:
     """Run ruff."""
     session.install("ruff>=0.6")
-    session.run("ruff", "check", "python/src", "python/tests")
+    session.run("ruff", "check", "src", "tests", "benchmarks", "fuzz")
 
 
 @nox.session
@@ -38,7 +38,7 @@ def typecheck(session: nox.Session) -> None:
 def docs(session: nox.Session) -> None:
     """Build docs in strict mode."""
     session.install("-e", ".[docs]")
-    session.run("mkdocs", "build", "--strict")
+    session.run("mkdocs", "build", "-f", "../mkdocs.yml", "--strict")
 
 
 @nox.session
@@ -47,7 +47,7 @@ def benchmarks(session: nox.Session) -> None:
     session.install("-e", _DEV)
     session.run(
         "pytest",
-        "python/benchmarks/",
+        "benchmarks/tests/test_benchmark.py",
         "--benchmark-only",
         "--benchmark-autosave",
         *session.posargs,

@@ -84,6 +84,12 @@ nav:
   - Comparison: comparison.md
   - Profiling: profiling.md
   - Roadmap: roadmap.md
+  - Project:
+      - Build: project/build.md
+      - Contributing: project/contributing.md
+      - Governance: project/governance.md
+      - Maintainers: project/maintainers.md
+      - Changelog: project/changelog.md
   - Security requirements: security-requirements.md
   - API Reference:
       - givp: api/grasp_ils_vnd_pr.md

@@ -177,7 +177,7 @@ ctest --test-dir cpp/build/coverage --output-on-failure
 - [CMakeLists.txt](CMakeLists.txt) — Main C++ build configuration
 - [.clang-format](.clang-format) — Code formatting rules
 - [.clang-tidy](.clang-tidy) — Static analysis rules
-- [.clangd](../.clangd) — clangd IntelliSense configuration (root)
+- [.clangd](.clangd) — clangd IntelliSense configuration
 - [.vscode/settings.json](../.vscode/settings.json) — VS Code CMake config (root)
 - [cpp/conan/conancenter/recipes/givp/all/conanfile.py](conan/conancenter/recipes/givp/all/conanfile.py) — ConanCenter recipe template
 - [cpp/vcpkg_ports/arnime-givp/](vcpkg_ports/arnime-givp/) — vcpkg port

@@ -8,7 +8,7 @@ on:
     push:
         branches: [ main ]
         paths:
-            - pyproject.toml
+            - python/pyproject.toml
             - julia/Project.toml
             - rust/Cargo.toml
             - r/DESCRIPTION
@@ -62,4 +62,3 @@ jobs:
               if: steps.tag_check.outputs.exists == 'false'
               run: |
                   echo "Tag ${{ steps.version.outputs.tag }} pushed — release.yml triggered automatically via push:tags event."
-

@@ -13,25 +13,32 @@ Run explicitly with:
 
 from __future__ import annotations
 
-import importlib
 import json
-import sys
 from pathlib import Path
+from types import ModuleType
 from typing import Any, cast
 
 import pytest
+
+from benchmarks.comparison import cli as comparison_cli
+from benchmarks.reporting import cli as reporting_cli
+from benchmarks.tuning import cli as tuning_cli
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
 
-def _import_script(script_name: str) -> Any:
-    """Import a benchmark script from python/benchmarks/ by module name."""
-    benchmarks_dir = Path(__file__).parent.parent / "benchmarks"
-    if str(benchmarks_dir) not in sys.path:
-        sys.path.insert(0, str(benchmarks_dir))
-    return importlib.import_module(script_name)
+_BENCHMARK_COMMANDS: dict[str, ModuleType] = {
+    "tune_hyperparams": tuning_cli,
+    "run_literature_comparison": comparison_cli,
+    "generate_report": reporting_cli,
+}
+
+
+def _import_script(script_name: str) -> ModuleType:
+    """Return an importable benchmark command module."""
+    return _BENCHMARK_COMMANDS[script_name]
 
 
 def _run_script_main(script_name: str, args: list[str]) -> Any:

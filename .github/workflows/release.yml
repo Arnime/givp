@@ -40,31 +40,32 @@ jobs:
       - name: Install release deps
         run: bash .github/scripts/poetry-install.sh --no-root --only main,release
       - name: Build package
+        working-directory: python
         run: python -m build
       - name: Generate artifact hashes
         id: hash
         run: |
-          cd dist && echo "hashes=$(sha256sum -- * | base64 -w0)" >> "$GITHUB_OUTPUT"
+          cd python/dist && echo "hashes=$(sha256sum -- * | base64 -w0)" >> "$GITHUB_OUTPUT"
       - name: Attest build provenance
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
-          subject-path: ./dist/*
+          subject-path: ./python/dist/*
       - name: Sign artifacts with Sigstore
         uses: sigstore/gh-action-sigstore-python@04cffa1d795717b140764e8b640de88853c92acc # v3.3.0
         with:
-          inputs: ./dist/*.tar.gz ./dist/*.whl
+          inputs: ./python/dist/*.tar.gz ./python/dist/*.whl
       - name: Rename sigstore bundles for Scorecard compatibility
-        run: for f in dist/*.sigstore.json; do mv "$f" "${f%.json}"; done
+        run: for f in python/dist/*.sigstore.json; do mv "$f" "${f%.json}"; done
       - name: Generate SBOM (CycloneDX)
         run: cyclonedx-py environment --of JSON -o sbom.cdx.json
       - name: Move sigstore files out of dist
-        run: mv dist/*.sigstore .
+        run: mv python/dist/*.sigstore .
       - name: Upload Python release artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: python-release-artifacts
           path: |
-            dist
+            python/dist
             *.sigstore
             sbom.cdx.json
           if-no-files-found: error
@@ -347,7 +348,7 @@ jobs:
         uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
         with:
           skip-existing: true
-          packages-dir: dist
+          packages-dir: python/dist
           attestations: true
 
   register-julia:

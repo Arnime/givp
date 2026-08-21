@@ -4,7 +4,7 @@ on:
     push:
         branches: [ main ]
         paths:
-            - "pyproject.toml"
+            - "python/pyproject.toml"
             - "julia/Project.toml"
             - "rust/Cargo.toml"
     workflow_dispatch:
@@ -32,8 +32,8 @@ jobs:
                   readme = pathlib.Path("README.md")
                   content = readme.read_text()
 
-                  # --- Python: reads requires-python from pyproject.toml ---
-                  pyproject = tomllib.loads(pathlib.Path("pyproject.toml").read_text())
+                  # --- Python: reads requires-python from python/pyproject.toml ---
+                  pyproject = tomllib.loads(pathlib.Path("python/pyproject.toml").read_text())
                   spec = pyproject["project"]["requires-python"]  # e.g. ">=3.10,<3.16"
                   lo = re.search(r">=(\d+\.\d+)", spec)
                   hi = re.search(r"<(\d+)\.(\d+)", spec)
@@ -96,5 +96,4 @@ jobs:
                       Automated update of Python / Julia / Rust version badges in README.md
                       triggered by a change to a version config file.
                   labels: "documentation,automated"
-
 
