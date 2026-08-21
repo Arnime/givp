@@ -34,9 +34,8 @@ jobs:
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.12"
-      - name: Bootstrap Poetry
-        run: |
-          bash .github/scripts/bootstrap-poetry.sh
+      - name: Setup Poetry
+        uses: ./.github/actions/setup-poetry
       - name: Install release deps
         run: bash .github/scripts/poetry-install.sh --no-root --only main,release
       - name: Build package

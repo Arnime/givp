@@ -7,7 +7,6 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-import givp
 from benchmarks.common.problems import ALGO_DESCRIPTIONS, PROBLEM_REGISTRY
 from benchmarks.comparison.algorithms import _run_single
 from benchmarks.comparison.persistence import (
@@ -16,9 +15,9 @@ from benchmarks.comparison.persistence import (
     _load_checkpoint,
     _save_checkpoint,
 )
-from givp import GIVPConfig
+from givp import GIVPConfig, __version__
 
-_GIVP_VERSION = getattr(givp, "__version__", "unknown")
+_GIVP_VERSION = __version__
 _log = logging.getLogger(__name__)
 
 

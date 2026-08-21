@@ -37,10 +37,10 @@ jobs:
             - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
               with:
                   enablement: true
+            - name: Setup Poetry
+              uses: ./.github/actions/setup-poetry
             - name: Install
-              run: |
-                  bash .github/scripts/bootstrap-poetry.sh
-                  bash .github/scripts/poetry-install.sh --only main,docs
+              run: bash .github/scripts/poetry-install.sh --only main,docs
             - name: Build
               run: >-
                   poetry -C python run mkdocs build

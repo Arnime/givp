@@ -11,7 +11,7 @@ on:
             - "python/pyproject.toml"
             - "python/poetry.lock"
             - "python/requirements/**"
-            - ".github/scripts/bootstrap-poetry.sh"
+            - ".github/actions/setup-poetry/action.yml"
             - ".github/scripts/poetry-install.sh"
             - ".github/workflows/codeql.yml"
     schedule:

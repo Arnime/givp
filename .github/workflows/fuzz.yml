@@ -16,10 +16,10 @@ jobs:
             - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
               with:
                   python-version: "3.12"
+            - name: Setup Poetry
+              uses: ./.github/actions/setup-poetry
             - name: Install package and fuzzers
-              run: |
-                  bash .github/scripts/bootstrap-poetry.sh
-                  bash .github/scripts/poetry-install.sh --only main,fuzz
+              run: bash .github/scripts/poetry-install.sh --only main,fuzz
             - name: Run fuzz target with atheris (Linux CI run)
               run: |
                   poetry -C python run python -m fuzz.atheris -atheris_runs=1000 -atheris_jobs=1

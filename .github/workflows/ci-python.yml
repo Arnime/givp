@@ -47,7 +47,7 @@ jobs:
             else
               echo 'versions=["3.13"]' >> "$GITHUB_OUTPUT"
             fi
-            if git diff --name-only "$PR_BASE" HEAD -- python/pyproject.toml python/poetry.lock python/requirements .github/actions/setup-python .github/scripts/bootstrap-poetry.sh .github/scripts/poetry-install.sh .github/workflows/ci-python.yml | grep -q .; then
+            if git diff --name-only "$PR_BASE" HEAD -- python/pyproject.toml python/poetry.lock python/requirements .github/actions/setup-python .github/actions/setup-poetry .github/scripts/poetry-install.sh .github/workflows/ci-python.yml | grep -q .; then
               config_changed=true
             fi
             echo "source_changed=$source_changed" >> "$GITHUB_OUTPUT"
@@ -78,9 +78,8 @@ jobs:
       - uses: ./.github/actions/setup-python
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Bootstrap Poetry
-        run: |
-          bash .github/scripts/bootstrap-poetry.sh
+      - name: Setup Poetry
+        uses: ./.github/actions/setup-poetry
       - name: Install
         run: |
           bash .github/scripts/poetry-install.sh --only main,dev,benchmarks
@@ -120,10 +119,9 @@ jobs:
         if: github.event_name != 'pull_request' || needs.setup.outputs.source_changed == 'true'
         with:
           python-version: "3.13"
-      - name: Bootstrap Poetry
+      - name: Setup Poetry
         if: github.event_name != 'pull_request' || needs.setup.outputs.source_changed == 'true'
-        run: |
-          bash .github/scripts/bootstrap-poetry.sh
+        uses: ./.github/actions/setup-poetry
       - name: Install
         if: github.event_name != 'pull_request' || needs.setup.outputs.source_changed == 'true'
         run: |
@@ -222,9 +220,8 @@ jobs:
       - uses: ./.github/actions/setup-python
         with:
           python-version: "3.13"
-      - name: Bootstrap Poetry
-        run: |
-          bash .github/scripts/bootstrap-poetry.sh
+      - name: Setup Poetry
+        uses: ./.github/actions/setup-poetry
       - name: Install
         run: |
           bash .github/scripts/poetry-install.sh --only main,dev
@@ -250,9 +247,8 @@ jobs:
       - uses: ./.github/actions/setup-python
         with:
           python-version: "3.13"
-      - name: Bootstrap Poetry
-        run: |
-          bash .github/scripts/bootstrap-poetry.sh
+      - name: Setup Poetry
+        uses: ./.github/actions/setup-poetry
       - name: Install (with benchmark extras)
         run: |
           bash .github/scripts/poetry-install.sh --only main,dev,benchmarks
@@ -294,9 +290,8 @@ jobs:
       - uses: ./.github/actions/setup-python
         with:
           python-version: "3.13"
-      - name: Bootstrap Poetry
-        run: |
-          bash .github/scripts/bootstrap-poetry.sh
+      - name: Setup Poetry
+        uses: ./.github/actions/setup-poetry
       - name: Install
         run: |
           bash .github/scripts/poetry-install.sh --only main,dev
@@ -320,9 +315,8 @@ jobs:
       - uses: ./.github/actions/setup-python
         with:
           python-version: "3.13"
-      - name: Bootstrap Poetry
-        run: |
-          bash .github/scripts/bootstrap-poetry.sh
+      - name: Setup Poetry
+        uses: ./.github/actions/setup-poetry
       - name: Install
         run: |
           bash .github/scripts/poetry-install.sh --only main,dev
@@ -355,9 +349,8 @@ jobs:
       - uses: ./.github/actions/setup-python
         with:
           python-version: "3.13"
-      - name: Bootstrap Poetry
-        run: |
-          bash .github/scripts/bootstrap-poetry.sh
+      - name: Setup Poetry
+        uses: ./.github/actions/setup-poetry
       - name: Install dependencies
         run: |
           bash .github/scripts/poetry-install.sh --only main,dev,mutation
@@ -417,9 +410,8 @@ jobs:
         with:
           python-version: "3.15"
           allow-prereleases: true
-      - name: Bootstrap Poetry
-        run: |
-          bash .github/scripts/bootstrap-poetry.sh
+      - name: Setup Poetry
+        uses: ./.github/actions/setup-poetry
       - name: Install
         id: install_prerelease
         run: |

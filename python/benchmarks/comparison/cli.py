@@ -10,12 +10,11 @@ import logging
 import time
 from pathlib import Path
 
-import givp
 from benchmarks.common.problems import ALGO_DESCRIPTIONS, PROBLEM_REGISTRY
 from benchmarks.comparison.execution import run_experiment
-from givp import GIVPConfig
+from givp import GIVPConfig, __version__
 
-_GIVP_VERSION = getattr(givp, "__version__", "unknown")
+_GIVP_VERSION = __version__
 
 _log = logging.getLogger(__name__)
 

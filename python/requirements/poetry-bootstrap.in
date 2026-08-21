@@ -1,5 +1,0 @@
-# Bootstrap Poetry in CI.
-# poetry-bootstrap.txt is intentionally a version-only pin (no hashes) because
-# a single hash-pinned file cannot cover all platform x Python-version combos.
-# To bump the Poetry version: update the == pin in poetry-bootstrap.txt directly.
-poetry>=2.0

@@ -109,9 +109,11 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Setup Poetry
+        uses: ./.github/actions/setup-poetry
+
       - name: Build
         run: |
-          bash .github/scripts/bootstrap-poetry.sh
           if bash .github/scripts/poetry-install.sh --no-root --only main,release; then
             if [ -f python/pyproject.toml ]; then
               poetry -C python run python -m build
