@@ -28,7 +28,7 @@ pytest -m integration python/tests \
   --override-ini="addopts="
 
 echo "[python] Property-based tests"
-pytest -m property python/tests -v \
+pytest -m property python/tests/givp/test_properties.py -v \
   --no-cov \
   --override-ini="addopts=" \
   -p no:randomly

@@ -242,7 +242,7 @@ jobs:
         # Run the generated-input suite separately from unit coverage.
         # The Hypothesis database is ephemeral in CI; this is intentional.
         run: |
-          poetry -C python run pytest -m property tests -v \
+          poetry -C python run pytest -m property tests/givp/test_properties.py -v \
             --no-cov \
             --override-ini="addopts=" \
             -p no:randomly

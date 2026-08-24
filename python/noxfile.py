@@ -44,7 +44,7 @@ def properties(session: nox.Session) -> None:
         "pytest",
         "-m",
         "property",
-        "tests",
+        "tests/givp/test_properties.py",
         "--no-cov",
         OVERRIDE_INI,
         "-p",

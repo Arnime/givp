@@ -25,7 +25,7 @@ Run each opt-in group explicitly:
 
 ```powershell
 poetry run pytest -m integration tests --no-cov --override-ini="addopts="
-poetry run pytest -m property tests --no-cov --override-ini="addopts=" -p no:randomly
+poetry run pytest -m property tests/givp/test_properties.py --no-cov --override-ini="addopts=" -p no:randomly
 poetry run pytest -m benchmark_regression tests --no-cov --override-ini="addopts="
 poetry run pytest -m slow tests/benchmark --no-cov --override-ini="addopts="
 poetry run pytest -m quality_gate tests/benchmark/test_quality.py --no-cov --override-ini="addopts="
