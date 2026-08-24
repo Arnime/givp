@@ -5,6 +5,7 @@ from hashlib import sha256
 from pathlib import Path
 
 import numpy as np
+import pytest
 
 from givp.examples.synthetic_hydropower.benchmark import (
     promote_benchmark_version,
@@ -16,6 +17,31 @@ from givp.examples.synthetic_hydropower.model import (
     simulate_cascade,
 )
 from givp.examples.synthetic_hydropower.paths import default_config_path
+
+
+def _write_promotion_source(
+    output_dir: Path,
+    config_path: Path,
+    *,
+    config_hash: str | None = None,
+    include_results: bool = True,
+) -> None:
+    """Write the minimal optimization artifact set accepted by promotion."""
+    output_dir.mkdir(parents=True, exist_ok=True)
+    expected_hash = config_hash or sha256(config_path.read_bytes()).hexdigest()
+    (output_dir / "protocol_manifest.json").write_text(
+        json.dumps({"config_sha256": expected_hash}),
+        encoding="utf-8",
+    )
+    if include_results:
+        (output_dir / "optimization_summary.csv").write_text(
+            "scenario\n",
+            encoding="utf-8",
+        )
+        (output_dir / "optimization_time_series.csv").write_text(
+            "scenario,period\n",
+            encoding="utf-8",
+        )
 
 
 def test_save_benchmark_results_writes_auditable_artifacts(tmp_path: Path) -> None:
@@ -74,3 +100,81 @@ def test_promote_benchmark_version_freezes_matching_artifacts(tmp_path: Path) ->
         / "reference_results"
         / "optimization_summary.csv"
     ).is_file()
+
+
+def test_promotion_requires_a_manifest(tmp_path: Path) -> None:
+    """Reject an output directory that has no auditable manifest."""
+    config_path = tmp_path / "base.json"
+    config_path.write_text("{}", encoding="utf-8")
+
+    with pytest.raises(FileNotFoundError, match="missing benchmark manifest"):
+        promote_benchmark_version(
+            tmp_path / "output",
+            tmp_path / "benchmarks" / "v1.0.0",
+            config_path,
+        )
+
+
+def test_promotion_rejects_a_configuration_checksum_mismatch(
+    tmp_path: Path,
+) -> None:
+    """Reject results generated from a different plant configuration."""
+    config_path = tmp_path / "base.json"
+    config_path.write_text("{}", encoding="utf-8")
+    output_dir = tmp_path / "output"
+    _write_promotion_source(output_dir, config_path, config_hash="not-the-checksum")
+
+    with pytest.raises(ValueError, match="do not match"):
+        promote_benchmark_version(
+            output_dir,
+            tmp_path / "benchmarks" / "v1.0.0",
+            config_path,
+        )
+
+
+def test_promotion_does_not_overwrite_an_existing_protocol(tmp_path: Path) -> None:
+    """Keep an already promoted protocol immutable."""
+    config_path = tmp_path / "base.json"
+    config_path.write_text("{}", encoding="utf-8")
+    output_dir = tmp_path / "output"
+    _write_promotion_source(output_dir, config_path)
+    version_dir = tmp_path / "benchmarks" / "v1.0.0"
+    (version_dir / "protocols" / "givp_optimization").mkdir(parents=True)
+
+    with pytest.raises(FileExistsError, match="already exists"):
+        promote_benchmark_version(output_dir, version_dir, config_path)
+
+
+def test_promotion_requires_all_reference_results(tmp_path: Path) -> None:
+    """Reject a partial run instead of publishing an incomplete benchmark."""
+    config_path = tmp_path / "base.json"
+    config_path.write_text("{}", encoding="utf-8")
+    output_dir = tmp_path / "output"
+    _write_promotion_source(output_dir, config_path, include_results=False)
+
+    with pytest.raises(FileNotFoundError, match="missing benchmark artifacts"):
+        promote_benchmark_version(
+            output_dir,
+            tmp_path / "benchmarks" / "v1.0.0",
+            config_path,
+        )
+
+
+def test_promotion_reuses_only_an_identical_shared_configuration(
+    tmp_path: Path,
+) -> None:
+    """Reject a version directory containing a different shared configuration."""
+    config_path = tmp_path / "base.json"
+    config_path.write_text('{"source": "current"}', encoding="utf-8")
+    output_dir = tmp_path / "output"
+    _write_promotion_source(output_dir, config_path)
+    version_dir = tmp_path / "benchmarks" / "v1.0.0"
+    config_dir = version_dir / "config"
+    config_dir.mkdir(parents=True)
+    (config_dir / "base.json").write_text(
+        '{"source": "different"}',
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="shared configuration"):
+        promote_benchmark_version(output_dir, version_dir, config_path)

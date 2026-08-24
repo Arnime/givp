@@ -11,6 +11,7 @@ Also covers the parallel paths in _evaluate_candidates_batch:
 from __future__ import annotations
 
 import logging
+from types import SimpleNamespace
 from typing import Any
 from unittest.mock import patch
 
@@ -25,6 +26,7 @@ from givp.core.engine.evaluation import (
     _evaluate_candidates_batch,
 )
 from givp.examples.benchmark import seed_sweep, sweep_summary
+from givp.examples.benchmark import sweep as sweep_module
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -44,19 +46,52 @@ _FAST_CACHE = GIVPConfig(
 _BOUNDS = [(-2.0, 2.0)] * 3
 
 
+@pytest.fixture
+def stub_optimizer(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Replace GIVP with a deterministic result factory for sweep unit tests."""
+
+    def fake_givp(
+        _func: Any,
+        _bounds: Any,
+        *,
+        direction: str,
+        config: GIVPConfig,
+        seed: int,
+        verbose: bool,
+    ) -> SimpleNamespace:
+        del config, verbose
+        objective = float(seed) if direction == "minimize" else -float(seed)
+        return SimpleNamespace(
+            fun=objective,
+            nit=seed + 1,
+            nfev=seed + 2,
+            success=True,
+            message="stubbed",
+        )
+
+    monkeypatch.setattr(sweep_module, "givp", fake_givp)
+
+
 # ---------------------------------------------------------------------------
 # PY-4 — seed_sweep and sweep_summary
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.usefixtures("stub_optimizer")
 class TestSeedSweep:
+    """Unit-test sweep orchestration without executing the optimizer."""
+
     def test_returns_list_of_dicts(self) -> None:
         rows = seed_sweep(_sphere, _BOUNDS, seeds=3, config=_FAST)
         assert isinstance(rows, list)
         assert len(rows) == 3
         for row in rows:
-            assert "seed" in row and "fun" in row and "nit" in row
-            assert "nfev" in row and "time_s" in row and "success" in row
+            assert "seed" in row
+            assert "fun" in row
+            assert "nit" in row
+            assert "nfev" in row
+            assert "time_s" in row
+            assert "success" in row
 
     def test_seeds_are_correct(self) -> None:
         rows = seed_sweep(_sphere, _BOUNDS, seeds=[7, 42, 99], config=_FAST)
@@ -146,6 +181,7 @@ class TestSweepSummary:
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.integration
 class TestParallelPaths:
     """Cover ProcessPoolExecutor, cloudpickle, and ThreadPool fallback paths."""
 

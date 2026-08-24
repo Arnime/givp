@@ -4,11 +4,14 @@ import json
 from pathlib import Path
 
 import numpy as np
+import pytest
 
 from givp.examples.synthetic_hydropower.runner import (
     load_experiment_config,
     optimize_scenario,
 )
+
+pytestmark = pytest.mark.integration
 
 
 def test_optimization_returns_a_finite_fictional_solution(tmp_path: Path) -> None:

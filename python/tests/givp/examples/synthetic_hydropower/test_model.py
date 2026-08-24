@@ -6,6 +6,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+import givp.examples.synthetic_hydropower.model.transition as transition_module
 from givp.examples.synthetic_hydropower.model import (
     CascadeConfig,
     PlantConfig,
@@ -99,14 +100,10 @@ def test_upstream_defluence_arrives_after_one_period(config: CascadeConfig) -> N
 def test_spill_and_level_penalty_are_reported(config: CascadeConfig) -> None:
     inflows = np.array([[1_000.0, 0.0, 0.0], [0.0, 0.0, 0.0]])
     full_plant_a = replace(config.plants[0], initial_volume_hm3=1.5)
-    full_config = CascadeConfig(
-        (full_plant_a, config.plants[1]), 3, 1.0, 1, 1000.0
-    )
+    full_config = CascadeConfig((full_plant_a, config.plants[1]), 3, 1.0, 1, 1000.0)
     result = simulate_cascade(full_config, inflows, np.zeros((2, 3)))
     expected_capacity_spill = (
-        full_plant_a.sanitary_spill_flow_m3s
-        + inflows[0, 0]
-        - full_plant_a.max_flow_m3s
+        full_plant_a.sanitary_spill_flow_m3s + inflows[0, 0] - full_plant_a.max_flow_m3s
     )
     assert result.spill_flow_m3s[0, 0] > expected_capacity_spill
     assert result.sanitary_spill_flow_m3s[0, 0] == pytest.approx(0.5)
@@ -129,9 +126,10 @@ def test_minimum_level_penalty_is_accumulated_for_each_plant_and_period(
 
     result = simulate_cascade(depleted_config, np.zeros((2, 3)), requested)
 
-    expected = 1000.0 * np.maximum(
-        0.0, depleted_plant_a.min_level_m - result.level_m[0, 1:]
-    ) ** 2
+    expected = (
+        1000.0
+        * np.maximum(0.0, depleted_plant_a.min_level_m - result.level_m[0, 1:]) ** 2
+    )
     assert np.allclose(result.minimum_level_penalty_by_period[0], expected)
     assert result.minimum_level_penalty > 0.0
     assert result.level_penalty == pytest.approx(
@@ -218,9 +216,7 @@ def test_gradual_spill_uses_the_maximorum_storage_band(config: CascadeConfig) ->
     narrow_plant_a = replace(
         config.plants[0], max_volume_hm3=1.01, maximorum_volume_hm3=1.10
     )
-    narrow_config = CascadeConfig(
-        (narrow_plant_a, config.plants[1]), 3, 1.0, 1, 1000.0
-    )
+    narrow_config = CascadeConfig((narrow_plant_a, config.plants[1]), 3, 1.0, 1, 1000.0)
     inflows = np.array([[20.0, 20.0, 20.0], [0.0, 0.0, 0.0]])
     result = simulate_cascade(narrow_config, inflows, np.zeros((2, 3)))
     for plant_index, plant in enumerate(narrow_config.plants):
@@ -228,19 +224,31 @@ def test_gradual_spill_uses_the_maximorum_storage_band(config: CascadeConfig) ->
     assert np.any(result.level_control_spill_flow_m3s > 0.0)
 
 
-def test_upstream_curve_preserves_bounds_and_is_nonlinear(config: CascadeConfig) -> None:
+def test_upstream_curve_preserves_bounds_and_is_nonlinear(
+    config: CascadeConfig,
+) -> None:
     result = simulate_cascade(config, np.zeros((2, 3)), np.zeros((2, 3)))
-    assert config.plants[0].min_level_m < result.level_m[0, 0] < config.plants[0].max_level_m
+    assert (
+        config.plants[0].min_level_m
+        < result.level_m[0, 0]
+        < config.plants[0].max_level_m
+    )
 
 
-def test_maximorum_level_branch_is_monotonic_and_anchored(config: CascadeConfig) -> None:
+def test_maximorum_level_branch_is_monotonic_and_anchored(
+    config: CascadeConfig,
+) -> None:
     plant = config.plants[0]
     middle_volume = (plant.max_volume_hm3 + plant.maximorum_volume_hm3) / 2.0
 
     assert upstream_level(plant, plant.max_volume_hm3) == pytest.approx(
         plant.max_level_m
     )
-    assert plant.max_level_m < upstream_level(plant, middle_volume) < plant.maximorum_level_m
+    assert (
+        plant.max_level_m
+        < upstream_level(plant, middle_volume)
+        < plant.maximorum_level_m
+    )
     assert upstream_level(plant, plant.maximorum_volume_hm3) == pytest.approx(
         plant.maximorum_level_m
     )
@@ -338,9 +346,7 @@ def test_power_schedule_records_water_limited_deficit(config: CascadeConfig) -> 
             for plant in water_limited_config.plants
         ]
     )
-    result = simulate_power_schedule(
-        water_limited_config, np.zeros((2, 3)), target
-    )
+    result = simulate_power_schedule(water_limited_config, np.zeros((2, 3)), target)
 
     assert np.any(result.power_deficit_mw > 0.0)
     assert "water_limited" in result.dispatch_status
@@ -348,3 +354,143 @@ def test_power_schedule_records_water_limited_deficit(config: CascadeConfig) -> 
         (result.delivered_power_mw == 0.0)
         | (result.delivered_power_mw >= np.array([[1.0], [1.0]]) - 1e-6)
     )
+
+
+@pytest.mark.parametrize(
+    ("inflow", "schedule", "message"),
+    [
+        (np.zeros((2, 2)), np.zeros((2, 3)), "must have shape"),
+        (np.full((2, 3), -1.0), np.zeros((2, 3)), "must be non-negative"),
+    ],
+)
+def test_simulation_rejects_invalid_hydraulic_inputs(
+    config: CascadeConfig,
+    inflow: np.ndarray,
+    schedule: np.ndarray,
+    message: str,
+) -> None:
+    """Reject malformed shapes and physically impossible negative inflows."""
+    with pytest.raises(ValueError, match=message):
+        simulate_cascade(config, inflow, schedule)
+
+
+def test_power_schedule_reports_head_limited_generation(
+    config: CascadeConfig,
+) -> None:
+    """Turn a unit off when tailwater removes all available net head."""
+    head_limited_plant = replace(
+        config.plants[0],
+        downstream_base_level_m=200.0,
+        downstream_level_range_m=0.0,
+    )
+    head_limited_config = replace(
+        config,
+        plants=(head_limited_plant, config.plants[1]),
+        periods=1,
+    )
+    target = np.zeros((2, 1))
+    target[0, 0] = head_limited_plant.min_power_mw
+
+    result = simulate_power_schedule(
+        head_limited_config,
+        np.zeros((2, 1)),
+        target,
+    )
+
+    assert result.dispatch_status[0, 0] == "head_limited"
+    assert result.delivered_power_mw[0, 0] == 0.0
+    assert result.power_deficit_mw[0, 0] == pytest.approx(
+        head_limited_plant.min_power_mw
+    )
+
+
+def test_power_flow_bisection_has_a_deterministic_iteration_fallback(
+    config: CascadeConfig,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Return the current interval midpoint when the iteration budget is exhausted."""
+    plant = config.plants[0]
+    monkeypatch.setattr(transition_module, "BISECTION_MAX_ITERATIONS", 0)
+
+    flow = transition_module._bisect_power_flow(
+        plant,
+        upstream_level(plant, plant.initial_volume_hm3),
+        plant.min_power_mw,
+        plant.max_flow_m3s,
+        0.0,
+    )
+
+    assert flow == pytest.approx(plant.max_flow_m3s / 2.0)
+
+
+def test_coupled_search_handles_exact_and_unreachable_targets(
+    config: CascadeConfig,
+) -> None:
+    """Select an exact grid point or the closest physical transition deterministically."""
+    plant = config.plants[0]
+    level = upstream_level(plant, plant.initial_volume_hm3)
+
+    exact = transition_module._search_coupled_transition(
+        config,
+        plant,
+        plant.initial_volume_hm3,
+        level,
+        0.0,
+        0.0,
+        plant.max_flow_m3s,
+    )
+    unreachable = transition_module._search_coupled_transition(
+        config,
+        plant,
+        plant.initial_volume_hm3,
+        level,
+        0.0,
+        plant.max_power_mw * 10.0,
+        plant.max_flow_m3s,
+    )
+
+    assert exact.power_mw == 0.0
+    assert unreachable.power_mw < plant.max_power_mw * 10.0
+
+
+def test_power_inversion_raises_for_non_finite_transitions(
+    config: CascadeConfig,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Fail explicitly instead of publishing a non-finite deterministic result."""
+    invalid = transition_module.HydraulicTransition(
+        requested_flow_m3s=0.0,
+        turbine_flow_m3s=0.0,
+        spill_flow_m3s=0.0,
+        sanitary_spill_flow_m3s=0.0,
+        capacity_spill_flow_m3s=0.0,
+        level_control_spill_flow_m3s=0.0,
+        final_volume_hm3=np.nan,
+        final_level_m=np.nan,
+        downstream_level_m=np.nan,
+        net_head_m=np.nan,
+        defluent_flow_m3s=0.0,
+        power_mw=np.nan,
+    )
+
+    def invalid_transition(*_args: object, **_kwargs: object) -> object:
+        """Return the deliberately invalid transition used by this regression test."""
+        return invalid
+
+    monkeypatch.setattr(transition_module, "_raw_transition", invalid_transition)
+    monkeypatch.setattr(
+        transition_module,
+        "_search_coupled_transition",
+        invalid_transition,
+    )
+
+    plant = config.plants[0]
+    with pytest.raises(transition_module.PowerScheduleConvergenceError):
+        transition_module.solve_power_transition(
+            config,
+            plant,
+            plant.initial_volume_hm3,
+            upstream_level(plant, plant.initial_volume_hm3),
+            0.0,
+            plant.min_power_mw,
+        )

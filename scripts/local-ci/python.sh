@@ -16,17 +16,27 @@ ruff check python/src python/tests
 echo "[python] Type-check"
 mypy
 
-echo "[python] Full test suite"
+echo "[python] Unit test suite"
 pytest
 
 echo "[python] Coverage gate (>=95%)"
 pytest --cov=givp --cov-report=xml:coverage-python.xml --cov-fail-under=95
 
+echo "[python] Integration tests (without coverage)"
+pytest -m integration python/tests \
+  --no-cov \
+  --override-ini="addopts="
+
 echo "[python] Property-based tests"
-pytest python/tests/givp/test_properties.py -v \
+pytest -m property python/tests -v \
   --no-cov \
   --override-ini="addopts=" \
   -p no:randomly
+
+echo "[python] Frozen benchmark regression tests"
+pytest -m benchmark_regression python/tests -v \
+  --no-cov \
+  --override-ini="addopts="
 
 echo "[python] Algorithm quality gate"
 pytest -m quality_gate python/tests/benchmark/test_quality.py \
@@ -37,6 +47,7 @@ pytest -m quality_gate python/tests/benchmark/test_quality.py \
 
 echo "[python] Benchmark smoke tests"
 pytest -m slow python/tests/benchmark/test_commands.py -v \
+  --no-cov \
   --override-ini="addopts="
 
 echo "[python] Benchmark regression"

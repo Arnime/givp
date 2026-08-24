@@ -48,6 +48,7 @@ def _run(
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.integration
 def test_run_outputs_json_to_stdout() -> None:
     proc = _run(
         "run",
@@ -65,6 +66,7 @@ def test_run_outputs_json_to_stdout() -> None:
     assert isinstance(data, dict)
 
 
+@pytest.mark.integration
 def test_run_json_schema_fields() -> None:
     proc = _run(
         "run",
@@ -97,6 +99,7 @@ def test_run_json_schema_fields() -> None:
     assert isinstance(data["direction"], str)
 
 
+@pytest.mark.integration
 def test_run_termination_is_closed_enum() -> None:
     from givp.result import TerminationReason
 
@@ -117,6 +120,7 @@ def test_run_termination_is_closed_enum() -> None:
     assert data["termination"] in valid_values
 
 
+@pytest.mark.integration
 def test_run_direction_minimize() -> None:
     proc = _run(
         "run",
@@ -136,6 +140,7 @@ def test_run_direction_minimize() -> None:
     assert data["direction"] == "minimize"
 
 
+@pytest.mark.integration
 def test_run_direction_maximize() -> None:
     proc = _run(
         "run",
@@ -155,6 +160,7 @@ def test_run_direction_maximize() -> None:
     assert data["direction"] == "maximize"
 
 
+@pytest.mark.integration
 def test_run_4d_bounds_produces_correct_x_shape() -> None:
     proc = _run(
         "run",
@@ -172,6 +178,7 @@ def test_run_4d_bounds_produces_correct_x_shape() -> None:
     assert len(data["x"]) == 4
 
 
+@pytest.mark.integration
 def test_run_seed_produces_output() -> None:
     proc = _run(
         "run",
@@ -191,6 +198,7 @@ def test_run_seed_produces_output() -> None:
     assert "x" in data
 
 
+@pytest.mark.integration
 def test_run_via_json_flag() -> None:
     payload = json.dumps(
         {
@@ -206,6 +214,7 @@ def test_run_via_json_flag() -> None:
     assert "x" in data
 
 
+@pytest.mark.integration
 def test_run_via_json_stdin() -> None:
     payload = json.dumps(
         {
@@ -221,6 +230,7 @@ def test_run_via_json_stdin() -> None:
     assert "x" in data
 
 
+@pytest.mark.integration
 def test_run_explicit_flags_override_json() -> None:
     """--bounds on the command line should take precedence over --json contents."""
     payload = json.dumps(
@@ -237,6 +247,7 @@ def test_run_explicit_flags_override_json() -> None:
     assert len(data["x"]) == 1  # CLI flag wins
 
 
+@pytest.mark.integration
 def test_errors_go_to_stderr() -> None:
     proc = _run(
         "run",
@@ -252,6 +263,7 @@ def test_errors_go_to_stderr() -> None:
     assert proc.stdout == ""
 
 
+@pytest.mark.integration
 def test_missing_func_name_error() -> None:
     proc = _run(
         "run",
@@ -268,12 +280,14 @@ def test_missing_func_name_error() -> None:
     assert proc.stdout == ""
 
 
+@pytest.mark.integration
 def test_missing_required_args_gives_exit_2() -> None:
     # No func-file/func-name/bounds and no --json
     proc = _run("run")
     assert proc.returncode == 2
 
 
+@pytest.mark.integration
 def test_invalid_bounds_json_gives_exit_2() -> None:
     proc = _run(
         "run",

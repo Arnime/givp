@@ -15,6 +15,8 @@ from givp.examples.synthetic_hydropower.paths import default_config_path
 
 FigureRenderer = Callable[[Path, Path, Path], list[Path]]
 
+pytestmark = pytest.mark.integration
+
 
 def _load_figures_module(project_root: Path) -> ModuleType:
     """Load the notebook-local figure module without making it a GIVP package."""

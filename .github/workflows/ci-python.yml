@@ -97,8 +97,15 @@ jobs:
         # runtime compatibility, including Python 3.14.
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.13'
         run: poetry -C python run mypy
-      - name: Test
+      - name: Unit tests
         run: poetry -C python run python -m pytest --no-cov
+      - name: Integration tests without coverage
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.13'
+        run: |
+          poetry -C python run python -m pytest -m integration \
+            tests \
+            --no-cov \
+            --override-ini="addopts="
 
   centralized-actions:
     name: Check centralized action pins
@@ -132,7 +139,7 @@ jobs:
         if: github.event_name != 'pull_request' || needs.setup.outputs.source_changed == 'true'
         run: |
           bash .github/scripts/poetry-install.sh --only main,dev,benchmarks
-      - name: Test with coverage
+      - name: Unit tests with coverage
         if: github.event_name != 'pull_request' || needs.setup.outputs.source_changed == 'true'
         run: poetry -C python run pytest --cov=givp --cov-report=xml:../coverage-python.xml --cov-fail-under=95
       - name: Check patch coverage on PR (>= 90%)
@@ -232,10 +239,10 @@ jobs:
         run: |
           bash .github/scripts/poetry-install.sh --only main,dev
       - name: Run property tests
-        # Run only test_properties.py with a generous timeout; --no-cov keeps it fast.
+        # Run the generated-input suite separately from unit coverage.
         # The Hypothesis database is ephemeral in CI; this is intentional.
         run: |
-          poetry -C python run pytest tests/givp/test_properties.py -v \
+          poetry -C python run pytest -m property tests -v \
             --no-cov \
             --override-ini="addopts=" \
             -p no:randomly
@@ -261,6 +268,13 @@ jobs:
       - name: Benchmark smoke tests
         run: |
           poetry -C python run pytest -m slow tests/benchmark/test_commands.py -v \
+            --no-cov \
+            --override-ini="addopts="
+
+      - name: Frozen benchmark regression tests
+        run: |
+          poetry -C python run pytest -m benchmark_regression tests -v \
+            --no-cov \
             --override-ini="addopts="
 
       - name: Run literature comparison smoke test

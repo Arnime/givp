@@ -306,12 +306,14 @@ def test_convergence_monitor_enabled(fast_config: GIVPConfig) -> None:
     assert np.isfinite(result.fun)
 
 
+@pytest.mark.integration
 def test_n_workers_parallel_path(fast_config: GIVPConfig) -> None:
     cfg = GIVPConfig(**{**fast_config.__dict__, "n_workers": 2})
     result = givp(sphere, [(-1.0, 1.0)] * 3, config=cfg)
     assert np.isfinite(result.fun)
 
 
+@pytest.mark.integration
 def test_n_workers_parity_serial_vs_parallel(fast_config: GIVPConfig) -> None:
     """n_workers=2 must return a finite, valid result for the same objective.
 
