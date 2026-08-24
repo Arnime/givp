@@ -19,7 +19,14 @@ jobs:
           fetch-depth: 0
 
       - name: Verify Signed-off-by on all commits
+        env:
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
         run: |
+          if [[ "$PR_AUTHOR" == "dependabot[bot]" ]]; then
+            echo "Dependabot PR detected; DCO sign-off is not applicable to bot-generated commits."
+            exit 0
+          fi
+
           BASE="${{ github.event.pull_request.base.sha }}"
           HEAD="${{ github.event.pull_request.head.sha }}"
           MISSING=0
