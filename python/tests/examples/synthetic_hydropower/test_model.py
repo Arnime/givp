@@ -10,6 +10,7 @@ from givp.examples.synthetic_hydropower.model import (
     CascadeConfig,
     PlantConfig,
     simulate_cascade,
+    simulate_power_schedule,
 )
 from givp.examples.synthetic_hydropower.model.curves import upstream_level
 from givp.examples.synthetic_hydropower.model.dispatch import level_control_spill
@@ -275,3 +276,75 @@ def test_actual_head_keeps_enabled_power_above_minimum(
 
     assert result.turbine_flow_m3s[0, 0] > lower_head_plant_a.min_flow_m3s
     assert result.power_mw[0, 0] >= lower_head_plant_a.min_power_mw - 1e-8
+
+
+@pytest.mark.parametrize("fraction", [0.0, 0.25, 0.5, 0.75, 1.0])
+def test_power_schedule_inversion_tracks_feasible_targets(
+    config: CascadeConfig, fraction: float
+) -> None:
+    """Invert minimum, intermediate and maximum feasible targets."""
+    feasible_plants = tuple(
+        replace(
+            plant,
+            downstream_base_level_m=(
+                upstream_level(plant, plant.initial_volume_hm3) - plant.head_m
+            ),
+            downstream_level_range_m=0.0,
+        )
+        for plant in config.plants
+    )
+    feasible_config = replace(
+        config, plants=(feasible_plants[0], feasible_plants[1]), periods=1
+    )
+    target = np.vstack(
+        [
+            np.full(
+                feasible_config.periods,
+                plant.min_power_mw
+                + fraction * (plant.max_power_mw - plant.min_power_mw),
+            )
+            for plant in feasible_config.plants
+        ]
+    )
+    result = simulate_power_schedule(feasible_config, np.zeros((2, 1)), target)
+
+    assert np.allclose(result.delivered_power_mw, target, atol=1e-6)
+    assert np.all(result.power_deficit_mw <= 1e-6)
+    assert np.all(result.dispatch_status == "met")
+
+
+def test_power_schedule_zero_target_keeps_units_off(config: CascadeConfig) -> None:
+    result = simulate_power_schedule(config, np.zeros((2, 3)), np.zeros((2, 3)))
+
+    assert np.all(result.delivered_power_mw == 0.0)
+    assert np.all(result.dispatch_status == "off")
+
+
+def test_power_schedule_rejects_target_between_zero_and_minimum(
+    config: CascadeConfig,
+) -> None:
+    target = np.zeros((2, 3))
+    target[0, 0] = config.plants[0].min_power_mw / 2.0
+
+    with pytest.raises(ValueError, match="must be zero"):
+        simulate_power_schedule(config, np.zeros((2, 3)), target)
+
+
+def test_power_schedule_records_water_limited_deficit(config: CascadeConfig) -> None:
+    water_limited_config = replace(config, period_hours=100_000.0)
+    target = np.vstack(
+        [
+            np.full(water_limited_config.periods, plant.max_power_mw)
+            for plant in water_limited_config.plants
+        ]
+    )
+    result = simulate_power_schedule(
+        water_limited_config, np.zeros((2, 3)), target
+    )
+
+    assert np.any(result.power_deficit_mw > 0.0)
+    assert "water_limited" in result.dispatch_status
+    assert np.all(
+        (result.delivered_power_mw == 0.0)
+        | (result.delivered_power_mw >= np.array([[1.0], [1.0]]) - 1e-6)
+    )

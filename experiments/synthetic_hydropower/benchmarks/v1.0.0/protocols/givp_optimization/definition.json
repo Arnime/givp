@@ -1,0 +1,41 @@
+{
+  "benchmark_id": "synthetic-hydropower-v1.0.0/givp-optimization",
+  "status": "frozen",
+  "model_scope": "two fictional hydropower plants in cascade",
+  "source_notebook": "notebooks/hydropower_two_plant_synthetic.ipynb",
+  "config_sha256": "74dd5838d5a4b3f158f9080103c8aaae29736bf1e63a92e58c24a5e489f35351",
+  "cascade": {
+    "periods": 24,
+    "period_hours": 1.0,
+    "travel_time_steps": 1,
+    "level_penalty_weight": 10000.0,
+    "unit_switch_penalty_weight": 250.0,
+    "minimum_state_duration_hours": 8,
+    "early_switch_penalty_weight": 500.0
+  },
+  "optimizer": {
+    "name": "GIVP",
+    "max_iterations": 40,
+    "alpha": 0.17,
+    "vnd_iterations": 15,
+    "ils_iterations": 5,
+    "perturbation_strength": 8,
+    "use_elite_pool": true,
+    "elite_size": 4,
+    "path_relink_frequency": 10,
+    "num_candidates_per_step": 15,
+    "use_cache": true,
+    "cache_size": 10000,
+    "use_convergence_monitor": true,
+    "direction": "minimize"
+  },
+  "scenarios": [
+    {"name": "dry_stable", "upstream_base": 75.0, "downstream_base": 22.0, "variability": 0.03, "profile": "stable", "seed": 42},
+    {"name": "dry_variable", "upstream_base": 100.0, "downstream_base": 28.0, "variability": 0.16, "profile": "alternating", "seed": 43},
+    {"name": "typical", "upstream_base": 180.0, "downstream_base": 60.0, "variability": 0.10, "profile": "daily", "seed": 44},
+    {"name": "upstream_peak", "upstream_base": 250.0, "downstream_base": 45.0, "variability": 0.12, "profile": "peak", "seed": 45},
+    {"name": "downstream_dominant", "upstream_base": 140.0, "downstream_base": 145.0, "variability": 0.10, "profile": "daily", "seed": 46},
+    {"name": "wet_rising", "upstream_base": 240.0, "downstream_base": 90.0, "variability": 0.08, "profile": "rising", "seed": 47},
+    {"name": "flood", "upstream_base": 390.0, "downstream_base": 155.0, "variability": 0.12, "profile": "peak", "seed": 48}
+  ]
+}

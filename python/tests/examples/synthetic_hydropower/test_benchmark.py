@@ -49,11 +49,11 @@ def test_promote_benchmark_version_freezes_matching_artifacts(tmp_path: Path) ->
     source_dir = tmp_path / "output"
     source_dir.mkdir()
     source_hash = sha256(config_path.read_bytes()).hexdigest()
-    (source_dir / "benchmark_manifest.json").write_text(
+    (source_dir / "protocol_manifest.json").write_text(
         json.dumps({"config_sha256": source_hash}), encoding="utf-8"
     )
-    (source_dir / "benchmark_summary.csv").write_text("scenario\n", encoding="utf-8")
-    (source_dir / "benchmark_time_series.csv").write_text(
+    (source_dir / "optimization_summary.csv").write_text("scenario\n", encoding="utf-8")
+    (source_dir / "optimization_time_series.csv").write_text(
         "scenario,period\n", encoding="utf-8"
     )
 
@@ -61,4 +61,10 @@ def test_promote_benchmark_version_freezes_matching_artifacts(tmp_path: Path) ->
     promote_benchmark_version(source_dir, version_dir, config_path)
 
     assert (version_dir / "config" / "base.json").is_file()
-    assert (version_dir / "reference_results" / "benchmark_summary.csv").is_file()
+    assert (
+        version_dir
+        / "protocols"
+        / "givp_optimization"
+        / "reference_results"
+        / "optimization_summary.csv"
+    ).is_file()

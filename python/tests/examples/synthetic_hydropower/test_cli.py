@@ -6,6 +6,7 @@ import pytest
 
 from givp.examples.synthetic_hydropower.paths import (
     default_config_path,
+    default_definition_path,
     default_output_dir,
     validate_cli_paths,
 )
@@ -13,10 +14,12 @@ from givp.examples.synthetic_hydropower.paths import (
 
 def test_cli_paths_accept_only_benchmark_owned_locations() -> None:
     """Accept CLI arguments when both paths belong to the benchmark."""
-    validate_cli_paths(default_config_path(), default_output_dir())
+    validate_cli_paths(
+        default_config_path(), default_definition_path(), default_output_dir()
+    )
 
 
-@pytest.mark.parametrize("untrusted_argument", ["config", "output"])
+@pytest.mark.parametrize("untrusted_argument", ["config", "definition", "output"])
 def test_cli_paths_reject_untrusted_locations(
     tmp_path: Path, untrusted_argument: str
 ) -> None:
@@ -28,6 +31,11 @@ def test_cli_paths_reject_untrusted_locations(
         if untrusted_argument == "config"
         else default_config_path()
     )
+    definition_path = (
+        untrusted_config
+        if untrusted_argument == "definition"
+        else default_definition_path()
+    )
     output_dir = (
         tmp_path / "output"
         if untrusted_argument == "output"
@@ -35,4 +43,4 @@ def test_cli_paths_reject_untrusted_locations(
     )
 
     with pytest.raises(ValueError, match="CLI"):
-        validate_cli_paths(config_path, output_dir)
+        validate_cli_paths(config_path, definition_path, output_dir)

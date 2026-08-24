@@ -58,7 +58,9 @@ def test_render_figures_creates_three_pngs_per_scenario(
                     "final_upstream_level_m": final_level,
                 }
             )
-    pd.DataFrame(rows).to_csv(reference_dir / "benchmark_time_series.csv", index=False)
+    pd.DataFrame(rows).to_csv(
+        reference_dir / "optimization_time_series.csv", index=False
+    )
 
     python_root = pytestconfig.rootpath
     project_root = python_root.parent if python_root.name == "python" else python_root

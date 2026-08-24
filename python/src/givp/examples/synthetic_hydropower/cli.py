@@ -10,6 +10,7 @@ import pandas as pd
 
 from givp.examples.synthetic_hydropower.paths import (
     default_config_path,
+    default_definition_path,
     default_output_dir,
     validate_cli_paths,
 )
@@ -22,6 +23,7 @@ from givp.examples.synthetic_hydropower.runner import (
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, required=True)
+    parser.add_argument("--definition", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--seed", type=int, default=42)
     return parser
@@ -30,10 +32,11 @@ def _build_parser() -> argparse.ArgumentParser:
 def main() -> None:
     """Run configured scenarios and write CSV/JSON results to an explicit directory."""
     args = _build_parser().parse_args()
-    validate_cli_paths(args.config, args.output_dir)
+    validate_cli_paths(args.config, args.definition, args.output_dir)
     config_path = default_config_path().resolve(strict=True)
+    definition_path = default_definition_path().resolve(strict=True)
     output_dir = default_output_dir().resolve(strict=False)
-    experiment = load_experiment_config(config_path)
+    experiment = load_experiment_config(config_path, definition_path)
     output_dir.mkdir(parents=True, exist_ok=True)
     summaries: list[dict[str, float | str]] = []
     for scenario_index, scenario_name in enumerate(experiment.scenarios):

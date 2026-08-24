@@ -31,25 +31,33 @@ class ExperimentConfig:
     optimizer: dict[str, int]
 
 
-def load_experiment_config(config_path: Path) -> ExperimentConfig:
-    """Load a fictional experiment configuration from an explicit JSON path."""
+def load_experiment_config(
+    config_path: Path, definition_path: Path
+) -> ExperimentConfig:
+    """Load plant parameters and GIVP protocol from separate explicit paths."""
     payload: dict[str, Any] = json.loads(config_path.read_text(encoding="utf-8"))
+    definition: dict[str, Any] = json.loads(
+        definition_path.read_text(encoding="utf-8")
+    )
     plants = tuple(PlantConfig(**plant) for plant in payload["plants"])
     if len(plants) != 2:
         raise ValueError("exactly two plants are required")
     cascade = CascadeConfig(
         plants=(plants[0], plants[1]),
-        periods=payload["periods"],
-        period_hours=payload["period_hours"],
-        travel_time_steps=payload["travel_time_steps"],
-        level_penalty_weight=payload["level_penalty_weight"],
+        **definition["cascade"],
     )
     scenarios = {
-        name: ScenarioDefinition(name=name, **values)
-        for name, values in payload["scenarios"].items()
+        item["name"]: ScenarioDefinition(
+            name=item["name"],
+            inflow_a_m3s=item["upstream_base"],
+            inflow_b_m3s=item["downstream_base"],
+            variability=item["variability"],
+            profile=item["profile"],
+        )
+        for item in definition["scenarios"]
     }
     return ExperimentConfig(
-        cascade=cascade, scenarios=scenarios, optimizer=payload["optimizer"]
+        cascade=cascade, scenarios=scenarios, optimizer=definition["optimizer"]
     )
 
 

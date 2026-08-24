@@ -1,0 +1,25 @@
+{
+  "protocol_id": "synthetic-hydropower-v1.0.0/givp-optimization",
+  "schema_version": "1.0.0/givp-optimization",
+  "execution": "stochastic optimization with GIVP",
+  "shared_config": "../../config/base.json",
+  "shared_inflows": "../../inputs/inflows.csv",
+  "periods": 24,
+  "period_hours": 1.0,
+  "travel_time_steps": 1,
+  "scenario_seeds": {
+    "dry_stable": 42,
+    "dry_variable": 43,
+    "typical": 44,
+    "upstream_peak": 45,
+    "downstream_dominant": 46,
+    "wet_rising": 47,
+    "flood": 48
+  },
+  "artifacts": {
+    "summary": "reference_results/optimization_summary.csv",
+    "time_series": "reference_results/optimization_time_series.csv",
+    "figures": "figures/"
+  },
+  "stability_note": "These optimization results are references and may vary slightly across supported environments."
+}

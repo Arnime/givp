@@ -143,3 +143,14 @@ class SimulationResult:
     maximum_level_penalty: float
     level_penalty: float
     objective: float
+
+
+@dataclass(frozen=True)
+class PowerScheduleResult:
+    """Hydraulic simulation and delivery diagnostics for a power schedule."""
+
+    simulation: SimulationResult
+    target_power_mw: NDArray[np.float64]
+    delivered_power_mw: NDArray[np.float64]
+    power_deficit_mw: NDArray[np.float64]
+    dispatch_status: NDArray[np.str_]

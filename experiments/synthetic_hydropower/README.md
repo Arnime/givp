@@ -1,22 +1,29 @@
 # Cascata hidrelétrica sintética
 
-Experimento acadêmico reproduzível para otimizar a geração de duas usinas
-hidrelétricas fictícias em cascata. Os notebooks e o benchmark pertencem a
+Experimento acadêmico reproduzível para estudar o balanço de duas usinas
+hidrelétricas sintéticas em cascata. Os notebooks e o benchmark pertencem a
 `experiments/`; a implementação reutilizável é disponibilizada como o exemplo
 opcional `givp.examples.synthetic_hydropower` do pacote GIVP.
 
 ## Independência do material proprietário
 
-Este experimento não reutiliza código, planilhas, coeficientes, estatísticas,
-nomes de ativos ou regras operacionais do SOG2/CERAN. Todos os parâmetros,
-cenários e relações físicas são fictícios e foram definidos apenas para fins
-didáticos e reprodutíveis.
+Os parâmetros são sintéticos e perturbados, ancorados em faixas publicadas nos
+Planos de Ação de Emergência das UHEs Monte Claro e 14 de Julho. As usinas A e
+B são aproximações acadêmicas inspiradas nessas faixas públicas; não são
+réplicas operacionais. O inventário versionado distingue referências públicas,
+transformações sintéticas documentadas e hipóteses inteiramente sintéticas.
+
+Nenhum código, série histórica, tabela operacional ou coeficiente proprietário
+do SOG2 foi incorporado. Essa rastreabilidade sustenta uma avaliação de
+independência técnica, mas não é parecer jurídico e não substitui a análise das
+reivindicações da patente, dos contratos e de eventuais obrigações de sigilo ou
+NDA.
 
 ## Modelo
 
-Os rótulos A e B, os valores e as séries não representam ativos reais. O
-experimento preserva apenas relações físicas genéricas necessárias para estudar
-uma cascata curta, sem pretensão de reproduzir a operação de qualquer ativo.
+Os rótulos A e B não identificam ativos. Os valores não são dados operacionais;
+foram arredondados, deslocados ou construídos a partir de faixas públicas para
+preservar apenas relações físicas genéricas de uma cascata curta.
 
 ### Elementos preservados
 
@@ -34,11 +41,12 @@ uma cascata curta, sem pretensão de reproduzir a operação de qualquer ativo.
 - Duas usinas fictícias, uma turbina agregada por usina e período horário fixo.
 - Afluências sintéticas: `y_B` agrega qualquer contribuição local de B; não há
   modelagem espacial de sub-bacias, previsão hidrológica ou dados observados.
-- Polinômios de quarto grau sintéticos e normalizados, sem calibração contra
-  curvas reais, tabelas operativas ou coeficientes proprietários.
+- Polinômios de quarto grau sintéticos e normalizados, construídos para lembrar
+  a forma física esperada sem copiar curvas, tabelas ou coeficientes operativos.
 - Rendimento constante; não há curvas de colina, perdas hidráulicas explícitas,
-  múltiplas máquinas, zonas de operação, tempos mínimos de operação, rampas ou
-  custos.
+  múltiplas máquinas, zonas proibidas, rampas, preços ou custos operativos. A
+  permanência de oito horas é apenas uma penalidade suave de chaveamento, não
+  uma restrição física de tempo mínimo.
 - O vertimento só é ativado quando o nível provisório supera o máximo; portanto,
   é uma regra didática de controle de armazenamento, não uma regra operacional.
 - A função objetivo contém benefício de energia, penalidade quadrática de nível
@@ -74,12 +82,14 @@ Todas as parcelas de vertimento, inclusive a sanitária, só são liberadas quan
 o nível provisório de montante supera o limite máximo; a defluência liberada
 segue de A para B. A potência é
 `P = 0,00981 ηHQ`, com `g = 9,81 m/s²`.
-A função minimizada é `-energia_gerada + penalidade_de_nível`: a única
-penalidade é quadrática para níveis de montante abaixo do mínimo ou acima do
-máximo. A cada período e para cada usina, o simulador acumula separadamente
+A função usada no experimento de otimização é `-energia_gerada +
+penalidade_de_nível + penalidade_de_chaveamento + penalidade_de_troca_antecipada`.
+A penalidade física de reservatório é quadrática para níveis de montante abaixo
+do mínimo ou acima do máximo. A cada período e para cada usina, o simulador acumula separadamente
 `w·max(0, nível_mínimo − nível_final)²` e
 `w·max(0, nível_final − nível_máximo)²`; a soma das duas parcelas é a
-penalidade de nível usada pela função objetivo.
+penalidade de nível. As duas parcelas de chaveamento são preferências suaves do
+experimento e não alteram as equações de conservação de massa.
 
 Como há uma turbina agregada por usina, o estado `ligada/desligada` é definido
 pela vazão turbinada. Cada mudança entre estados em horas consecutivas recebe a
@@ -96,9 +106,9 @@ sensibilidade.
 
 O arquivo empacotado
 `python/src/givp/examples/synthetic_hydropower/configs/base.json` contém
-exclusivamente os parâmetros fictícios das duas usinas. O horizonte, os sete
-cenários sintéticos e os parâmetros do GIVP ficam declarados no notebook para
-tornar explícita a configuração do experimento.
+exclusivamente os parâmetros das duas usinas sintéticas. Horizonte, cenários,
+seeds e protocolo pertencem às definições versionadas em `benchmarks/`; os
+parâmetros do GIVP aparecem somente na seção opcional do notebook.
 
 Os parâmetros finais documentados para o GIVP na dissertação são usados no
 notebook: 40 iterações, $\alpha=0{,}17$, VND=15, ILS=5, perturbação=8,
@@ -115,12 +125,10 @@ poetry install -E hydropower -E notebooks
 poetry run pytest tests/examples/synthetic_hydropower
 ```
 
-Abra e execute o notebook para rodar os cenários. Antes da otimização, sua
-célula de configuração informa quantos cenários serão executados e seus nomes.
-Após cada cenário concluído, o notebook atualiza os resultados em `output/`:
-`benchmark_summary.csv`, `benchmark_time_series.csv` e
-`benchmark_manifest.json`. O manifesto registra as seeds e o checksum da
-configuração física fictícia usada.
+Abra e execute o notebook para carregar primeiro o protocolo
+`deterministic_balance` do benchmark v1.0.0, sem chamar o GIVP. Ele informa os sete cenários e apresenta a matriz
+6×6 de potência de cada um. A comparação com o GIVP fica em uma seção opcional
+e não modifica os CSVs canônicos.
 
 ## Notebook
 
@@ -129,23 +137,15 @@ Ele importa o modelo pelo namespace `givp.examples.synthetic_hydropower`, usa
 automaticamente a configuração-base empacotada e cria
 `experiments/synthetic_hydropower/output/` para os resultados locais.
 
-O módulo experimental `notebooks/figures.py` concentra a geração das três
-figuras de cada cenário (potência, vazões e níveis). Ele permanece junto ao
+O módulo experimental `notebooks/figures.py` concentra as figuras dos protocolos
+`givp_optimization` e `deterministic_balance` do benchmark v1.0.0. Ele permanece junto ao
 notebook porque transforma os resultados apenas para apresentação e não faz
 parte da API nem do wheel do GIVP.
 
-O mesmo modelo pode ser executado sem notebook, sempre com caminhos explícitos:
-
-```powershell
-cd python
-poetry run synthetic-hydropower --config src/givp/examples/synthetic_hydropower/configs/base.json --output-dir ../experiments/synthetic_hydropower/output --seed 42
-```
-
-Por segurança, o comando reproduz somente o caso oficial do benchmark: o
-`base.json` empacotado e a pasta `output/` acima formam uma lista explícita de
-caminhos permitidos. Experimentos com outros arquivos podem usar diretamente
-`load_experiment_config` e `optimize_scenario` pela API Python, sob controle do
-programa chamador.
+O cálculo determinístico pode ser refeito sem notebook pela API
+`givp.examples.synthetic_hydropower.benchmark`, usando explicitamente os
+caminhos de `benchmarks/v1.0.0/config/base.json`,
+`protocols/deterministic_balance/definition.json` e `inputs/inflows.csv`.
 
 ## Benchmark público e preservação
 

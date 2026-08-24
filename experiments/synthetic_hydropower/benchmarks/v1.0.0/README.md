@@ -1,40 +1,64 @@
 # Benchmark sintético de cascata hidrelétrica — v1.0.0
 
-Esta é a primeira versão congelada do benchmark acadêmico de duas usinas
-fictícias em cascata. Ela contém sete cenários de 24 horas e uma turbina
-agregada por usina.
+Esta é a única versão do benchmark acadêmico. Ela compartilha a mesma cascata,
+os mesmos parâmetros físicos e as mesmas sete afluências congeladas entre dois
+protocolos complementares.
 
-## Conteúdo da versão
+## Protocolos
 
-- `benchmark_definition.json`: cenários, seeds, horizonte, penalidades e
-  hiperparâmetros do GIVP;
-- `config/base.json`: cópia imutável dos parâmetros físicos sintéticos;
-- `reference_results/`: resultados de referência gerados com esta definição.
-- `figures/`: referência visual gerada exclusivamente dos resultados congelados.
+### `deterministic_balance`
 
-Os arquivos em `reference_results/` são:
+É a referência física canônica e não executa o GIVP. Para cada cenário, cruza
+seis metas constantes de potência em A com seis em B durante 24 horas. São 36
+combinações por cenário e 252 casos no total.
 
-- `benchmark_summary.csv`, com métricas agregadas por cenário;
-- `benchmark_time_series.csv`, com a série horária de cada usina;
-- `benchmark_manifest.json`, com a rastreabilidade da execução.
+O protocolo registra potência solicitada e realizada, déficit, status, vazões,
+parcelas de vertimento, defluência, volumes, níveis de montante e jusante,
+queda, penalidades e resíduo de massa. Seus CSVs usam seis casas decimais e são
+reproduzíveis a partir das afluências congeladas.
 
-Para cada cenário, `figures/` contém três imagens PNG: potência das duas
-usinas, vazões por usina e níveis de montante com seus limites normais. As
-imagens são auxiliares de validação visual; CSV e manifesto continuam sendo a
-referência numérica do benchmark.
+### `givp_optimization`
 
-## Regra de imutabilidade
+É um experimento derivado que usa o GIVP para escolher solicitações de vazão.
+O balanço hidráulico continua sendo calculado pelo mesmo modelo sintético. Seus
+resultados são referências estocásticas e podem apresentar pequenas diferenças
+entre ambientes; não definem os resultados canônicos do balanço determinístico.
 
-Esta pasta não deve ser alterada depois de publicada. Mudanças nos cenários,
-na configuração física, nas equações, no GIVP ou nos resultados devem criar
-uma nova versão, como `v1.1.0` ou `v2.0.0`.
+## Estrutura
 
-## Reprodução
+```text
+v1.0.0/
+  benchmark_definition.json
+  benchmark_manifest.json
+  data_provenance.json
+  config/base.json
+  inputs/inflows.csv
+  protocols/
+    deterministic_balance/
+      definition.json
+      protocol_manifest.json
+      inputs/power_schedules.csv
+      reference_results/
+      figures/
+    givp_optimization/
+      definition.json
+      protocol_manifest.json
+      reference_results/
+      figures/
+```
 
-Use o notebook indicado em `benchmark_definition.json`, com as dependências
-declaradas em `pyproject.toml`. A configuração e os resultados de referência
-devem ter o mesmo checksum SHA-256 registrado no manifesto.
+O manifesto raiz registra o SHA-256 de todos os JSONs, CSVs e PNGs canônicos.
+Cada protocolo também possui definição e manifesto próprios para deixar claro
+se o resultado veio do equacionamento determinístico ou de uma execução do
+GIVP.
 
-Todos os dados, rótulos, coeficientes e regras operacionais deste benchmark são
-fictícios. A estrutura física é didática e não reproduz a operação de ativos
-reais.
+## Proveniência e independência
+
+Os parâmetros são sintéticos e perturbados, ancorados em faixas públicas. As
+usinas A e B são aproximações acadêmicas inspiradas em informações publicadas
+sobre Monte Claro e 14 de Julho, sem representar sua operação oficial.
+
+Nenhum código, série histórica, tabela operacional ou coeficiente proprietário
+do SOG2 foi incorporado. Essa organização documenta independência técnica, mas
+não constitui parecer jurídico e não substitui análise de patente, contratos ou
+obrigações de confidencialidade.
