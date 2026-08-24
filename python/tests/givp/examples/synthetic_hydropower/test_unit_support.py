@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
+from unittest.mock import Mock
 
 import numpy as np
 import pytest
@@ -251,15 +252,7 @@ def test_runner_loads_split_configuration_and_uses_optimizer_as_dependency(
     )
     experiment = runner_module.load_experiment_config(config_path, definition_path)
     simulated = SimpleNamespace(objective=-1.0)
-    calls: list[np.ndarray] = []
-
-    def fake_simulate(
-        _cascade_config: CascadeConfig,
-        _inflows: np.ndarray,
-        requested: np.ndarray,
-    ) -> Any:
-        calls.append(requested.copy())
-        return simulated
+    simulate_mock = Mock(return_value=simulated)
 
     def fake_givp(objective: Any, *, bounds: Any, config: Any, seed: int) -> Any:
         vector = np.zeros(len(bounds))
@@ -269,12 +262,13 @@ def test_runner_loads_split_configuration_and_uses_optimizer_as_dependency(
         return SimpleNamespace(x=vector)
 
     monkeypatch.setattr(runner_module, "generate_inflows", lambda *_args: np.ones((2, 2)))
-    monkeypatch.setattr(runner_module, "simulate_cascade", fake_simulate)
+    monkeypatch.setattr(runner_module, "simulate_cascade", simulate_mock)
     monkeypatch.setattr(runner_module, "givp", fake_givp)
+
+    with pytest.raises(ValueError, match="unknown scenario"):
+        runner_module.optimize_scenario(experiment, "missing", seed=7)
 
     result = runner_module.optimize_scenario(experiment, "scenario", seed=7)
 
-    assert result is simulated
-    assert len(calls) == 2
-    with pytest.raises(ValueError, match="unknown scenario"):
-        runner_module.optimize_scenario(experiment, "missing", seed=7)
+    assert simulate_mock.call_count == 2
+    assert result.objective == pytest.approx(-1.0)

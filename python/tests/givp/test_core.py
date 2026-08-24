@@ -407,9 +407,11 @@ def test_build_random_and_heuristic_candidates_respect_bounds() -> None:
     upper = np.array([1.0, 1.0, 5.0, 5.0])
     for _ in range(5):
         sol = _build_random_candidate(4, 2, lower, upper, rng)
-        assert np.all(sol >= lower) and np.all(sol <= upper)
+        assert np.all(sol >= lower)
+        assert np.all(sol <= upper)
         sol = _build_heuristic_candidate(4, 2, lower, upper, rng)
-        assert np.all(sol >= lower - 1e-9) and np.all(sol <= upper + 1e-9)
+        assert np.all(sol >= lower - 1e-9)
+        assert np.all(sol <= upper + 1e-9)
 
 
 def test_build_heuristic_candidate_collapsed_int_bounds() -> None:
