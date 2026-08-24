@@ -1,14 +1,13 @@
 # SPDX-FileCopyrightText: 2026 Arnaldo Mendes Pires Junior
 # SPDX-License-Identifier: MIT
-"""Smoke tests for the benchmark scripts (tune_hyperparams, run_literature_comparison,
-generate_report).
+"""Smoke tests for tuning, comparison, and reporting commands.
 
 These tests exercise the full CLI pipeline with minimal settings so they
 complete in a few seconds on any machine.  They are marked ``slow`` and
 excluded from the default test run to keep CI fast.
 
 Run explicitly with:
-    pytest -m slow python/tests/test_benchmark_scripts.py
+    pytest -m slow tests/benchmark/test_commands.py
 """
 
 from __future__ import annotations

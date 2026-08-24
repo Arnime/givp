@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: 2026 Arnaldo Mendes Pires Junior
 # SPDX-License-Identifier: MIT
-"""Result-field invariant tests — cross-language regression guard.
+"""Result-field invariants used as a cross-language regression guard.
 
 These tests assert structural and logical invariants that MUST hold in every
 language port of GIVP (Python, Julia, Rust, C++, R).  They are intentionally

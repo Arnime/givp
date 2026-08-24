@@ -1,4 +1,4 @@
-"""Regression tests for the frozen deterministic benchmark protocol."""
+"""Regression tests for the frozen deterministic hydropower protocol."""
 
 import json
 from hashlib import sha256

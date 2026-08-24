@@ -84,7 +84,7 @@ jobs:
         run: |
           bash .github/scripts/poetry-install.sh --only main,dev,benchmarks
       - name: Lint
-        run: poetry -C python run ruff check src tests benchmarks fuzz
+        run: poetry -C python run python -m ruff check src tests benchmarks fuzz
       - name: Type-check
         # Mypy is configured to validate the package's Python 3.10 baseline.
         # Run it once on a stable interpreter; the full matrix still exercises
@@ -229,7 +229,7 @@ jobs:
         # Run only test_properties.py with a generous timeout; --no-cov keeps it fast.
         # The Hypothesis database is ephemeral in CI; this is intentional.
         run: |
-          poetry -C python run pytest tests/test_properties.py -v \
+          poetry -C python run pytest tests/givp/test_properties.py -v \
             --no-cov \
             --override-ini="addopts=" \
             -p no:randomly
@@ -254,7 +254,7 @@ jobs:
           bash .github/scripts/poetry-install.sh --only main,dev,benchmarks
       - name: Benchmark smoke tests
         run: |
-          poetry -C python run pytest -m slow tests/test_benchmark_scripts.py -v \
+          poetry -C python run pytest -m slow tests/benchmark/test_commands.py -v \
             --override-ini="addopts="
 
       - name: Run literature comparison smoke test
@@ -297,7 +297,7 @@ jobs:
           bash .github/scripts/poetry-install.sh --only main,dev
       - name: Run convergence quality gate
         run: |
-          poetry -C python run pytest -m quality_gate tests/test_algorithm_quality.py \
+          poetry -C python run pytest -m quality_gate tests/benchmark/test_quality.py \
             -v \
             --no-cov \
             --override-ini="addopts=" \
@@ -323,7 +323,7 @@ jobs:
       - name: Run performance benchmarks
         run: |
           mkdir -p python/benchmarks/.results
-          poetry -C python run pytest benchmarks/tests/test_benchmark.py \
+          poetry -C python run pytest tests/benchmark/test_performance.py \
             --benchmark-only \
             --benchmark-autosave \
             --benchmark-storage=python/benchmarks/.results \
@@ -367,7 +367,7 @@ jobs:
         run: |
           # Keep CI mutation tests very fast: smoke scope only.
           MUTATE_PATHS="src/givp/api"
-          TEST_RUNNER="poetry run python -m pytest tests/test_api.py -q --no-cov -x"
+          TEST_RUNNER="poetry run python -m pytest tests/givp/test_api.py -q --no-cov -x"
           cd python
           poetry run mutmut run \
             --paths-to-mutate "$MUTATE_PATHS" \
@@ -423,7 +423,7 @@ jobs:
           fi
       - name: Lint
         if: steps.install_prerelease.outputs.env_ready == 'true'
-        run: poetry -C python run ruff check src tests benchmarks fuzz
+        run: poetry -C python run python -m ruff check src tests benchmarks fuzz
       - name: Type-check
         if: steps.install_prerelease.outputs.env_ready == 'true'
         run: echo "Skipping mypy on Python pre-release due to upstream dependency resolution issue; type-checking is enforced in the stable matrix."

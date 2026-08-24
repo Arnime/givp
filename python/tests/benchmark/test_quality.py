@@ -4,7 +4,7 @@
 
 These tests verify that GIVP actually *converges* on standard benchmark
 functions, not merely that it runs without errors.  They complement the
-structural invariant tests (test_result_invariants.py) by asserting that
+structural invariant tests (``tests/givp/test_result.py``) by asserting that
 the optimizer achieves a minimum solution quality threshold.
 
 Design
@@ -26,7 +26,7 @@ threshold is violated, the optimizer has regressed and the CI job will fail.
 
 Marks:
     ``quality_gate`` — can be run in isolation with:
-    pytest -m quality_gate python/tests/test_algorithm_quality.py
+    pytest -m quality_gate tests/benchmark/test_quality.py
 """
 
 from __future__ import annotations

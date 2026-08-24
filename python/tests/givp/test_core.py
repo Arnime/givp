@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: 2026 Arnaldo Mendes Pires Junior
 # SPDX-License-Identifier: MIT
-"""Tests for ``givp.core`` internals: helpers, classes, neighborhoods, search."""
+"""Tests for helpers, classes, neighborhoods, and search in ``givp.core``."""
 
 from __future__ import annotations
 

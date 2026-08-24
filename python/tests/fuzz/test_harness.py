@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: 2026 Arnaldo Mendes Pires Junior
 # SPDX-License-Identifier: MIT
-"""Tests for the backend-independent Python fuzz target."""
+"""Tests for the backend-independent Python fuzzing harness."""
 
 from __future__ import annotations
 

@@ -33,5 +33,5 @@ print(best_value)  # => 220
 print(selection)    # => array([0, 1, 1])
 ```
 
-Veja também os testes em `tests/test_benchmarks.py` para exemplos adicionais
+Veja também os testes em `tests/benchmark/test_problems.py` para exemplos adicionais
 de uso e validação automatizada.

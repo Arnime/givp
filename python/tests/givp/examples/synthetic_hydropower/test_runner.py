@@ -1,4 +1,4 @@
-"""Tests for standalone configuration loading and optimization."""
+"""Tests for standalone hydropower configuration and optimization."""
 
 import json
 from pathlib import Path

@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: 2026 Arnaldo Mendes Pires Junior
 # SPDX-License-Identifier: MIT
-"""Tests for the public ``givp`` API (``givp`` and ``GIVPOptimizer``)."""
+"""Tests for the public ``givp`` API and ``GIVPOptimizer``."""
 
 from __future__ import annotations
 

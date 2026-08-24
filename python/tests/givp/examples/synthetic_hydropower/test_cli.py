@@ -1,4 +1,4 @@
-"""Tests for the synthetic hydropower command-line path boundary."""
+"""Tests for the synthetic hydropower command-line boundary."""
 
 from pathlib import Path
 

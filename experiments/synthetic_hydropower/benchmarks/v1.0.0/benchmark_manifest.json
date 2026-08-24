@@ -21,7 +21,7 @@
     "protocols/deterministic_balance/figures/wet_rising_factorial_heatmap.png": "ff14ee9d8874276fff286bcbebe30121231a071810ddab179e917a2942016d49",
     "protocols/deterministic_balance/figures/wet_rising_representative_trajectories.png": "b8d3d93100bcebc6d27fdf3a47b1eaa000f313a031c93d21faf7e6d3d0f24331",
     "protocols/deterministic_balance/inputs/power_schedules.csv": "30db862fcb4dc44d44bd422de4a88839d5f843dd656b9bb4ce082959e116960c",
-    "protocols/deterministic_balance/protocol_manifest.json": "ac9a988cd78e40fe9d591a3223ec728ae4c5a0bf49d497e79a39471254ce2acc",
+    "protocols/deterministic_balance/protocol_manifest.json": "9010d13655d62267a1db499789d4a9a19a030606ee93cdab502303fc9a204d1a",
     "protocols/deterministic_balance/reference_results/balance_summary.csv": "a157afb508e357043f8111b5cf20f5b75cce621c35d7655c626d365f156c933c",
     "protocols/deterministic_balance/reference_results/balance_time_series.csv": "d77f8605df292885610503eb292d719d05980426b52d6df90d3a2d45111c9cdb",
     "protocols/givp_optimization/definition.json": "cc06323245391be946d56c38c69b952acfabb4133d44cfcf130dbe120a1114ae",

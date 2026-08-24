@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: 2026 Arnaldo Mendes Pires Junior
 # SPDX-License-Identifier: MIT
-"""Unit tests for the functions in `givp.examples.benchmark`.
+"""Unit tests for problems exposed by ``givp.examples.benchmark``.
 
 These tests assert that the classic functions return their known minima
 at the canonical inputs (e.g. zeros or ones) and exercise the knapsack DP

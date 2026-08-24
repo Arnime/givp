@@ -57,7 +57,7 @@ poetry run python -m benchmarks.publishing \
 O microbenchmark é opt-in e não pertence à suíte funcional padrão:
 
 ```powershell
-poetry run pytest benchmarks/tests/test_benchmark.py \
+poetry run pytest -m performance tests/benchmark/test_performance.py \
   --benchmark-only --benchmark-autosave
 ```
 

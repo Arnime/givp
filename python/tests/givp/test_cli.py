@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: 2026 Arnaldo Mendes Pires Junior
 # SPDX-License-Identifier: MIT
-"""Tests for the ``givp`` CLI (``givp run``)."""
+"""Tests for the ``givp run`` command-line interface."""
 
 from __future__ import annotations
 
@@ -9,12 +9,12 @@ import io
 import json
 import subprocess
 import sys
-from pathlib import Path
+from importlib.resources import files
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-SPHERE_FILE = str(Path(__file__).parent / "fixtures" / "sphere.py")
+SPHERE_FILE = str(files("tests.fixtures").joinpath("sphere.py"))
 BOUNDS_1D = "[[-5,5]]"
 BOUNDS_4D = "[[-5,5],[-5,5],[-5,5],[-5,5]]"
 FAST_CONFIG = json.dumps(

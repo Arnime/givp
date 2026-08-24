@@ -122,7 +122,7 @@ foram publicados na tabela de resultados e permanecem nos padrões do GIVP.
 ```powershell
 cd python
 poetry install -E hydropower -E notebooks
-poetry run pytest tests/examples/synthetic_hydropower
+poetry run pytest tests/givp/examples/synthetic_hydropower
 ```
 
 Abra e execute o notebook para carregar primeiro o protocolo

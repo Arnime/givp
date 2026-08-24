@@ -23,25 +23,25 @@ echo "[python] Coverage gate (>=95%)"
 pytest --cov=givp --cov-report=xml:coverage-python.xml --cov-fail-under=95
 
 echo "[python] Property-based tests"
-pytest python/tests/test_properties.py -v \
+pytest python/tests/givp/test_properties.py -v \
   --no-cov \
   --override-ini="addopts=" \
   -p no:randomly
 
 echo "[python] Algorithm quality gate"
-pytest -m quality_gate python/tests/test_algorithm_quality.py \
+pytest -m quality_gate python/tests/benchmark/test_quality.py \
   -v \
   --no-cov \
   --override-ini="addopts=" \
   --tb=short
 
 echo "[python] Benchmark smoke tests"
-pytest -m slow python/tests/test_benchmark_scripts.py -v \
+pytest -m slow python/tests/benchmark/test_commands.py -v \
   --override-ini="addopts="
 
 echo "[python] Benchmark regression"
 mkdir -p python/benchmarks/.results
-pytest python/benchmarks/test_benchmarks.py \
+pytest python/tests/benchmark/test_performance.py \
   --benchmark-only \
   --benchmark-autosave \
   --benchmark-storage=python/benchmarks/.results \
@@ -56,7 +56,7 @@ if [ "${RUN_MUTATION:-false}" = "true" ]; then
   fi
 
   MUTATE_PATHS="python/src/givp/api.py"
-  TEST_RUNNER="python -m pytest python/tests/test_api.py -q --no-cov -x"
+  TEST_RUNNER="python -m pytest python/tests/givp/test_api.py -q --no-cov -x"
   mutmut run \
     --paths-to-mutate "$MUTATE_PATHS" \
     --runner "$TEST_RUNNER" \

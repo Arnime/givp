@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: 2026 Arnaldo Mendes Pires Junior
 # SPDX-License-Identifier: MIT
-"""Smoke tests for benchmark documentation publishing."""
+"""Smoke tests for publishing benchmark documentation."""
 
 from __future__ import annotations
 

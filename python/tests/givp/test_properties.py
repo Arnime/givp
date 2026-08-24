@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: 2026 Arnaldo Mendes Pires Junior
 # SPDX-License-Identifier: MIT
-"""Property-based tests using Hypothesis.
+"""Property-based tests for the public GIVP API using Hypothesis.
 
 These tests exercise the public API with randomly generated inputs to surface
 edge cases that the deterministic suite in ``test_api.py`` may miss.

@@ -1,4 +1,4 @@
-"""Tests for benchmark result persistence."""
+"""Tests for synthetic hydropower benchmark artifact persistence."""
 
 import json
 from hashlib import sha256
@@ -40,6 +40,12 @@ def test_save_benchmark_results_writes_auditable_artifacts(tmp_path: Path) -> No
     assert manifest["scenario_seeds"] == {"dry_stable": 42}
     assert manifest["saved_scenarios"] == ["dry_stable"]
     assert len(artifacts.time_series_path.read_text(encoding="utf-8").splitlines()) == 7
+    for artifact_path in (
+        artifacts.summary_path,
+        artifacts.time_series_path,
+        artifacts.manifest_path,
+    ):
+        assert b"\r\n" not in artifact_path.read_bytes()
 
 
 def test_promote_benchmark_version_freezes_matching_artifacts(tmp_path: Path) -> None:

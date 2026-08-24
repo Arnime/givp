@@ -121,10 +121,11 @@ include = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-q --cov=givp --cov-report=term-missing --cov-fail-under=95 --strict-markers -m 'not slow and not quality_gate'"
+addopts = "-q --cov=givp --cov-report=term-missing --cov-fail-under=95 --strict-markers -m 'not slow and not quality_gate and not performance'"
 markers = [
     "slow: tests that are not run by default; use -m slow to enable",
     "quality_gate: statistical convergence gate — verifies algorithm achieves minimum quality threshold; use -m quality_gate to run",
+    "performance: opt-in pytest-benchmark performance measurements",
 ]
 
 [tool.pytest-benchmark]

@@ -47,7 +47,9 @@ def benchmarks(session: nox.Session) -> None:
     session.install("-e", _DEV)
     session.run(
         "pytest",
-        "benchmarks/tests/test_benchmark.py",
+        "-m",
+        "performance",
+        "tests/benchmark/test_performance.py",
         "--benchmark-only",
         "--benchmark-autosave",
         *session.posargs,

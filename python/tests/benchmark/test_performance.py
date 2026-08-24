@@ -4,7 +4,7 @@
 
 Run with::
 
-    pytest benchmarks/tests/test_benchmark.py --benchmark-only
+    pytest -m performance tests/benchmark/test_performance.py --benchmark-only
 
 These benchmarks are excluded from the default test discovery (see
 ``pyproject.toml``); run them on demand to track regressions.
@@ -18,6 +18,8 @@ import numpy as np
 import pytest
 
 from givp import GIVPConfig, OptimizeResult, givp
+
+pytestmark = pytest.mark.performance
 
 
 def sphere(x: np.ndarray) -> float:
