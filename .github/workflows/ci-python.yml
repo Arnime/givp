@@ -18,6 +18,12 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   POETRY_VIRTUALENVS_CREATE: "false"
 
+defaults:
+  run:
+    # snok/install-poetry exposes $HOME/.local/bin through Bash on Windows.
+    # Using one shell across the OS matrix keeps Poetry available in later steps.
+    shell: bash
+
 permissions:
   contents: read
 
