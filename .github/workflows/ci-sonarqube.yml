@@ -102,7 +102,7 @@ jobs:
 
       - name: Install cargo-llvm-cov
         if: steps.preflight.outputs.enabled == 'true'
-        uses: taiki-e/install-action@6c6fd71fe4fb72c3697d269963d0e15df8adedad # v2.85.10
+        uses: taiki-e/install-action@ba47c86ac325773530516bb756137ac718732518 # v2.86.5
         with:
           tool: cargo-llvm-cov
 
@@ -134,7 +134,7 @@ jobs:
 
       - name: SonarQube scan
         if: steps.preflight.outputs.enabled == 'true'
-        uses: SonarSource/sonarqube-scan-action@7006c4492b2e0ee0f816d36501671557c97f5995 # v8.1.0
+        uses: SonarSource/sonarqube-scan-action@22918119ff8e1ca75a623e15c8296b6ea4fbe28f # v8.2.1
         env:
           SONAR_TOKEN: ${{ secrets['SONAR_TOKEN'] }}
           SONAR_HOST_URL: ${{ secrets['SONAR_HOST_URL'] }}
