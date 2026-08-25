@@ -10,6 +10,10 @@ on:
         description: "Release tag to synchronize"
         required: true
         type: string
+    secrets:
+      REGISTRY_FORK_TOKEN:
+        description: "Optional repository-level fallback for registry forks"
+        required: false
   push:
     tags: ["v*"]
     branches: [main]

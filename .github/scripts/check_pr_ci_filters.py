@@ -313,6 +313,31 @@ def _check_release_services() -> list[str]:
         errors.append(
             "sync-cpp-registries.yml: environment secret cannot be a required call secret"
         )
+    secret_contracts = (
+        (
+            _read(".github/workflows/publish-rust.yml"),
+            _release_job_block(release, "publish-rust"),
+            "CARGO_REGISTRY_TOKEN",
+        ),
+        (
+            sync_cpp,
+            _release_job_block(release, "sync-cpp-registries"),
+            "REGISTRY_FORK_TOKEN",
+        ),
+    )
+    for workflow, caller, secret_name in secret_contracts:
+        errors.extend(
+            _missing_release_snippets(
+                workflow,
+                (f"{secret_name}:", "required: false"),
+                f"reusable release secret {secret_name!r} misses {{snippet!r}}",
+            )
+        )
+        expected_forwarding = f"{secret_name}: ${{{{ secrets.{secret_name} }}}}"
+        if expected_forwarding not in caller:
+            errors.append(f"release.yml: {secret_name} is not explicitly forwarded")
+        if "secrets: inherit" in caller:
+            errors.append(f"release.yml: {secret_name} must not expose unrelated secrets")
     return errors
 
 
