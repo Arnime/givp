@@ -55,9 +55,21 @@ jobs:
             echo "::error::Expected a vX.Y.Z semantic-version tag, got '$TAG'."
             exit 1
           fi
-          python .github/scripts/validate_unified_version.py --root .
-          if [[ "$(python .github/scripts/validate_unified_version.py --root .)" != "$VERSION" ]]; then
-            echo "::error::Tag $TAG does not match the unified manifest version."
+          CMAKE_VERSION="$(python - <<'PY'
+          import re
+          from pathlib import Path
+
+          content = Path("cpp/CMakeLists.txt").read_text(encoding="utf-8")
+          match = re.search(
+              r"project\(\s*givp\s+VERSION\s+([0-9A-Za-z.+-]+)", content
+          )
+          if match is None:
+              raise SystemExit("Unable to read the version from cpp/CMakeLists.txt.")
+          print(match.group(1))
+          PY
+          )"
+          if [[ "$CMAKE_VERSION" != "$VERSION" ]]; then
+            echo "::error::Tag $TAG does not match the CMake project version $CMAKE_VERSION."
             exit 1
           fi
           echo "semver=$VERSION" >> "$GITHUB_OUTPUT"
@@ -88,7 +100,8 @@ jobs:
           cmake -S cpp -B cpp/build/release-test -DCMAKE_BUILD_TYPE=Release \
             -DGIVP_BUILD_TESTS=ON -DGIVP_BUILD_BENCHMARKS=OFF -DGIVP_BUILD_FUZZ=OFF
           cmake --build cpp/build/release-test --config Release
-          cmake --build cpp/build/release-test --config Release --target RUN_TESTS
+          ctest --test-dir cpp/build/release-test --build-config Release \
+            --output-on-failure
 
   validate-package:
     name: Validate CMake package installation
@@ -128,9 +141,17 @@ jobs:
         run: |
           set -euo pipefail
           TARBALL="givp-cpp-${VERSION}.tar.gz"
+          CHANGELOG_PATH="docs/project/changelog.md"
+          if [[ ! -f "$CHANGELOG_PATH" ]]; then
+            CHANGELOG_PATH="CHANGELOG.md"
+          fi
+          if [[ ! -f "$CHANGELOG_PATH" ]]; then
+            echo "::error::No changelog was found for the release archive."
+            exit 1
+          fi
           tar --exclude='.git' --exclude='build*' --exclude='.venv' --exclude='target' \
             --exclude='node_modules' --exclude='*.pyc' -czf "$TARBALL" \
-            cpp/ LICENSE docs/project/changelog.md CODE_OF_CONDUCT.md
+            cpp/ LICENSE "$CHANGELOG_PATH" CODE_OF_CONDUCT.md
           sha256sum "$TARBALL" > "${TARBALL}.sha256"
           echo "name=cpp-release-artifacts-${VERSION}" >> "$GITHUB_OUTPUT"
           echo "hashes=$(sha256sum "$TARBALL" | base64 -w0)" >> "$GITHUB_OUTPUT"

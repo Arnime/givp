@@ -467,6 +467,7 @@ jobs:
           GH_REF_NAME: ${{ github.ref_name }}
           INPUT_TAG: ${{ inputs.tag }}
         run: |
+          set -uo pipefail
           if [ "$GH_EVENT_NAME" = "workflow_dispatch" ]; then
             TAG="$(echo "$INPUT_TAG" | tr -d '[:space:]')"
           else
@@ -476,9 +477,13 @@ jobs:
 
           echo "Checking r-universe for givp version ${VERSION}"
           for i in $(seq 1 30); do
-            if curl -fsSL "https://arnime.r-universe.dev/givp/json" | grep -q '"Version":"'"${VERSION}"'"'; then
-              echo "✓ r-universe published givp ${VERSION}"
-              exit 0
+            if METADATA="$(curl -fsSL "https://arnime.r-universe.dev/givp/json")"; then
+              if PUBLISHED_VERSION="$(printf '%s' "$METADATA" | python -c \
+                'import json, sys; print(json.load(sys.stdin).get("Version", ""))')" \
+                && [ "$PUBLISHED_VERSION" = "$VERSION" ]; then
+                echo "✓ r-universe published givp ${VERSION}"
+                exit 0
+              fi
             fi
             echo "Attempt ${i}/30: version not visible yet; waiting 20s"
             sleep 20
