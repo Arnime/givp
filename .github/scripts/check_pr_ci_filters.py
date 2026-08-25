@@ -294,6 +294,13 @@ def _check_release_services() -> list[str]:
             "release-provenance.yml: missing repository-safe asset check {snippet!r}",
         )
     )
+    publish_python = _read(".github/workflows/publish-python.yml")
+    if "contents: read" in publish_python:
+        errors.append(
+            "publish-python.yml: PyPI publication must not request repository contents"
+        )
+    if "id-token: write" not in publish_python:
+        errors.append("publish-python.yml: PyPI trusted publishing requires OIDC")
     return errors
 
 
