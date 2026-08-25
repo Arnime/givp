@@ -301,3 +301,4 @@ build = ">=1.4.4"
 [tool.poetry.group.release.dependencies]
 build = ">=1.0"
 cyclonedx-bom = ">=4.0"
+installer = "==1.0.1"

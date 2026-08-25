@@ -20,7 +20,6 @@ jobs:
   setup:
     runs-on: ubuntu-latest
     outputs:
-      toolchains: ${{ steps.pick.outputs.toolchains }}
       source_changed: ${{ steps.pick.outputs.source_changed }}
       config_changed: ${{ steps.pick.outputs.config_changed }}
       validation_required: ${{ steps.pick.outputs.validation_required }}
@@ -37,10 +36,7 @@ jobs:
             source_changed=false
             config_changed=false
             if git diff --name-only "$PR_BASE" HEAD -- cpp/include cpp/tests cpp/benchmarks cpp/fuzz | grep -q .; then
-              echo 'toolchains=[{"os":"ubuntu-latest","compiler":"gcc","cc":"gcc","cxx":"g++"},{"os":"ubuntu-latest","compiler":"clang","cc":"clang","cxx":"clang++"},{"os":"windows-latest","compiler":"msvc","cc":"cl","cxx":"cl"},{"os":"macos-latest","compiler":"clang","cc":"clang","cxx":"clang++"}]' >> "$GITHUB_OUTPUT"
               source_changed=true
-            else
-              echo 'toolchains=[{"os":"ubuntu-latest","compiler":"gcc","cc":"gcc","cxx":"g++"}]' >> "$GITHUB_OUTPUT"
             fi
             if git diff --name-only "$PR_BASE" HEAD -- cpp/CMakeLists.txt cpp/tests/CMakeLists.txt cpp/benchmarks/CMakeLists.txt cpp/conan cpp/vcpkg_ports .github/scripts/validate_conan_recipes.py .github/scripts/sync_cpp_registry_templates.py .github/workflows/ci-cpp.yml .github/workflows/sync-cpp-registries.yml | grep -q .; then
               config_changed=true
@@ -53,7 +49,6 @@ jobs:
               echo 'validation_required=false' >> "$GITHUB_OUTPUT"
             fi
           else
-            echo 'toolchains=[{"os":"ubuntu-latest","compiler":"gcc","cc":"gcc","cxx":"g++"},{"os":"ubuntu-latest","compiler":"clang","cc":"clang","cxx":"clang++"},{"os":"windows-latest","compiler":"msvc","cc":"cl","cxx":"cl"},{"os":"macos-latest","compiler":"clang","cc":"clang","cxx":"clang++"}]' >> "$GITHUB_OUTPUT"
             echo 'source_changed=true' >> "$GITHUB_OUTPUT"
             echo 'config_changed=true' >> "$GITHUB_OUTPUT"
             echo 'validation_required=true' >> "$GITHUB_OUTPUT"
@@ -102,7 +97,23 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJson(needs.setup.outputs.toolchains) }}
+        include:
+          - os: ubuntu-latest
+            compiler: gcc
+            cc: gcc
+            cxx: g++
+          - os: ubuntu-latest
+            compiler: clang
+            cc: clang
+            cxx: clang++
+          - os: windows-latest
+            compiler: msvc
+            cc: cl
+            cxx: cl
+          - os: macos-latest
+            compiler: clang
+            cc: clang
+            cxx: clang++
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -138,7 +149,23 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJson(needs.setup.outputs.toolchains) }}
+        include:
+          - os: ubuntu-latest
+            compiler: gcc
+            cc: gcc
+            cxx: g++
+          - os: ubuntu-latest
+            compiler: clang
+            cc: clang
+            cxx: clang++
+          - os: windows-latest
+            compiler: msvc
+            cc: cl
+            cxx: cl
+          - os: macos-latest
+            compiler: clang
+            cc: clang
+            cxx: clang++
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
