@@ -151,6 +151,9 @@ def _check_cpp_release() -> list[str]:
         "--target RUN_TESTS": (
             "release-cpp.yml: use cross-platform ctest instead of RUN_TESTS"
         ),
+        "--build-config Release \\": (
+            "release-cpp.yml: PowerShell steps cannot use Bash line continuations"
+        ),
     }
     errors.extend(
         message for snippet, message in forbidden.items() if snippet in content
