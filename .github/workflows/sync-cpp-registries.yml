@@ -10,9 +10,6 @@ on:
         description: "Release tag to synchronize"
         required: true
         type: string
-    secrets:
-      REGISTRY_FORK_TOKEN:
-        required: true
   push:
     tags: ["v*"]
     branches: [main]
