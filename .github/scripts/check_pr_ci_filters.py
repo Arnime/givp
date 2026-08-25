@@ -93,11 +93,16 @@ def _check_slsa_pins() -> list[str]:
         r"\.github/workflows/generator_generic_slsa3\.yml@([0-9a-f]{40})"
     )
     for relative_path in SLSA_WORKFLOWS:
-        match = re.search(pattern, _read(relative_path))
+        content = _read(relative_path)
+        match = re.search(pattern, content)
         if match is None:
             errors.append(f"{relative_path}: missing immutable SLSA generator pin")
         else:
             pins.append(match.group(1))
+        if "compile-generator: true" not in content:
+            errors.append(
+                f"{relative_path}: SHA-pinned SLSA workflows must compile the generator"
+            )
     if len(pins) == len(SLSA_WORKFLOWS) and len(set(pins)) != 1:
         errors.append(
             "SLSA generator pins must match in Release and Backfill Provenance"
