@@ -1,0 +1,10 @@
+[submodule "vcpkg"]
+	path = cpp/vcpkg
+	url = https://github.com/Arnime/vcpkg.git
+[submodule "conan-center-index"]
+	path = cpp/conan-center-index
+	url = https://github.com/Arnime/conan-center-index.git
+[submodule "r/r-universe"]
+	path = r/r-universe
+	url = https://github.com/Arnime/arnime.git
+	branch = master

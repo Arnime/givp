@@ -62,6 +62,17 @@ def main() -> None:
             slsa_pins.append(match.group(1))
     if len(slsa_pins) == 2 and len(set(slsa_pins)) != 1:
         missing.append("SLSA generator pins must match in Release and Backfill Provenance")
+    release_ci = (ROOT / ".github/workflows/release.yml").read_text(encoding="utf-8")
+    if "uses: ./.github/actions/setup-poetry" in release_ci:
+        missing.append("release.yml: historical tags cannot use the local Poetry action")
+    for snippet in (
+        "snok/install-poetry@a783c322200f0519c7926aa6faa857c4e23e9263",
+        "[ -f python/pyproject.toml ]",
+        "elif [ -f pyproject.toml ]",
+        "mv dist python/dist",
+    ):
+        if snippet not in release_ci:
+            missing.append(f"release.yml: missing historical Python layout support {snippet!r}")
     if missing:
         raise SystemExit("\n".join(missing))
     print("PR CI path-filter checks passed.")

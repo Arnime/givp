@@ -30,17 +30,33 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event_name == 'workflow_dispatch' && format('refs/tags/{0}', inputs.tag) || github.ref }}
-      # Release tags may predate local composite actions, so keep this external.
+      # Release tags may predate the current repository layout and local actions.
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12"
       - name: Setup Poetry
-        uses: ./.github/actions/setup-poetry
+        uses: snok/install-poetry@a783c322200f0519c7926aa6faa857c4e23e9263 # v1.4.2
+        with:
+          version: "2.4.1"
       - name: Install release deps
         run: bash .github/scripts/poetry-install.sh --no-root --only main,release
       - name: Build package
-        working-directory: python
-        run: python -m build
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -f python/pyproject.toml ]; then
+            (cd python && python -m build)
+          elif [ -f pyproject.toml ]; then
+            python -m build
+            if [ -e python/dist ]; then
+              echo "::error::Cannot normalize the legacy build because python/dist already exists."
+              exit 1
+            fi
+            mv dist python/dist
+          else
+            echo "::error::No Python project manifest was found in python/ or the repository root."
+            exit 1
+          fi
       - name: Generate artifact hashes
         id: hash
         run: |
