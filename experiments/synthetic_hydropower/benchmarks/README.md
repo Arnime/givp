@@ -1,26 +1,20 @@
-# Publicação de benchmarks
+# Publicação do benchmark hidrelétrico
 
-Os arquivos produzidos em `output/` são resultados locais de uma execução e
-ficam fora do versionamento. Cada versão publicada, como
-[`v1.0.0`](v1.0.0/), congela definição, configuração e resultados de referência.
-Uma nova execução não pode substituir os arquivos já publicados.
+O diretório [`v1.0.0`](v1.0.0/) é a única versão canônica do benchmark. Uma
+versão representa o conjunto físico e seus dados compartilhados; as diferentes
+formas de execução ficam separadas internamente como protocolos.
 
-Os três artefatos de referência são:
+- `deterministic_balance`: balanço físico calculado diretamente, sem GIVP;
+- `givp_optimization`: experimento de otimização derivado, executado com GIVP.
 
-- `benchmark_summary.csv`: comparação agregada entre cenários;
-- `benchmark_time_series.csv`: série horária em formato longo, por usina;
-- `benchmark_manifest.json`: seeds, horizonte e checksum de `configs/base.json`.
-- `figures/`: gráficos PNG produzidos a partir da série horária congelada.
+As afluências congeladas e a configuração das usinas são compartilhadas. Cada
+protocolo mantém suas próprias definições, entradas específicas, resultados,
+figuras e manifesto. O manifesto raiz cobre todos os artefatos canônicos.
 
-Antes de publicar, execute os testes e confirme que o manifesto lista os sete
-cenários esperados. Use `promote_benchmark_version` para copiar os artefatos:
-ela valida o checksum da configuração e se recusa a sobrescrever uma versão.
+Resultados locais permanecem em `output/` e são ignorados pelo Git. Antes de
+publicar uma release ou depositar o conjunto em um repositório com DOI, execute
+os testes de reprodução, valide os checksums e registre o hash do commit e as
+versões do Python e do GIVP.
 
-Para preservação em nuvem, a recomendação é publicar essa pasta em uma release
-imutável do repositório Git e arquivá-la em um repositório de dados com DOI,
-como Zenodo. A release deve incluir o hash do commit, a versão do Python, a
-versão do GIVP e o manifesto. O DOI é a referência a ser usada por terceiros;
-o repositório continua sendo a fonte do código e das configurações.
-
-Nenhum resultado é enviado automaticamente: a publicação exige escolher e
-autorizar a conta/organização de destino.
+Nenhum resultado é enviado automaticamente. Publicação em nuvem exige escolher
+e autorizar explicitamente a conta ou organização de destino.

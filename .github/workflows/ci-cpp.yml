@@ -416,10 +416,11 @@ jobs:
             --algorithms GIVP-full DE PSO GA CMA-ES SA \
             --output cpp/benchmarks/ci_smoke_results.json
 
+      - name: Setup Poetry
+        uses: ./.github/actions/setup-poetry
+
       - name: Install Python report dependencies
-        run: |
-          bash .github/scripts/bootstrap-poetry.sh
-          bash .github/scripts/poetry-install.sh --no-root --only main,benchmarks
+        run: bash .github/scripts/poetry-install.sh --no-root --only main,benchmarks
 
       - name: Generate canonical benchmark smoke report
         run: |
@@ -441,10 +442,11 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Setup Poetry
+        uses: ./.github/actions/setup-poetry
+
       - name: Install Conan
-        run: |
-          bash .github/scripts/bootstrap-poetry.sh
-          bash .github/scripts/poetry-install.sh --only main,conan
+        run: bash .github/scripts/poetry-install.sh --only main,conan
 
       - name: Detect default profile
         run: poetry -C python run conan profile detect --force

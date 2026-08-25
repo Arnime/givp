@@ -1,0 +1,40 @@
+{
+  "benchmark_id": "synthetic-hydropower-v1.0.0",
+  "scope": "academic synthetic approximation",
+  "public_references": [
+    {
+      "category": "public_reference",
+      "plant": "Monte Claro",
+      "document": "Plano de Acao de Emergencia da UHE Monte Claro",
+      "url": "https://ceran.com.br/wp-content/uploads/2024/08/Plano-de-Acao-de-Emergencia-UHE-Monte-Claro.pdf",
+      "use": "qualitative ranges for installed generation and reservoir elevations"
+    },
+    {
+      "category": "public_reference",
+      "plant": "14 de Julho",
+      "document": "Plano de Acao de Emergencia da UHE 14 de Julho",
+      "url": "https://ceran.com.br/storage/2024/08/Plano-de-Acao-de-Emergencia-UHE-14-de-Julho.pdf",
+      "use": "qualitative ranges for installed generation and reservoir elevations"
+    }
+  ],
+  "derived_synthetic": [
+    "Plants A and B are perturbed academic approximations inspired by public ranges for Monte Claro and 14 de Julho.",
+    "Power limits, reservoir bands and level anchors were rounded or displaced and are not operational records.",
+    "Quartic forebay and tailwater curves were constructed for smooth synthetic behavior and are not fitted proprietary coefficients."
+  ],
+  "synthetic_assumptions": [
+    "Seven hourly inflow scenarios and their random perturbations",
+    "One-hour travel time from A to B",
+    "Constant efficiency and gravitational acceleration of 9.81 m/s2",
+    "Aggregated turbine per plant, spill response and penalty weights",
+    "Six-level constant-power factorial protocol"
+  ],
+  "excluded_material": [
+    "SOG2 source code",
+    "historical inflow or generation series",
+    "internal operational tables",
+    "proprietary polynomial coefficients",
+    "dispatch rules, constraints or calibrated parameters from SOG2"
+  ],
+  "legal_notice": "This provenance record supports technical traceability and an independence assessment. It is not a legal opinion and does not replace review of patent claims, contracts, confidentiality obligations or NDAs."
+}

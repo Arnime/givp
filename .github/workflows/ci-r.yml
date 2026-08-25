@@ -448,11 +448,12 @@ jobs:
         with:
           python-version: "3.13"
 
+      - name: Setup Poetry
+        uses: ./.github/actions/setup-poetry
+
       - name: Install Python report dependencies
         shell: bash
-        run: |
-          bash .github/scripts/bootstrap-poetry.sh
-          bash .github/scripts/poetry-install.sh --no-root --only main,benchmarks
+        run: bash .github/scripts/poetry-install.sh --no-root --only main,benchmarks
 
       - name: Generate canonical benchmark smoke report
         shell: bash

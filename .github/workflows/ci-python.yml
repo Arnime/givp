@@ -18,6 +18,12 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   POETRY_VIRTUALENVS_CREATE: "false"
 
+defaults:
+  run:
+    # snok/install-poetry exposes $HOME/.local/bin through Bash on Windows.
+    # Using one shell across the OS matrix keeps Poetry available in later steps.
+    shell: bash
+
 permissions:
   contents: read
 
@@ -47,7 +53,7 @@ jobs:
             else
               echo 'versions=["3.13"]' >> "$GITHUB_OUTPUT"
             fi
-            if git diff --name-only "$PR_BASE" HEAD -- python/pyproject.toml python/poetry.lock python/requirements .github/actions/setup-python .github/scripts/bootstrap-poetry.sh .github/scripts/poetry-install.sh .github/workflows/ci-python.yml | grep -q .; then
+            if git diff --name-only "$PR_BASE" HEAD -- python/pyproject.toml python/poetry.lock python/requirements .github/actions/setup-python .github/actions/setup-poetry .github/scripts/poetry-install.sh .github/workflows/ci-python.yml | grep -q .; then
               config_changed=true
             fi
             echo "source_changed=$source_changed" >> "$GITHUB_OUTPUT"
@@ -78,22 +84,28 @@ jobs:
       - uses: ./.github/actions/setup-python
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Bootstrap Poetry
-        run: |
-          bash .github/scripts/bootstrap-poetry.sh
+      - name: Setup Poetry
+        uses: ./.github/actions/setup-poetry
       - name: Install
         run: |
           bash .github/scripts/poetry-install.sh --only main,dev,benchmarks
       - name: Lint
-        run: poetry -C python run ruff check src tests benchmarks fuzz
+        run: poetry -C python run python -m ruff check src tests benchmarks fuzz
       - name: Type-check
         # Mypy is configured to validate the package's Python 3.10 baseline.
         # Run it once on a stable interpreter; the full matrix still exercises
         # runtime compatibility, including Python 3.14.
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.13'
         run: poetry -C python run mypy
-      - name: Test
+      - name: Unit tests
         run: poetry -C python run python -m pytest --no-cov
+      - name: Integration tests without coverage
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.13'
+        run: |
+          poetry -C python run python -m pytest -m integration \
+            tests \
+            --no-cov \
+            --override-ini="addopts="
 
   centralized-actions:
     name: Check centralized action pins
@@ -120,15 +132,14 @@ jobs:
         if: github.event_name != 'pull_request' || needs.setup.outputs.source_changed == 'true'
         with:
           python-version: "3.13"
-      - name: Bootstrap Poetry
+      - name: Setup Poetry
         if: github.event_name != 'pull_request' || needs.setup.outputs.source_changed == 'true'
-        run: |
-          bash .github/scripts/bootstrap-poetry.sh
+        uses: ./.github/actions/setup-poetry
       - name: Install
         if: github.event_name != 'pull_request' || needs.setup.outputs.source_changed == 'true'
         run: |
           bash .github/scripts/poetry-install.sh --only main,dev,benchmarks
-      - name: Test with coverage
+      - name: Unit tests with coverage
         if: github.event_name != 'pull_request' || needs.setup.outputs.source_changed == 'true'
         run: poetry -C python run pytest --cov=givp --cov-report=xml:../coverage-python.xml --cov-fail-under=95
       - name: Check patch coverage on PR (>= 90%)
@@ -222,17 +233,16 @@ jobs:
       - uses: ./.github/actions/setup-python
         with:
           python-version: "3.13"
-      - name: Bootstrap Poetry
-        run: |
-          bash .github/scripts/bootstrap-poetry.sh
+      - name: Setup Poetry
+        uses: ./.github/actions/setup-poetry
       - name: Install
         run: |
           bash .github/scripts/poetry-install.sh --only main,dev
       - name: Run property tests
-        # Run only test_properties.py with a generous timeout; --no-cov keeps it fast.
+        # Run the generated-input suite separately from unit coverage.
         # The Hypothesis database is ephemeral in CI; this is intentional.
         run: |
-          poetry -C python run pytest tests/test_properties.py -v \
+          poetry -C python run pytest -m property tests/givp/test_properties.py -v \
             --no-cov \
             --override-ini="addopts=" \
             -p no:randomly
@@ -250,15 +260,21 @@ jobs:
       - uses: ./.github/actions/setup-python
         with:
           python-version: "3.13"
-      - name: Bootstrap Poetry
-        run: |
-          bash .github/scripts/bootstrap-poetry.sh
+      - name: Setup Poetry
+        uses: ./.github/actions/setup-poetry
       - name: Install (with benchmark extras)
         run: |
           bash .github/scripts/poetry-install.sh --only main,dev,benchmarks
       - name: Benchmark smoke tests
         run: |
-          poetry -C python run pytest -m slow tests/test_benchmark_scripts.py -v \
+          poetry -C python run pytest -m slow tests/benchmark/test_commands.py -v \
+            --no-cov \
+            --override-ini="addopts="
+
+      - name: Frozen benchmark regression tests
+        run: |
+          poetry -C python run pytest -m benchmark_regression tests -v \
+            --no-cov \
             --override-ini="addopts="
 
       - name: Run literature comparison smoke test
@@ -294,15 +310,14 @@ jobs:
       - uses: ./.github/actions/setup-python
         with:
           python-version: "3.13"
-      - name: Bootstrap Poetry
-        run: |
-          bash .github/scripts/bootstrap-poetry.sh
+      - name: Setup Poetry
+        uses: ./.github/actions/setup-poetry
       - name: Install
         run: |
           bash .github/scripts/poetry-install.sh --only main,dev
       - name: Run convergence quality gate
         run: |
-          poetry -C python run pytest -m quality_gate tests/test_algorithm_quality.py \
+          poetry -C python run pytest -m quality_gate tests/benchmark/test_quality.py \
             -v \
             --no-cov \
             --override-ini="addopts=" \
@@ -320,16 +335,15 @@ jobs:
       - uses: ./.github/actions/setup-python
         with:
           python-version: "3.13"
-      - name: Bootstrap Poetry
-        run: |
-          bash .github/scripts/bootstrap-poetry.sh
+      - name: Setup Poetry
+        uses: ./.github/actions/setup-poetry
       - name: Install
         run: |
           bash .github/scripts/poetry-install.sh --only main,dev
       - name: Run performance benchmarks
         run: |
           mkdir -p python/benchmarks/.results
-          poetry -C python run pytest benchmarks/tests/test_benchmark.py \
+          poetry -C python run pytest tests/benchmark/test_performance.py \
             --benchmark-only \
             --benchmark-autosave \
             --benchmark-storage=python/benchmarks/.results \
@@ -355,9 +369,8 @@ jobs:
       - uses: ./.github/actions/setup-python
         with:
           python-version: "3.13"
-      - name: Bootstrap Poetry
-        run: |
-          bash .github/scripts/bootstrap-poetry.sh
+      - name: Setup Poetry
+        uses: ./.github/actions/setup-poetry
       - name: Install dependencies
         run: |
           bash .github/scripts/poetry-install.sh --only main,dev,mutation
@@ -374,7 +387,7 @@ jobs:
         run: |
           # Keep CI mutation tests very fast: smoke scope only.
           MUTATE_PATHS="src/givp/api"
-          TEST_RUNNER="poetry run python -m pytest tests/test_api.py -q --no-cov -x"
+          TEST_RUNNER="poetry run python -m pytest tests/givp/test_api.py -q --no-cov -x"
           cd python
           poetry run mutmut run \
             --paths-to-mutate "$MUTATE_PATHS" \
@@ -417,9 +430,8 @@ jobs:
         with:
           python-version: "3.15"
           allow-prereleases: true
-      - name: Bootstrap Poetry
-        run: |
-          bash .github/scripts/bootstrap-poetry.sh
+      - name: Setup Poetry
+        uses: ./.github/actions/setup-poetry
       - name: Install
         id: install_prerelease
         run: |
@@ -431,7 +443,7 @@ jobs:
           fi
       - name: Lint
         if: steps.install_prerelease.outputs.env_ready == 'true'
-        run: poetry -C python run ruff check src tests benchmarks fuzz
+        run: poetry -C python run python -m ruff check src tests benchmarks fuzz
       - name: Type-check
         if: steps.install_prerelease.outputs.env_ready == 'true'
         run: echo "Skipping mypy on Python pre-release due to upstream dependency resolution issue; type-checking is enforced in the stable matrix."

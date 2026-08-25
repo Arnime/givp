@@ -347,10 +347,11 @@ jobs:
             --algorithms GIVP-full DE PSO GA CMA-ES SA \
             --output benchmarks/ci_smoke_results.json
 
+      - name: Setup Poetry
+        uses: ./.github/actions/setup-poetry
+
       - name: Install Python report dependencies
-        run: |
-          bash .github/scripts/bootstrap-poetry.sh
-          bash .github/scripts/poetry-install.sh --no-root --only main,benchmarks
+        run: bash .github/scripts/poetry-install.sh --no-root --only main,benchmarks
 
       - name: Generate canonical benchmark smoke report
         run: |

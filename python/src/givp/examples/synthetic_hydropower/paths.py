@@ -39,7 +39,24 @@ def default_output_dir() -> Path:
     return project_root() / "output"
 
 
-def validate_cli_paths(config_path: Path, output_dir: Path) -> None:
+def default_definition_path() -> Path:
+    """Return the versioned GIVP experiment protocol from a source checkout."""
+    definition_path = (
+        project_root()
+        / "benchmarks"
+        / "v1.0.0"
+        / "protocols"
+        / "givp_optimization"
+        / "definition.json"
+    )
+    if not definition_path.is_file():
+        raise FileNotFoundError(f"default benchmark definition is missing: {definition_path}")
+    return definition_path
+
+
+def validate_cli_paths(
+    config_path: Path, definition_path: Path, output_dir: Path
+) -> None:
     """Validate CLI paths against the files owned by the benchmark checkout.
 
     The console command is intended to reproduce the checked-in benchmark.  It
@@ -54,17 +71,21 @@ def validate_cli_paths(config_path: Path, output_dir: Path) -> None:
         ValueError: If either supplied path is outside the CLI allowlist.
     """
     trusted_config = default_config_path().resolve(strict=True)
+    trusted_definition = default_definition_path().resolve(strict=True)
     benchmark_output = default_output_dir()
     if benchmark_output.is_symlink():
         raise ValueError("the benchmark output directory must not be a symbolic link")
     trusted_output = benchmark_output.resolve(strict=False)
     supplied_config = config_path.expanduser().resolve(strict=True)
+    supplied_definition = definition_path.expanduser().resolve(strict=True)
     supplied_output = output_dir.expanduser().resolve(strict=False)
 
     if supplied_config != trusted_config:
         raise ValueError(
             "the CLI accepts only the packaged synthetic hydropower base configuration"
         )
+    if supplied_definition != trusted_definition:
+        raise ValueError("the CLI accepts only the versioned benchmark definition")
     if supplied_output != trusted_output:
         raise ValueError(
             "the CLI writes only to the synthetic hydropower benchmark output directory"

@@ -11,13 +11,61 @@ nox.options.reuse_existing_virtualenvs = True
 
 PY_VERSIONS = ["3.10", "3.11", "3.12", "3.13", "3.14", "3.15"]
 _DEV = ".[dev]"
+OVERRIDE_INI = "--override-ini=addopts="
 
 
 @nox.session(python=PY_VERSIONS)
 def tests(session: nox.Session) -> None:
-    """Run the test suite with coverage."""
+    """Run the unit test suite with coverage."""
     session.install("-e", _DEV)
     session.run("pytest", *session.posargs)
+
+
+@nox.session
+def integration(session: nox.Session) -> None:
+    """Run cross-component execution tests without collecting coverage."""
+    session.install("-e", _DEV)
+    session.run(
+        "pytest",
+        "-m",
+        "integration",
+        "tests",
+        "--no-cov",
+        OVERRIDE_INI,
+        *session.posargs,
+    )
+
+
+@nox.session
+def properties(session: nox.Session) -> None:
+    """Run property-based tests without collecting coverage."""
+    session.install("-e", _DEV)
+    session.run(
+        "pytest",
+        "-m",
+        "property",
+        "tests/givp/test_properties.py",
+        "--no-cov",
+        OVERRIDE_INI,
+        "-p",
+        "no:randomly",
+        *session.posargs,
+    )
+
+
+@nox.session
+def benchmark_regression(session: nox.Session) -> None:
+    """Validate frozen benchmark protocols without collecting coverage."""
+    session.install("-e", _DEV)
+    session.run(
+        "pytest",
+        "-m",
+        "benchmark_regression",
+        "tests",
+        "--no-cov",
+        OVERRIDE_INI,
+        *session.posargs,
+    )
 
 
 @nox.session
@@ -47,7 +95,9 @@ def benchmarks(session: nox.Session) -> None:
     session.install("-e", _DEV)
     session.run(
         "pytest",
-        "benchmarks/tests/test_benchmark.py",
+        "-m",
+        "performance",
+        "tests/benchmark/test_performance.py",
         "--benchmark-only",
         "--benchmark-autosave",
         *session.posargs,

@@ -4,11 +4,11 @@ from dataclasses import dataclass
 from pathlib import Path
 
 BENCHMARK_SCHEMA_VERSION = "1.0"
-BENCHMARK_MANIFEST_FILENAME = "benchmark_manifest.json"
-BENCHMARK_RESULT_FILENAMES = (
-    "benchmark_summary.csv",
-    "benchmark_time_series.csv",
-    BENCHMARK_MANIFEST_FILENAME,
+OPTIMIZATION_MANIFEST_FILENAME = "protocol_manifest.json"
+OPTIMIZATION_RESULT_FILENAMES = (
+    "optimization_summary.csv",
+    "optimization_time_series.csv",
+    OPTIMIZATION_MANIFEST_FILENAME,
 )
 
 

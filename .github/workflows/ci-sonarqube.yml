@@ -81,10 +81,9 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Bootstrap Poetry
+      - name: Setup Poetry
         if: steps.preflight.outputs.enabled == 'true'
-        run: |
-          bash .github/scripts/bootstrap-poetry.sh
+        uses: ./.github/actions/setup-poetry
 
       - name: Generate Python coverage
         if: steps.preflight.outputs.enabled == 'true'

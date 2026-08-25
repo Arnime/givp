@@ -7,8 +7,8 @@ from hashlib import sha256
 from pathlib import Path
 
 from givp.examples.synthetic_hydropower.benchmark.artifacts import (
-    BENCHMARK_MANIFEST_FILENAME,
     BENCHMARK_SCHEMA_VERSION,
+    OPTIMIZATION_MANIFEST_FILENAME,
     BenchmarkArtifacts,
 )
 from givp.examples.synthetic_hydropower.benchmark.frames import (
@@ -36,9 +36,9 @@ def save_benchmark_results(
         raise ValueError(f"missing seeds for scenarios: {names}")
 
     output_dir.mkdir(parents=True, exist_ok=True)
-    summary_path = output_dir / "benchmark_summary.csv"
-    time_series_path = output_dir / "benchmark_time_series.csv"
-    manifest_path = output_dir / BENCHMARK_MANIFEST_FILENAME
+    summary_path = output_dir / "optimization_summary.csv"
+    time_series_path = output_dir / "optimization_time_series.csv"
+    manifest_path = output_dir / OPTIMIZATION_MANIFEST_FILENAME
 
     _write_csv_atomic(_summary_frame(results, cascade, scenario_seeds), summary_path)
     _write_csv_atomic(

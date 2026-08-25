@@ -14,7 +14,7 @@ on:
       - "python/pyproject.toml"
       - "python/poetry.lock"
       - "python/requirements/**"
-      - ".github/scripts/bootstrap-poetry.sh"
+      - ".github/actions/setup-poetry/action.yml"
       - ".github/scripts/poetry-install.sh"
       - ".github/workflows/security.yml"
   schedule:
@@ -35,9 +35,8 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12"
-      - name: Bootstrap Poetry
-        run: |
-          bash .github/scripts/bootstrap-poetry.sh
+      - name: Setup Poetry
+        uses: ./.github/actions/setup-poetry
       - name: Install Bandit
         run: bash .github/scripts/poetry-install.sh --no-root --only main,dev
       - name: Run Bandit

@@ -9,6 +9,7 @@ from typing import Final
 
 import matplotlib.pyplot as plt
 import pandas as pd
+
 from givp.examples.synthetic_hydropower.model import PlantConfig
 
 PERIOD_LABEL = "Período"
@@ -21,7 +22,7 @@ def render_figures(
     figures_dir: Path,
 ) -> list[Path]:
     """Render power, flow and level figures from a frozen time-series CSV."""
-    time_series_path = reference_results_dir / "benchmark_time_series.csv"
+    time_series_path = reference_results_dir / "optimization_time_series.csv"
     if not time_series_path.is_file():
         raise FileNotFoundError(f"missing reference time series: {time_series_path}")
     if not config_path.is_file():
@@ -50,6 +51,108 @@ def render_figures(
             )
         )
     return figures
+
+
+def render_deterministic_figures(
+    reference_results_dir: Path,
+    config_path: Path,
+    figures_dir: Path,
+) -> list[Path]:
+    """Render one factorial heatmap and representative trajectories per scenario."""
+    summary_path = reference_results_dir / "balance_summary.csv"
+    time_series_path = reference_results_dir / "balance_time_series.csv"
+    if not summary_path.is_file() or not time_series_path.is_file():
+        raise FileNotFoundError("missing deterministic benchmark result tables")
+    summary = pd.read_csv(summary_path)
+    time_series = pd.read_csv(time_series_path)
+    plant_payload = json.loads(config_path.read_text(encoding="utf-8"))
+    plants = {plant["name"]: PlantConfig(**plant) for plant in plant_payload["plants"]}
+    figures_dir.mkdir(parents=True, exist_ok=True)
+    figures: list[Path] = []
+    for scenario_key, scenario_summary in summary.groupby("scenario", sort=False):
+        if not isinstance(scenario_key, str):
+            raise TypeError("scenario values in reference results must be strings")
+        scenario_series = time_series.loc[time_series["scenario"] == scenario_key]
+        slug = _scenario_slug(scenario_key)
+        figures.append(
+            _render_factorial_heatmap(scenario_summary, figures_dir, scenario_key, slug)
+        )
+        figures.append(
+            _render_representative_trajectories(
+                scenario_series, plants, figures_dir, scenario_key, slug
+            )
+        )
+    return figures
+
+
+def _render_factorial_heatmap(
+    records: pd.DataFrame, figures_dir: Path, scenario_name: str, slug: str
+) -> Path:
+    """Render the delivered-energy percentage over the six-by-six target matrix."""
+    order = ["off", "minimum", "quarter", "half", "three_quarters", "maximum"]
+    matrix = records.pivot(index="level_a", columns="level_b", values="delivered_percent")
+    matrix = matrix.reindex(index=order, columns=order)
+    figure, axis = plt.subplots(figsize=(8, 6.5))
+    image = axis.imshow(matrix.to_numpy(), cmap="viridis", aspect="auto")
+    axis.set(
+        title=f"Energia entregue (%) — {scenario_name}",
+        xlabel="Meta da usina B",
+        ylabel="Meta da usina A",
+        xticks=range(len(order)),
+        yticks=range(len(order)),
+        xticklabels=order,
+        yticklabels=order,
+    )
+    axis.tick_params(axis="x", rotation=35)
+    figure.colorbar(image, ax=axis, label="% da energia solicitada")
+    figure.tight_layout()
+    path = figures_dir / f"{slug}_factorial_heatmap.png"
+    figure.savefig(path, dpi=160)
+    plt.close(figure)
+    return path
+
+
+def _render_representative_trajectories(
+    records: pd.DataFrame,
+    plants: dict[str, PlantConfig],
+    figures_dir: Path,
+    scenario_name: str,
+    slug: str,
+) -> Path:
+    """Render power and forebay-level paths for four representative diagonal cases."""
+    representatives = ("off", "minimum", "half", "maximum")
+    figure, axes = plt.subplots(2, 2, figsize=(14, 8), sharex=True)
+    for column, plant_name in enumerate(("A", "B")):
+        power_axis = axes[0, column]
+        level_axis = axes[1, column]
+        for label in representatives:
+            subset = records.loc[
+                (records["plant"] == plant_name)
+                & (records["level_a"] == label)
+                & (records["level_b"] == label)
+            ].sort_values("period")
+            power_axis.plot(
+                subset["period"], subset["delivered_power_mw"], label=label
+            )
+            level_axis.plot(
+                subset["period"], subset["final_upstream_level_m"], label=label
+            )
+        plant = plants[plant_name]
+        power_axis.set(title=f"Potência entregue — usina {plant_name}", ylabel="MW")
+        level_axis.axhline(plant.min_level_m, color="#d62728", linestyle="--")
+        level_axis.axhline(plant.max_level_m, color="#d62728", linestyle="--")
+        level_axis.set(
+            title=f"Nível de montante — usina {plant_name}",
+            xlabel=PERIOD_LABEL,
+            ylabel="m",
+        )
+        power_axis.legend(loc=UPPER_RIGHT_LEGEND)
+    figure.suptitle(f"Trajetórias representativas — {scenario_name}")
+    figure.tight_layout()
+    path = figures_dir / f"{slug}_representative_trajectories.png"
+    figure.savefig(path, dpi=160)
+    plt.close(figure)
+    return path
 
 
 def _render_power(

@@ -12,8 +12,8 @@
 # The risk is mitigated by:
 #   1. A committed poetry.lock that pins every transitive dependency and hash.
 #   2. pyproject.toml declaring only well-known, reviewed packages.
-#   3. The bootstrap step installing Poetry itself at the exact reviewed
-#      version declared in python/requirements/poetry-bootstrap.txt.
+#   3. The setup-poetry composite action installing the exact reviewed Poetry
+#      version through a commit-pinned third-party action.
 set -e
 
 # `sync` removes packages that are not in poetry.lock.  It must therefore
