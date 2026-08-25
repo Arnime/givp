@@ -49,7 +49,6 @@ REUSABLE_RELEASE_WORKFLOWS = (
     RELEASE_CPP_WORKFLOWS,
     ".github/workflows/release-r.yml",
     RELEASE_PROVENANCE_WORKFLOWS,
-    ".github/workflows/publish-python.yml",
     ".github/workflows/publish-rust.yml",
     ".github/workflows/register-julia.yml",
     ".github/workflows/verify-r-universe.yml",
@@ -187,7 +186,6 @@ def _check_release_orchestrator() -> list[str]:
         "cpp": ("release-cpp.yml", NEEDS_CONTEXT),
         "r": ("release-r.yml", NEEDS_CONTEXT),
         "provenance": ("release-provenance.yml", "needs: [context, python, cpp, r]"),
-        "publish-python": ("publish-python.yml", "needs: [provenance, python]"),
         "publish-rust": ("publish-rust.yml", NEEDS_CONTEXT_AND_PROVENANCE),
         "register-julia": ("register-julia.yml", NEEDS_CONTEXT_AND_PROVENANCE),
         "sync-cpp-registries": (
@@ -210,7 +208,6 @@ def _check_release_orchestrator() -> list[str]:
             )
         )
     forbidden = (
-        "runs-on:",
         "actions/checkout@",
         "slsa-framework/slsa-github-generator",
         "cargo publish",
@@ -294,13 +291,28 @@ def _check_release_services() -> list[str]:
             "release-provenance.yml: missing repository-safe asset check {snippet!r}",
         )
     )
-    publish_python = _read(".github/workflows/publish-python.yml")
-    if "contents: read" in publish_python:
-        errors.append(
-            "publish-python.yml: PyPI publication must not request repository contents"
+    release = _read(".github/workflows/release.yml")
+    publish_python = _release_job_block(release, "publish-python")
+    errors.extend(
+        _missing_release_snippets(
+            publish_python,
+            (
+                "needs: [provenance, python]",
+                "environment:",
+                "name: pypi",
+                "id-token: write",
+                "pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33",
+            ),
+            "release.yml: inline PyPI publication misses {snippet!r}",
         )
-    if "id-token: write" not in publish_python:
-        errors.append("publish-python.yml: PyPI trusted publishing requires OIDC")
+    )
+    if "uses: ./.github/workflows/publish-python.yml" in release:
+        errors.append("release.yml: PyPI trusted publishing cannot use a reusable workflow")
+    sync_cpp = _read(".github/workflows/sync-cpp-registries.yml")
+    if "REGISTRY_FORK_TOKEN:\n        required: true" in sync_cpp:
+        errors.append(
+            "sync-cpp-registries.yml: environment secret cannot be a required call secret"
+        )
     return errors
 
 

@@ -27,8 +27,10 @@ The Python, C++, and R builds run in parallel. Each returns an artifact name and
 base64-encoded hashes to the provenance workflow. That workflow combines the
 subjects, generates SLSA provenance, verifies the release asset, and attaches
 all language artifacts. External publication starts only after this barrier
-succeeds. The specialized release workflows expose `workflow_call` contracts
-and are not manual entry points.
+succeeds. PyPI publishing remains an inline job in `release.yml` because
+[PyPI Trusted Publishing does not support reusable workflows][pypi-reusable].
+The other specialized release workflows expose `workflow_call` contracts and
+are not manual entry points.
 
 ## Prepare a release
 
@@ -57,6 +59,12 @@ checks it and rebuilds only when its `.intoto.jsonl` asset is missing.
 Store the crates.io API token as `CARGO_REGISTRY_TOKEN` in the protected GitHub
 environment named `crates-io`. Do not add the token to workflow files,
 repository secrets, source code, or local configuration committed to Git.
+The environment secret must use that exact name; an empty value intentionally
+fails the release instead of silently skipping publication.
+
+Configure it under **Settings → Environments → crates-io → Environment
+secrets**. The reusable Rust workflow obtains the secret from that protected
+environment; it is not passed by `release.yml`.
 
 The central workflow validates the Rust package, verifies the tag matches
 `rust/Cargo.toml`, and checks crates.io before publishing. If a prior run has
@@ -86,3 +94,5 @@ forks. Store it in the protected `registry-forks` environment. The forks remain
 ignored local clones, not submodules. vcpkg and ConanCenter still require their
 own CI, CLA where applicable, review, and maintainer merge; this automation
 never merges external PRs.
+
+[pypi-reusable]: https://docs.pypi.org/trusted-publishers/troubleshooting/#reusable-workflows-on-github
