@@ -2044,6 +2044,18 @@ files = [
 markers = {main = "extra == \"dev\""}
 
 [[package]]
+name = "installer"
+version = "1.0.1"
+description = "A library for installing Python wheels."
+optional = false
+python-versions = ">=3.10"
+groups = ["release"]
+files = [
+    {file = "installer-1.0.1-py3-none-any.whl", hash = "sha256:011d045df8b954ced7dde3a7e42ae4418da40ecda7990f2d11d5ed7c146fd98b"},
+    {file = "installer-1.0.1.tar.gz", hash = "sha256:052c7fc3721d54c696e2dea019be67539d7b144e924f559f54beb3121831c364"},
+]
+
+[[package]]
 name = "ipykernel"
 version = "7.3.0"
 description = "IPython Kernel for Jupyter"
@@ -7373,4 +7385,4 @@ notebooks = ["ipykernel", "jupyter", "jupyter-server", "matplotlib", "mistune", 
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<3.16"
-content-hash = "092481433dbd14b7544ea51f3c6c0518faaf43bc79c84b4f7f6711f5763312f8"
+content-hash = "1d49e730ff0165dcfd1e94cc0058f064c27da77f0a7cb3ef8966e35f0fa9ac54"
