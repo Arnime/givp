@@ -97,11 +97,9 @@ jobs:
           echo "CXX=${{ matrix.cxx }}" >> "$GITHUB_ENV"
       - name: Configure, build, and test
         run: |
-          cmake -S cpp -B cpp/build/release-test -DCMAKE_BUILD_TYPE=Release \
-            -DGIVP_BUILD_TESTS=ON -DGIVP_BUILD_BENCHMARKS=OFF -DGIVP_BUILD_FUZZ=OFF
+          cmake -S cpp -B cpp/build/release-test -DCMAKE_BUILD_TYPE=Release -DGIVP_BUILD_TESTS=ON -DGIVP_BUILD_BENCHMARKS=OFF -DGIVP_BUILD_FUZZ=OFF
           cmake --build cpp/build/release-test --config Release
-          ctest --test-dir cpp/build/release-test --build-config Release \
-            --output-on-failure
+          ctest --test-dir cpp/build/release-test --build-config Release --output-on-failure
 
   validate-package:
     name: Validate CMake package installation
