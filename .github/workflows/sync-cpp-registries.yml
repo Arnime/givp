@@ -23,13 +23,6 @@ on:
       - ".github/scripts/validate_conan_recipes.py"
       - ".github/scripts/validate_unified_version.py"
       - ".github/workflows/sync-cpp-registries.yml"
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: "Released tag to synchronize (for example v1.0.1)"
-        required: true
-        type: string
-
 permissions:
   contents: read
 
@@ -49,7 +42,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.event_name == 'workflow_dispatch' && github.sha || inputs.tag && format('refs/tags/{0}', inputs.tag) || github.ref }}
+          ref: ${{ inputs.tag && format('refs/tags/{0}', inputs.tag) || github.ref }}
           fetch-depth: 0
       - id: release
         env:
@@ -62,11 +55,6 @@ jobs:
             VERSION="$(python .github/scripts/validate_unified_version.py --root .)"
             TAG="v$VERSION"
             WRITE_ENABLED=false
-            SOURCE_REF="$GITHUB_SHA"
-          elif [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
-            TAG="$INPUT_TAG"
-            VERSION="${TAG#v}"
-            WRITE_ENABLED=true
             SOURCE_REF="$GITHUB_SHA"
           else
             TAG="${INPUT_TAG:-$REF_NAME}"

@@ -1,0 +1,95 @@
+# SPDX-FileCopyrightText: 2026 Arnaldo Mendes Pires Junior
+# SPDX-License-Identifier: MIT
+
+name: Build Python Release
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: "Validated release tag"
+        required: true
+        type: string
+    outputs:
+      artifact_name:
+        description: "Uploaded Python artifact name"
+        value: ${{ jobs.build.outputs.artifact_name }}
+      hashes:
+        description: "Base64-encoded SHA256 subjects"
+        value: ${{ jobs.build.outputs.hashes }}
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  POETRY_VIRTUALENVS_CREATE: "false"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      attestations: write
+      contents: read
+      id-token: write
+    outputs:
+      artifact_name: ${{ steps.hash.outputs.artifact_name }}
+      hashes: ${{ steps.hash.outputs.hashes }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: refs/tags/${{ inputs.tag }}
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: Setup Poetry
+        uses: snok/install-poetry@a783c322200f0519c7926aa6faa857c4e23e9263 # v1.4.2
+        with:
+          version: "2.4.1"
+      - name: Install release dependencies
+        run: bash .github/scripts/poetry-install.sh --no-root --only main,release
+      - name: Build package
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -f python/pyproject.toml ]; then
+            (cd python && python -m build)
+          elif [ -f pyproject.toml ]; then
+            python -m build
+            if [ -e python/dist ]; then
+              echo "::error::Cannot normalize the legacy build because python/dist already exists."
+              exit 1
+            fi
+            mv dist python/dist
+          else
+            echo "::error::No Python project manifest was found in python/ or the repository root."
+            exit 1
+          fi
+      - name: Generate artifact hashes
+        id: hash
+        run: |
+          echo "artifact_name=python-release-artifacts" >> "$GITHUB_OUTPUT"
+          cd python/dist && echo "hashes=$(sha256sum -- * | base64 -w0)" >> "$GITHUB_OUTPUT"
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: ./python/dist/*
+      - name: Sign artifacts with Sigstore
+        uses: sigstore/gh-action-sigstore-python@04cffa1d795717b140764e8b640de88853c92acc # v3.3.0
+        with:
+          inputs: ./python/dist/*.tar.gz ./python/dist/*.whl
+      - name: Rename Sigstore bundles for Scorecard compatibility
+        run: for f in python/dist/*.sigstore.json; do mv "$f" "${f%.json}"; done
+      - name: Generate SBOM
+        run: cyclonedx-py environment --of JSON -o sbom.cdx.json
+      - name: Move Sigstore files out of dist
+        run: mv python/dist/*.sigstore .
+      - name: Upload Python release artifacts
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ${{ steps.hash.outputs.artifact_name }}
+          path: |
+            python/dist
+            *.sigstore
+            sbom.cdx.json
+          if-no-files-found: error

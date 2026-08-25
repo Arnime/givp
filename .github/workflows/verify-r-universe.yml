@@ -1,0 +1,44 @@
+# SPDX-FileCopyrightText: 2026 Arnaldo Mendes Pires Junior
+# SPDX-License-Identifier: MIT
+
+name: Verify R-universe Release
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: "Validated release tag"
+        required: true
+        type: string
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check R-universe published version
+        env:
+          TAG: ${{ inputs.tag }}
+        shell: bash
+        run: |
+          set -uo pipefail
+          VERSION="${TAG#v}"
+          echo "Checking r-universe for givp version ${VERSION}"
+          for attempt in $(seq 1 30); do
+            if METADATA="$(curl -fsSL "https://arnime.r-universe.dev/givp/json")"; then
+              if PUBLISHED_VERSION="$(printf '%s' "$METADATA" | python -c \
+                'import json, sys; print(json.load(sys.stdin).get("Version", ""))')" \
+                && [ "$PUBLISHED_VERSION" = "$VERSION" ]; then
+                echo "R-universe published givp ${VERSION}."
+                exit 0
+              fi
+            fi
+            echo "Attempt ${attempt}/30: version not visible yet; waiting 20 seconds."
+            sleep 20
+          done
+          echo "::warning::R-universe did not show givp ${VERSION} within the retry window."

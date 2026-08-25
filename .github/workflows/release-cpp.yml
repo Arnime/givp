@@ -20,13 +20,6 @@ on:
       hashes:
         description: "Base64-encoded SHA256 subjects for SLSA provenance"
         value: ${{ jobs.prepare-artifacts.outputs.hashes }}
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: "Tag to validate (for example v1.0.1)"
-        required: true
-        type: string
-
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   CMAKE_BUILD_PARALLEL_LEVEL: "4"
