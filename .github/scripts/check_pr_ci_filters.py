@@ -4,6 +4,12 @@
 import re
 from pathlib import Path
 
+RELEASE_PROVENANCE_WORKFLOWS = ".github/workflows/release-provenance.yml"
+RELEASE_PYTHON_WORKFLOWS = ".github/workflows/release-python.yml"
+RELEASE_CPP_WORKFLOWS = ".github/workflows/release-cpp.yml"
+NEEDS_CONTEXT = "needs: context"
+NEEDS_CONTEXT_AND_PROVENANCE = "needs: [context, provenance]"
+
 ROOT = Path(__file__).resolve().parents[2]
 EXPECTATIONS = {
     ".github/workflows/ci-python.yml": (
@@ -34,8 +40,19 @@ ALWAYS_REPORTED_COVERAGE = {
     ".github/workflows/ci-cpp.yml": "name: coverage-cpp",
 }
 SLSA_WORKFLOWS = (
-    ".github/workflows/release.yml",
+    RELEASE_PROVENANCE_WORKFLOWS,
     ".github/workflows/backfill-provenance.yml",
+)
+REUSABLE_RELEASE_WORKFLOWS = (
+    ".github/workflows/release-context.yml",
+    RELEASE_PYTHON_WORKFLOWS,
+    RELEASE_CPP_WORKFLOWS,
+    ".github/workflows/release-r.yml",
+    RELEASE_PROVENANCE_WORKFLOWS,
+    ".github/workflows/publish-python.yml",
+    ".github/workflows/publish-rust.yml",
+    ".github/workflows/register-julia.yml",
+    ".github/workflows/verify-r-universe.yml",
 )
 
 
@@ -121,14 +138,30 @@ def _missing_release_snippets(
     ]
 
 
+def _release_job_block(content: str, job_name: str) -> str:
+    """Return one top-level release job block, or an empty string if absent."""
+    marker = f"  {job_name}:\n"
+    start = content.find(marker)
+    if start < 0:
+        return ""
+    following_job = content.find("\n  ", start + len(marker))
+    while following_job >= 0:
+        next_line = content[following_job + 1 :].splitlines()[0]
+        if next_line.endswith(":") and not next_line.startswith("    "):
+            return content[start:following_job]
+        following_job = content.find("\n  ", following_job + 1)
+    return content[start:]
+
+
 def _check_python_release() -> list[str]:
     """Return errors when Python releases lose historical-layout support."""
-    content = _read(".github/workflows/release.yml")
+    relative_path = RELEASE_PYTHON_WORKFLOWS
+    content = _read(relative_path)
     errors: list[str] = []
     if "uses: ./.github/actions/setup-poetry" in content:
-        errors.append("release.yml: historical tags cannot use the local Poetry action")
-    if 'arnime.r-universe.dev/givp/json" | grep -q' in content:
-        errors.append("release.yml: parse r-universe metadata as JSON instead of text")
+        errors.append(
+            f"{relative_path}: historical tags cannot use the local Poetry action"
+        )
     errors.extend(
         _missing_release_snippets(
             content,
@@ -137,9 +170,128 @@ def _check_python_release() -> list[str]:
                 "[ -f python/pyproject.toml ]",
                 "elif [ -f pyproject.toml ]",
                 "mv dist python/dist",
-                "json.load(sys.stdin)",
             ),
-            "release.yml: missing historical Python layout support {snippet!r}",
+            f"{relative_path}: missing historical Python layout support {{snippet!r}}",
+        )
+    )
+    return errors
+
+
+def _check_release_orchestrator() -> list[str]:
+    """Return errors when the central release stops being a pure orchestrator."""
+    relative_path = ".github/workflows/release.yml"
+    content = _read(relative_path)
+    job_contracts = {
+        "context": ("release-context.yml", None),
+        "python": ("release-python.yml", NEEDS_CONTEXT),
+        "cpp": ("release-cpp.yml", NEEDS_CONTEXT),
+        "r": ("release-r.yml", NEEDS_CONTEXT),
+        "provenance": ("release-provenance.yml", "needs: [context, python, cpp, r]"),
+        "publish-python": ("publish-python.yml", "needs: [provenance, python]"),
+        "publish-rust": ("publish-rust.yml", NEEDS_CONTEXT_AND_PROVENANCE),
+        "register-julia": ("register-julia.yml", NEEDS_CONTEXT_AND_PROVENANCE),
+        "sync-cpp-registries": (
+            "sync-cpp-registries.yml",
+            NEEDS_CONTEXT_AND_PROVENANCE,
+        ),
+        "verify-r-universe": ("verify-r-universe.yml", "needs: [context, r]"),
+    }
+    errors: list[str] = []
+    for job_name, (workflow_name, dependency) in job_contracts.items():
+        block = _release_job_block(content, job_name)
+        required = [f"uses: ./.github/workflows/{workflow_name}"]
+        if dependency is not None:
+            required.append(dependency)
+        errors.extend(
+            _missing_release_snippets(
+                block,
+                tuple(required),
+                f"{relative_path}: job {job_name!r} misses {{snippet!r}}",
+            )
+        )
+    forbidden = (
+        "runs-on:",
+        "actions/checkout@",
+        "slsa-framework/slsa-github-generator",
+        "cargo publish",
+        "R CMD build",
+        "python -m build",
+    )
+    errors.extend(
+        f"{relative_path}: orchestrator contains implementation detail {snippet!r}"
+        for snippet in forbidden
+        if snippet in content
+    )
+    if len(content.splitlines()) > 120:
+        errors.append(f"{relative_path}: orchestrator exceeds 120 lines")
+    return errors
+
+
+def _check_release_context() -> list[str]:
+    """Return errors when tag validation can no longer fail before checkout."""
+    relative_path = ".github/workflows/release-context.yml"
+    content = _read(relative_path)
+    errors = _missing_release_snippets(
+        content,
+        (
+            "Expected a vX.Y.Z semantic-version tag",
+            'gh api "repos/${GH_REPO}/git/ref/tags/${TAG}"',
+            'echo "tag=$TAG" >> "$GITHUB_OUTPUT"',
+            'echo "version=$VERSION" >> "$GITHUB_OUTPUT"',
+        ),
+        f"{relative_path}: missing pre-checkout tag contract {{snippet!r}}",
+    )
+    if "actions/checkout@" in content:
+        errors.append(f"{relative_path}: tag validation must run before checkout")
+    return errors
+
+
+def _check_release_reusability() -> list[str]:
+    """Return errors when specialized release workflows gain manual triggers."""
+    errors: list[str] = []
+    for workflow_path in REUSABLE_RELEASE_WORKFLOWS:
+        content = _read(workflow_path)
+        if "  workflow_call:" not in content:
+            errors.append(f"{workflow_path}: missing workflow_call trigger")
+        if "  workflow_dispatch:" in content:
+            errors.append(f"{workflow_path}: reusable releases cannot be manual")
+    if "workflow_dispatch" in _read(".github/workflows/sync-cpp-registries.yml"):
+        errors.append(
+            "sync-cpp-registries.yml: release synchronization cannot be manual"
+        )
+    return errors
+
+
+def _check_release_artifacts() -> list[str]:
+    """Return errors when canonical release artifact names drift."""
+    contracts = {
+        RELEASE_PYTHON_WORKFLOWS: "python-release-artifacts",
+        ".github/workflows/release-r.yml": "r-release-artifacts",
+        RELEASE_CPP_WORKFLOWS: "cpp-release-artifacts-${VERSION}",
+    }
+    return [
+        f"{workflow_path}: missing canonical artifact name {artifact_name!r}"
+        for workflow_path, artifact_name in contracts.items()
+        if artifact_name not in _read(workflow_path)
+    ]
+
+
+def _check_release_services() -> list[str]:
+    """Return errors when external release checks lose safe behavior."""
+    r_universe = _read(".github/workflows/verify-r-universe.yml")
+    errors = _missing_release_snippets(
+        r_universe,
+        ("json.load(sys.stdin)", "::warning::R-universe did not show"),
+        "verify-r-universe.yml: missing non-blocking JSON check {snippet!r}",
+    )
+    errors.extend(
+        _missing_release_snippets(
+            _read(RELEASE_PROVENANCE_WORKFLOWS),
+            (
+                "GH_REPO: ${{ github.repository }}",
+                'gh release view "$TAG" --repo "$GH_REPO"',
+            ),
+            "release-provenance.yml: missing repository-safe asset check {snippet!r}",
         )
     )
     return errors
@@ -147,7 +299,7 @@ def _check_python_release() -> list[str]:
 
 def _check_cpp_release() -> list[str]:
     """Return errors when C++ releases lose cross-platform or legacy support."""
-    content = _read(".github/workflows/release-cpp.yml")
+    content = _read(RELEASE_CPP_WORKFLOWS)
     errors: list[str] = []
     forbidden = {
         "python .github/scripts/validate_unified_version.py": (
@@ -186,6 +338,11 @@ def main() -> None:
         _check_codeql_pins,
         _check_slsa_pins,
         _check_python_release,
+        _check_release_orchestrator,
+        _check_release_context,
+        _check_release_reusability,
+        _check_release_artifacts,
+        _check_release_services,
         _check_cpp_release,
     )
     missing = [error for check in checks for error in check()]

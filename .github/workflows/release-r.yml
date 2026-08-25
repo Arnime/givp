@@ -1,0 +1,67 @@
+# SPDX-FileCopyrightText: 2026 Arnaldo Mendes Pires Junior
+# SPDX-License-Identifier: MIT
+
+name: Build R Release
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: "Validated release tag"
+        required: true
+        type: string
+    outputs:
+      artifact_name:
+        description: "Uploaded R artifact name"
+        value: ${{ jobs.build.outputs.artifact_name }}
+      hashes:
+        description: "Base64-encoded SHA256 subject"
+        value: ${{ jobs.build.outputs.hashes }}
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      artifact_name: ${{ steps.hash.outputs.artifact_name }}
+      hashes: ${{ steps.hash.outputs.hashes }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: refs/tags/${{ inputs.tag }}
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake libcurl4-openssl-dev libssl-dev libxml2-dev pandoc
+      - uses: r-lib/actions/setup-r@d3c5be51b12e724e68f33216ca3c148b66d5f0b6 # v2
+        with:
+          r-version: release
+          use-public-rspm: true
+      - uses: r-lib/actions/setup-r-dependencies@d3c5be51b12e724e68f33216ca3c148b66d5f0b6 # v2
+        with:
+          working-directory: r
+          extra-packages: any::lazyeval
+          cache: true
+      - name: Build R package tarball
+        id: package
+        run: |
+          R CMD build r
+          echo "tarball=$(ls givp_*.tar.gz | head -1)" >> "$GITHUB_OUTPUT"
+      - name: Generate R artifact hash
+        id: hash
+        env:
+          TARBALL: ${{ steps.package.outputs.tarball }}
+        run: |
+          echo "artifact_name=r-release-artifacts" >> "$GITHUB_OUTPUT"
+          echo "hashes=$(sha256sum "$TARBALL" | base64 -w0)" >> "$GITHUB_OUTPUT"
+      - name: Upload R release artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ${{ steps.hash.outputs.artifact_name }}
+          path: ${{ steps.package.outputs.tarball }}
+          if-no-files-found: error

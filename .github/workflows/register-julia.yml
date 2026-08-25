@@ -1,0 +1,93 @@
+# SPDX-FileCopyrightText: 2026 Arnaldo Mendes Pires Junior
+# SPDX-License-Identifier: MIT
+
+name: Register Julia Release
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: "Validated release tag"
+        required: true
+        type: string
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+permissions:
+  contents: read
+
+jobs:
+  register:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: refs/tags/${{ inputs.tag }}
+      - name: Validate Julia version against tag
+        id: version
+        env:
+          TAG: ${{ inputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="${TAG#v}"
+          JULIA_VERSION="$(grep '^version' julia/Project.toml | head -1 | sed 's/.*= *"\(.*\)"/\1/' | tr -d '[:space:]')"
+          if [ "$VERSION" != "$JULIA_VERSION" ]; then
+            echo "::error::Tag $TAG does not match julia/Project.toml version $JULIA_VERSION."
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+      - name: Open or update Julia registration issue
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const tag = process.env.RELEASE_TAG;
+            const version = process.env.RELEASE_VERSION;
+            const title = `Register GIVPOptimizer v${version}`;
+
+            const search = await github.rest.search.issuesAndPullRequests({
+              q: `repo:${owner}/${repo} is:issue in:title "${title}"`,
+              per_page: 20,
+            });
+            let issue = search.data.items.find((item) => !item.pull_request);
+            const issueBody = [
+              "Automated Julia package registration request.",
+              "",
+              "- Package: GIVPOptimizer",
+              "- Subdirectory: julia",
+              `- Version: ${version}`,
+              `- Trigger tag: ${tag}`,
+              "",
+              "This issue was created by the release workflow.",
+            ].join("\n");
+
+            if (!issue) {
+              const created = await github.rest.issues.create({
+                owner,
+                repo,
+                title,
+                body: issueBody,
+              });
+              issue = created.data;
+            }
+
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number: issue.number,
+              body: [
+                "@JuliaRegistrator register subdir=julia",
+                "",
+                "Release notes:",
+                `- Automated registration for ${tag}.`,
+              ].join("\n"),
+            });

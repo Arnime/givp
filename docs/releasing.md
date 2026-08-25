@@ -4,6 +4,32 @@ GIVP uses one release version across its Python, Rust, Julia, R, and C++
 packages. A push to `main` that changes a version manifest creates the matching
 `vX.Y.Z` tag and triggers the central release workflow.
 
+## Workflow architecture
+
+`Release` is the only workflow that operators start manually. It validates the
+existing tag before any checkout and then calls focused reusable workflows:
+
+```text
+release-context
+      |
+      +-- release-python --+
+      +-- release-cpp -----+-- release-provenance
+      +-- release-r -------+          |
+                                      +-- publish-python
+                                      +-- publish-rust
+                                      +-- register-julia
+                                      +-- sync-cpp-registries
+
+release-r -- verify-r-universe (non-blocking)
+```
+
+The Python, C++, and R builds run in parallel. Each returns an artifact name and
+base64-encoded hashes to the provenance workflow. That workflow combines the
+subjects, generates SLSA provenance, verifies the release asset, and attaches
+all language artifacts. External publication starts only after this barrier
+succeeds. The specialized release workflows expose `workflow_call` contracts
+and are not manual entry points.
+
 ## Prepare a release
 
 1. Update the version to the same `X.Y.Z` value in `python/pyproject.toml`,
@@ -20,11 +46,11 @@ packages. A push to `main` that changes a version manifest creates the matching
 
 Do not use GitHub's **Create a new release** interface for normal releases.
 For a manual rerun, use **Actions → Release → Run workflow** and provide the
-existing `vX.Y.Z` tag. The workflow builds all official artifacts, generates
-SLSA provenance before attaching release assets, and only then publishes to
-external registries. If a release is created directly in the GitHub interface,
-the provenance fallback checks it and rebuilds only when its `.intoto.jsonl`
-asset is missing.
+existing `vX.Y.Z` tag. Do not invoke specialized workflows directly. The
+workflow builds all official artifacts, generates SLSA provenance before
+attaching release assets, and only then publishes to external registries. If a
+release is created directly in the GitHub interface, the provenance fallback
+checks it and rebuilds only when its `.intoto.jsonl` asset is missing.
 
 ## crates.io credentials and retries
 
