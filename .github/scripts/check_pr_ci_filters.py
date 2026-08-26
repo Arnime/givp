@@ -119,6 +119,10 @@ def _check_slsa_pins() -> list[str]:
             errors.append(
                 f"{relative_path}: SHA-pinned SLSA workflows must compile the generator"
             )
+        if "FORCE_JAVASCRIPT_ACTIONS_TO_NODE24" in content:
+            errors.append(
+                f"{relative_path}: SLSA v2.1.0 actions must not be forced to Node.js 24"
+            )
     if len(pins) == len(SLSA_WORKFLOWS) and len(set(pins)) != 1:
         errors.append(
             "SLSA generator pins must match in Release and Backfill Provenance"
