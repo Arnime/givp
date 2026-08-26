@@ -93,6 +93,7 @@ jobs:
   vcpkg:
     needs: context
     if: needs.context.outputs.tag_exists == 'true'
+    continue-on-error: true
     runs-on: ubuntu-latest
     environment: registry-forks
     permissions:
@@ -121,7 +122,7 @@ jobs:
           fi
           gh auth setup-git
           BRANCH="add-givp-$VERSION"
-          OPEN_PR="$(gh pr list --repo microsoft/vcpkg --head "Arnime:$BRANCH" --state open --json url --jq '.[0].url')"
+          OPEN_PR="$(gh api "repos/microsoft/vcpkg/pulls?head=Arnime:$BRANCH&state=open&per_page=1" --jq 'if length == 0 then empty else .[0].html_url end')"
           if [[ "$WRITE_ENABLED" == false && -z "$OPEN_PR" ]]; then
             echo "::notice::No open vcpkg PR for $BRANCH; template update is a no-op."
             exit 0
@@ -157,18 +158,21 @@ jobs:
             git commit -m "givp: update to $VERSION"
             git push --force-with-lease origin "HEAD:$BRANCH"
           fi
-          ALL_PR="$(gh pr list --repo microsoft/vcpkg --head "Arnime:$BRANCH" --state all --json state,url --jq 'if length == 0 then empty else .[0] | "\(.state) \(.url)" end')"
-          if [[ -z "$ALL_PR" ]]; then
-            gh pr create --repo microsoft/vcpkg --base master --head "Arnime:$BRANCH" \
+          OPEN_PR="$(gh api "repos/microsoft/vcpkg/pulls?head=Arnime:$BRANCH&state=open&per_page=1" --jq 'if length == 0 then empty else .[0].html_url end')"
+          if [[ -z "$OPEN_PR" ]]; then
+            if ! gh pr create --repo microsoft/vcpkg --base master --head "Arnime:$BRANCH" \
               --title "[givp] add version $VERSION" \
-              --body "Adds the GIVP $VERSION port from the immutable $TAG release archive."
+              --body "Adds the GIVP $VERSION port from the immutable $TAG release archive."; then
+              echo "::warning::Unable to create the vcpkg PR; the fork branch Arnime:$BRANCH is ready for manual submission."
+            fi
           else
-            echo "vcpkg PR already exists: $ALL_PR"
+            echo "vcpkg PR already exists: $OPEN_PR"
           fi
 
   conan:
     needs: context
     if: needs.context.outputs.tag_exists == 'true'
+    continue-on-error: true
     runs-on: ubuntu-latest
     environment: registry-forks
     permissions:
@@ -197,7 +201,7 @@ jobs:
           fi
           gh auth setup-git
           BRANCH="add-givp-$VERSION"
-          OPEN_PR="$(gh pr list --repo conan-io/conan-center-index --head "Arnime:$BRANCH" --state open --json url --jq '.[0].url')"
+          OPEN_PR="$(gh api "repos/conan-io/conan-center-index/pulls?head=Arnime:$BRANCH&state=open&per_page=1" --jq 'if length == 0 then empty else .[0].html_url end')"
           if [[ "$WRITE_ENABLED" == false && -z "$OPEN_PR" ]]; then
             echo "::notice::No open ConanCenter PR for $BRANCH; template update is a no-op."
             exit 0
@@ -231,11 +235,13 @@ jobs:
             git commit -m "givp: update to $VERSION"
             git push --force-with-lease origin "HEAD:$BRANCH"
           fi
-          ALL_PR="$(gh pr list --repo conan-io/conan-center-index --head "Arnime:$BRANCH" --state all --json state,url --jq 'if length == 0 then empty else .[0] | "\(.state) \(.url)" end')"
-          if [[ -z "$ALL_PR" ]]; then
-            gh pr create --repo conan-io/conan-center-index --base master --head "Arnime:$BRANCH" \
+          OPEN_PR="$(gh api "repos/conan-io/conan-center-index/pulls?head=Arnime:$BRANCH&state=open&per_page=1" --jq 'if length == 0 then empty else .[0].html_url end')"
+          if [[ -z "$OPEN_PR" ]]; then
+            if ! gh pr create --repo conan-io/conan-center-index --base master --head "Arnime:$BRANCH" \
               --title "givp/$VERSION: add recipe" \
-              --body "Adds the GIVP $VERSION recipe from the immutable $TAG release archive."
+              --body "Adds the GIVP $VERSION recipe from the immutable $TAG release archive."; then
+              echo "::warning::Unable to create the ConanCenter PR; the fork branch Arnime:$BRANCH is ready for manual submission."
+            fi
           else
-            echo "ConanCenter PR already exists: $ALL_PR"
+            echo "ConanCenter PR already exists: $OPEN_PR"
           fi

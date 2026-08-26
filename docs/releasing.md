@@ -90,6 +90,11 @@ only the archive hashes in those forks, and creates or updates the upstream
 PRs. A template change on `main` updates an already-open PR only; without a
 matching release tag or PR it succeeds without writing to either fork.
 
+The registry jobs are best-effort and do not block publication of the signed
+release artifacts. When the token cannot create an upstream PR, the workflow
+keeps the updated fork branch and emits a warning so the PR can be submitted
+manually.
+
 Create `REGISTRY_FORK_TOKEN` as a fine-grained PAT with **Contents: read and
 write** plus **Pull requests: read and write**, restricted to the two Arnime
 forks. Store it in the protected `registry-forks` environment. The forks remain

@@ -334,6 +334,15 @@ def _check_release_services() -> list[str]:
             "sync-cpp-registries.yml: automation must not be checked out from "
             "historical release tags"
         )
+    if sync_cpp.count("continue-on-error: true") < 2:
+        errors.append(
+            "sync-cpp-registries.yml: external registry jobs must be non-blocking"
+        )
+    if sync_cpp.count("gh api ") < 4:
+        errors.append(
+            "sync-cpp-registries.yml: use the pull-request REST endpoint "
+            "to detect existing external PRs"
+        )
     identity_positions = [
         match.start() for match in re.finditer('git config user.name', sync_cpp)
     ]
