@@ -358,7 +358,9 @@ def _check_release_services() -> list[str]:
     ]
     push_positions = [
         match.start()
-        for match in re.finditer(r'git push origin "HEAD:\$BRANCH"', sync_cpp)
+        for match in re.finditer(
+            r'git push --force-with-lease origin "HEAD:\$BRANCH"', sync_cpp
+        )
     ]
     if (
         len(auth_positions) != 2

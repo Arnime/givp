@@ -155,7 +155,7 @@ jobs:
           else
             git add ports/givp versions/g-/givp.json versions/baseline.json
             git commit -m "givp: update to $VERSION"
-            git push origin "HEAD:$BRANCH"
+            git push --force-with-lease origin "HEAD:$BRANCH"
           fi
           ALL_PR="$(gh pr list --repo microsoft/vcpkg --head "Arnime:$BRANCH" --state all --json state,url --jq 'if length == 0 then empty else .[0] | "\(.state) \(.url)" end')"
           if [[ -z "$ALL_PR" ]]; then
@@ -229,7 +229,7 @@ jobs:
           else
             git add recipes/givp
             git commit -m "givp: update to $VERSION"
-            git push origin "HEAD:$BRANCH"
+            git push --force-with-lease origin "HEAD:$BRANCH"
           fi
           ALL_PR="$(gh pr list --repo conan-io/conan-center-index --head "Arnime:$BRANCH" --state all --json state,url --jq 'if length == 0 then empty else .[0] | "\(.state) \(.url)" end')"
           if [[ -z "$ALL_PR" ]]; then
