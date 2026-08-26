@@ -334,6 +334,25 @@ def _check_release_services() -> list[str]:
             "sync-cpp-registries.yml: automation must not be checked out from "
             "historical release tags"
         )
+    identity_positions = [
+        match.start() for match in re.finditer('git config user.name', sync_cpp)
+    ]
+    rebase_positions = [
+        match.start() for match in re.finditer('git rebase upstream/master', sync_cpp)
+    ]
+    if (
+        len(identity_positions) != 2
+        or len(rebase_positions) != 2
+        or any(
+            identity_position > rebase_position
+            for identity_position, rebase_position in zip(
+                identity_positions, rebase_positions, strict=True
+            )
+        )
+    ):
+        errors.append(
+            "sync-cpp-registries.yml: configure the bot identity before each rebase"
+        )
     secret_contracts = (
         (
             _read(".github/workflows/publish-rust.yml"),

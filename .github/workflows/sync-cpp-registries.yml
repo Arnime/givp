@@ -127,6 +127,8 @@ jobs:
           fi
           gh repo clone Arnime/vcpkg "$RUNNER_TEMP/vcpkg"
           cd "$RUNNER_TEMP/vcpkg"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if git remote get-url upstream >/dev/null 2>&1; then
             git remote set-url upstream https://github.com/microsoft/vcpkg.git
           else
@@ -150,8 +152,6 @@ jobs:
           if git diff --quiet; then
             echo "No vcpkg registry changes required."
           else
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add ports/givp versions/g-/givp.json versions/baseline.json
             git commit -m "givp: update to $VERSION"
             git push origin "HEAD:$BRANCH"
@@ -202,6 +202,8 @@ jobs:
           fi
           gh repo clone Arnime/conan-center-index "$RUNNER_TEMP/conan-center-index"
           cd "$RUNNER_TEMP/conan-center-index"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if git remote get-url upstream >/dev/null 2>&1; then
             git remote set-url upstream https://github.com/conan-io/conan-center-index.git
           else
@@ -223,8 +225,6 @@ jobs:
           if git diff --quiet; then
             echo "No ConanCenter registry changes required."
           else
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add recipes/givp
             git commit -m "givp: update to $VERSION"
             git push origin "HEAD:$BRANCH"
