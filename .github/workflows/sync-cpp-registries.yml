@@ -119,6 +119,7 @@ jobs:
             echo "::error::REGISTRY_FORK_TOKEN must be configured in the registry-forks environment."
             exit 1
           fi
+          gh auth setup-git
           BRANCH="add-givp-$VERSION"
           OPEN_PR="$(gh pr list --repo microsoft/vcpkg --head "Arnime:$BRANCH" --state open --json url --jq '.[0].url')"
           if [[ "$WRITE_ENABLED" == false && -z "$OPEN_PR" ]]; then
@@ -194,6 +195,7 @@ jobs:
             echo "::error::REGISTRY_FORK_TOKEN must be configured in the registry-forks environment."
             exit 1
           fi
+          gh auth setup-git
           BRANCH="add-givp-$VERSION"
           OPEN_PR="$(gh pr list --repo conan-io/conan-center-index --head "Arnime:$BRANCH" --state open --json url --jq '.[0].url')"
           if [[ "$WRITE_ENABLED" == false && -z "$OPEN_PR" ]]; then

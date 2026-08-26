@@ -353,6 +353,26 @@ def _check_release_services() -> list[str]:
         errors.append(
             "sync-cpp-registries.yml: configure the bot identity before each rebase"
         )
+    auth_positions = [
+        match.start() for match in re.finditer("gh auth setup-git", sync_cpp)
+    ]
+    push_positions = [
+        match.start()
+        for match in re.finditer(r'git push origin "HEAD:\$BRANCH"', sync_cpp)
+    ]
+    if (
+        len(auth_positions) != 2
+        or len(push_positions) != 2
+        or any(
+            auth_position > push_position
+            for auth_position, push_position in zip(
+                auth_positions, push_positions, strict=True
+            )
+        )
+    ):
+        errors.append(
+            "sync-cpp-registries.yml: authenticate Git before each registry push"
+        )
     secret_contracts = (
         (
             _read(".github/workflows/publish-rust.yml"),
