@@ -101,4 +101,9 @@ For compatibility with an existing repository- or organization-level secret,
 `release.yml` explicitly forwards only `REGISTRY_FORK_TOKEN`. A secret defined
 in the protected `registry-forks` environment takes precedence.
 
+Registry synchronization executes the automation and templates from the
+workflow commit. The immutable release tag is used only to download and hash
+the published source archive. Existing tags therefore remain processable after
+the release automation evolves, without requiring new scripts inside the tag.
+
 [pypi-reusable]: https://docs.pypi.org/trusted-publishers/troubleshooting/#reusable-workflows-on-github

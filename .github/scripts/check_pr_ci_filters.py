@@ -317,6 +317,23 @@ def _check_release_services() -> list[str]:
         errors.append(
             "sync-cpp-registries.yml: environment secret cannot be a required call secret"
         )
+    errors.extend(
+        _missing_release_snippets(
+            sync_cpp,
+            (
+                "ref: ${{ github.sha }}",
+                'SOURCE_REF="$GITHUB_SHA"',
+                'if [[ -z "$INPUT_TAG" ]]; then',
+            ),
+            "sync-cpp-registries.yml: missing branch-safe release contract "
+            "{snippet!r}",
+        )
+    )
+    if "format('refs/tags/{0}', inputs.tag)" in sync_cpp:
+        errors.append(
+            "sync-cpp-registries.yml: automation must not be checked out from "
+            "historical release tags"
+        )
     secret_contracts = (
         (
             _read(".github/workflows/publish-rust.yml"),
