@@ -57,14 +57,16 @@ checks it and rebuilds only when its `.intoto.jsonl` asset is missing.
 ## crates.io credentials and retries
 
 Store the crates.io API token as `CARGO_REGISTRY_TOKEN` in the protected GitHub
-environment named `crates-io`. Do not add the token to workflow files,
-repository secrets, source code, or local configuration committed to Git.
+environment named `crates-io`. Do not add the token to workflow files, source
+code, or local configuration committed to Git.
 The environment secret must use that exact name; an empty value intentionally
 fails the release instead of silently skipping publication.
 
 Configure it under **Settings → Environments → crates-io → Environment
-secrets**. The reusable Rust workflow obtains the secret from that protected
-environment; it is not passed by `release.yml`.
+secrets**. For compatibility with an existing repository- or organization-level
+secret, `release.yml` explicitly forwards only `CARGO_REGISTRY_TOKEN`. A secret
+defined in the protected `crates-io` environment takes precedence in the
+reusable workflow.
 
 The central workflow validates the Rust package, verifies the tag matches
 `rust/Cargo.toml`, and checks crates.io before publishing. If a prior run has
@@ -88,11 +90,25 @@ only the archive hashes in those forks, and creates or updates the upstream
 PRs. A template change on `main` updates an already-open PR only; without a
 matching release tag or PR it succeeds without writing to either fork.
 
+The registry jobs are best-effort and do not block publication of the signed
+release artifacts. When the token cannot create an upstream PR, the workflow
+keeps the updated fork branch and emits a warning so the PR can be submitted
+manually.
+
 Create `REGISTRY_FORK_TOKEN` as a fine-grained PAT with **Contents: read and
 write** plus **Pull requests: read and write**, restricted to the two Arnime
 forks. Store it in the protected `registry-forks` environment. The forks remain
 ignored local clones, not submodules. vcpkg and ConanCenter still require their
 own CI, CLA where applicable, review, and maintainer merge; this automation
 never merges external PRs.
+
+For compatibility with an existing repository- or organization-level secret,
+`release.yml` explicitly forwards only `REGISTRY_FORK_TOKEN`. A secret defined
+in the protected `registry-forks` environment takes precedence.
+
+Registry synchronization executes the automation and templates from the
+workflow commit. The immutable release tag is used only to download and hash
+the published source archive. Existing tags therefore remain processable after
+the release automation evolves, without requiring new scripts inside the tag.
 
 [pypi-reusable]: https://docs.pypi.org/trusted-publishers/troubleshooting/#reusable-workflows-on-github

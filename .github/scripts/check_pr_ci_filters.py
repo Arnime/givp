@@ -119,6 +119,10 @@ def _check_slsa_pins() -> list[str]:
             errors.append(
                 f"{relative_path}: SHA-pinned SLSA workflows must compile the generator"
             )
+        if "FORCE_JAVASCRIPT_ACTIONS_TO_NODE24" in content:
+            errors.append(
+                f"{relative_path}: SLSA v2.1.0 actions must not be forced to Node.js 24"
+            )
     if len(pins) == len(SLSA_WORKFLOWS) and len(set(pins)) != 1:
         errors.append(
             "SLSA generator pins must match in Release and Backfill Provenance"
@@ -313,6 +317,98 @@ def _check_release_services() -> list[str]:
         errors.append(
             "sync-cpp-registries.yml: environment secret cannot be a required call secret"
         )
+    errors.extend(
+        _missing_release_snippets(
+            sync_cpp,
+            (
+                "ref: ${{ github.sha }}",
+                'SOURCE_REF="$GITHUB_SHA"',
+                'if [[ -z "$INPUT_TAG" ]]; then',
+            ),
+            "sync-cpp-registries.yml: missing branch-safe release contract "
+            "{snippet!r}",
+        )
+    )
+    if "format('refs/tags/{0}', inputs.tag)" in sync_cpp:
+        errors.append(
+            "sync-cpp-registries.yml: automation must not be checked out from "
+            "historical release tags"
+        )
+    if sync_cpp.count("continue-on-error: true") < 2:
+        errors.append(
+            "sync-cpp-registries.yml: external registry jobs must be non-blocking"
+        )
+    if sync_cpp.count("gh api ") < 4:
+        errors.append(
+            "sync-cpp-registries.yml: use the pull-request REST endpoint "
+            "to detect existing external PRs"
+        )
+    identity_positions = [
+        match.start() for match in re.finditer('git config user.name', sync_cpp)
+    ]
+    rebase_positions = [
+        match.start() for match in re.finditer('git rebase upstream/master', sync_cpp)
+    ]
+    if (
+        len(identity_positions) != 2
+        or len(rebase_positions) != 2
+        or any(
+            identity_position > rebase_position
+            for identity_position, rebase_position in zip(
+                identity_positions, rebase_positions, strict=True
+            )
+        )
+    ):
+        errors.append(
+            "sync-cpp-registries.yml: configure the bot identity before each rebase"
+        )
+    auth_positions = [
+        match.start() for match in re.finditer("gh auth setup-git", sync_cpp)
+    ]
+    push_positions = [
+        match.start()
+        for match in re.finditer(
+            r'git push --force-with-lease origin "HEAD:\$BRANCH"', sync_cpp
+        )
+    ]
+    if (
+        len(auth_positions) != 2
+        or len(push_positions) != 2
+        or any(
+            auth_position > push_position
+            for auth_position, push_position in zip(
+                auth_positions, push_positions, strict=True
+            )
+        )
+    ):
+        errors.append(
+            "sync-cpp-registries.yml: authenticate Git before each registry push"
+        )
+    secret_contracts = (
+        (
+            _read(".github/workflows/publish-rust.yml"),
+            _release_job_block(release, "publish-rust"),
+            "CARGO_REGISTRY_TOKEN",
+        ),
+        (
+            sync_cpp,
+            _release_job_block(release, "sync-cpp-registries"),
+            "REGISTRY_FORK_TOKEN",
+        ),
+    )
+    for workflow, caller, secret_name in secret_contracts:
+        errors.extend(
+            _missing_release_snippets(
+                workflow,
+                (f"{secret_name}:", "required: false"),
+                f"reusable release secret {secret_name!r} misses {{snippet!r}}",
+            )
+        )
+        expected_forwarding = f"{secret_name}: ${{{{ secrets.{secret_name} }}}}"
+        if expected_forwarding not in caller:
+            errors.append(f"release.yml: {secret_name} is not explicitly forwarded")
+        if "secrets: inherit" in caller:
+            errors.append(f"release.yml: {secret_name} must not expose unrelated secrets")
     return errors
 
 

@@ -10,6 +10,10 @@ on:
         description: "Validated release tag"
         required: true
         type: string
+    secrets:
+      CARGO_REGISTRY_TOKEN:
+        description: "Optional repository-level fallback for crates.io"
+        required: false
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true

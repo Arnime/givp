@@ -10,6 +10,10 @@ on:
         description: "Release tag to synchronize"
         required: true
         type: string
+    secrets:
+      REGISTRY_FORK_TOKEN:
+        description: "Optional repository-level fallback for registry forks"
+        required: false
   push:
     tags: ["v*"]
     branches: [main]
@@ -39,7 +43,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ inputs.tag && format('refs/tags/{0}', inputs.tag) || github.ref }}
+          ref: ${{ github.sha }}
           fetch-depth: 0
       - id: release
         env:
@@ -57,16 +61,18 @@ jobs:
             TAG="${INPUT_TAG:-$REF_NAME}"
             VERSION="${TAG#v}"
             WRITE_ENABLED=true
-            SOURCE_REF="refs/tags/$TAG"
+            SOURCE_REF="$GITHUB_SHA"
           fi
           if [[ "$TAG" != "v$VERSION" ]] || ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "::error::Expected a stable vX.Y.Z tag, got '$TAG'."
             exit 1
           fi
-          python .github/scripts/validate_unified_version.py --root .
-          if [[ "$(python .github/scripts/validate_unified_version.py --root .)" != "$VERSION" ]]; then
-            echo "::error::Tag $TAG does not match the unified manifest version."
-            exit 1
+          if [[ -z "$INPUT_TAG" ]]; then
+            python .github/scripts/validate_unified_version.py --root .
+            if [[ "$(python .github/scripts/validate_unified_version.py --root .)" != "$VERSION" ]]; then
+              echo "::error::Tag $TAG does not match the unified manifest version."
+              exit 1
+            fi
           fi
           if ! git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null; then
             if [[ "$WRITE_ENABLED" == true ]]; then
@@ -87,6 +93,7 @@ jobs:
   vcpkg:
     needs: context
     if: needs.context.outputs.tag_exists == 'true'
+    continue-on-error: true
     runs-on: ubuntu-latest
     environment: registry-forks
     permissions:
@@ -113,14 +120,17 @@ jobs:
             echo "::error::REGISTRY_FORK_TOKEN must be configured in the registry-forks environment."
             exit 1
           fi
+          gh auth setup-git
           BRANCH="add-givp-$VERSION"
-          OPEN_PR="$(gh pr list --repo microsoft/vcpkg --head "Arnime:$BRANCH" --state open --json url --jq '.[0].url')"
+          OPEN_PR="$(gh api "repos/microsoft/vcpkg/pulls?head=Arnime:$BRANCH&state=open&per_page=1" --jq 'if length == 0 then empty else .[0].html_url end')"
           if [[ "$WRITE_ENABLED" == false && -z "$OPEN_PR" ]]; then
             echo "::notice::No open vcpkg PR for $BRANCH; template update is a no-op."
             exit 0
           fi
           gh repo clone Arnime/vcpkg "$RUNNER_TEMP/vcpkg"
           cd "$RUNNER_TEMP/vcpkg"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if git remote get-url upstream >/dev/null 2>&1; then
             git remote set-url upstream https://github.com/microsoft/vcpkg.git
           else
@@ -144,24 +154,25 @@ jobs:
           if git diff --quiet; then
             echo "No vcpkg registry changes required."
           else
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add ports/givp versions/g-/givp.json versions/baseline.json
             git commit -m "givp: update to $VERSION"
-            git push origin "HEAD:$BRANCH"
+            git push --force-with-lease origin "HEAD:$BRANCH"
           fi
-          ALL_PR="$(gh pr list --repo microsoft/vcpkg --head "Arnime:$BRANCH" --state all --json state,url --jq 'if length == 0 then empty else .[0] | "\(.state) \(.url)" end')"
-          if [[ -z "$ALL_PR" ]]; then
-            gh pr create --repo microsoft/vcpkg --base master --head "Arnime:$BRANCH" \
+          OPEN_PR="$(gh api "repos/microsoft/vcpkg/pulls?head=Arnime:$BRANCH&state=open&per_page=1" --jq 'if length == 0 then empty else .[0].html_url end')"
+          if [[ -z "$OPEN_PR" ]]; then
+            if ! gh pr create --repo microsoft/vcpkg --base master --head "Arnime:$BRANCH" \
               --title "[givp] add version $VERSION" \
-              --body "Adds the GIVP $VERSION port from the immutable $TAG release archive."
+              --body "Adds the GIVP $VERSION port from the immutable $TAG release archive."; then
+              echo "::warning::Unable to create the vcpkg PR; the fork branch Arnime:$BRANCH is ready for manual submission."
+            fi
           else
-            echo "vcpkg PR already exists: $ALL_PR"
+            echo "vcpkg PR already exists: $OPEN_PR"
           fi
 
   conan:
     needs: context
     if: needs.context.outputs.tag_exists == 'true'
+    continue-on-error: true
     runs-on: ubuntu-latest
     environment: registry-forks
     permissions:
@@ -188,14 +199,17 @@ jobs:
             echo "::error::REGISTRY_FORK_TOKEN must be configured in the registry-forks environment."
             exit 1
           fi
+          gh auth setup-git
           BRANCH="add-givp-$VERSION"
-          OPEN_PR="$(gh pr list --repo conan-io/conan-center-index --head "Arnime:$BRANCH" --state open --json url --jq '.[0].url')"
+          OPEN_PR="$(gh api "repos/conan-io/conan-center-index/pulls?head=Arnime:$BRANCH&state=open&per_page=1" --jq 'if length == 0 then empty else .[0].html_url end')"
           if [[ "$WRITE_ENABLED" == false && -z "$OPEN_PR" ]]; then
             echo "::notice::No open ConanCenter PR for $BRANCH; template update is a no-op."
             exit 0
           fi
           gh repo clone Arnime/conan-center-index "$RUNNER_TEMP/conan-center-index"
           cd "$RUNNER_TEMP/conan-center-index"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if git remote get-url upstream >/dev/null 2>&1; then
             git remote set-url upstream https://github.com/conan-io/conan-center-index.git
           else
@@ -217,17 +231,17 @@ jobs:
           if git diff --quiet; then
             echo "No ConanCenter registry changes required."
           else
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add recipes/givp
             git commit -m "givp: update to $VERSION"
-            git push origin "HEAD:$BRANCH"
+            git push --force-with-lease origin "HEAD:$BRANCH"
           fi
-          ALL_PR="$(gh pr list --repo conan-io/conan-center-index --head "Arnime:$BRANCH" --state all --json state,url --jq 'if length == 0 then empty else .[0] | "\(.state) \(.url)" end')"
-          if [[ -z "$ALL_PR" ]]; then
-            gh pr create --repo conan-io/conan-center-index --base master --head "Arnime:$BRANCH" \
+          OPEN_PR="$(gh api "repos/conan-io/conan-center-index/pulls?head=Arnime:$BRANCH&state=open&per_page=1" --jq 'if length == 0 then empty else .[0].html_url end')"
+          if [[ -z "$OPEN_PR" ]]; then
+            if ! gh pr create --repo conan-io/conan-center-index --base master --head "Arnime:$BRANCH" \
               --title "givp/$VERSION: add recipe" \
-              --body "Adds the GIVP $VERSION recipe from the immutable $TAG release archive."
+              --body "Adds the GIVP $VERSION recipe from the immutable $TAG release archive."; then
+              echo "::warning::Unable to create the ConanCenter PR; the fork branch Arnime:$BRANCH is ready for manual submission."
+            fi
           else
-            echo "ConanCenter PR already exists: $ALL_PR"
+            echo "ConanCenter PR already exists: $OPEN_PR"
           fi
