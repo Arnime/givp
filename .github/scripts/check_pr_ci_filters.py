@@ -324,6 +324,9 @@ def _check_release_services() -> list[str]:
                 "ref: ${{ github.sha }}",
                 'SOURCE_REF="$GITHUB_SHA"',
                 'if [[ -z "$INPUT_TAG" ]]; then',
+                "COMMIT_AUTHOR_NAME: ${{ github.actor }}",
+                "COMMIT_AUTHOR_EMAIL: ${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com",
+                "--reset-author --no-edit",
             ),
             "sync-cpp-registries.yml: missing branch-safe release contract "
             "{snippet!r}",
@@ -347,7 +350,7 @@ def _check_release_services() -> list[str]:
         match.start() for match in re.finditer('git config user.name', sync_cpp)
     ]
     rebase_positions = [
-        match.start() for match in re.finditer('git rebase upstream/master', sync_cpp)
+        match.start() for match in re.finditer('git rebase --exec', sync_cpp)
     ]
     if (
         len(identity_positions) != 2
@@ -360,7 +363,15 @@ def _check_release_services() -> list[str]:
         )
     ):
         errors.append(
-            "sync-cpp-registries.yml: configure the bot identity before each rebase"
+            "sync-cpp-registries.yml: configure the triggering identity before each rebase"
+        )
+    if sync_cpp.count("--reset-author --no-edit") != 2:
+        errors.append(
+            "sync-cpp-registries.yml: reattribute each legacy bot commit during rebase"
+        )
+    if 'git config user.name "github-actions[bot]"' in sync_cpp:
+        errors.append(
+            "sync-cpp-registries.yml: generated registry commits must use the triggering identity"
         )
     auth_positions = [
         match.start() for match in re.finditer("gh auth setup-git", sync_cpp)

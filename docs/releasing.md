@@ -95,6 +95,12 @@ release artifacts. When the token cannot create an upstream PR, the workflow
 keeps the updated fork branch and emits a warning so the PR can be submitted
 manually.
 
+Generated registry commits use the identity of the user who triggered the
+release, with that account's GitHub noreply email. During a rebase, legacy
+commits authored by `github-actions[bot]` are reattributed to that same
+identity. This prevents external CLA checks from being blocked by an unsigned
+automation account while preserving commits already authored by contributors.
+
 Create `REGISTRY_FORK_TOKEN` as a fine-grained PAT with **Contents: read and
 write** plus **Pull requests: read and write**, restricted to the two Arnime
 forks. Store it in the protected `registry-forks` environment. The forks remain

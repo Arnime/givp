@@ -109,6 +109,8 @@ jobs:
           TAG: ${{ needs.context.outputs.tag }}
           VERSION: ${{ needs.context.outputs.version }}
           WRITE_ENABLED: ${{ needs.context.outputs.write_enabled }}
+          COMMIT_AUTHOR_NAME: ${{ github.actor }}
+          COMMIT_AUTHOR_EMAIL: ${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com
         shell: bash
         run: |
           set -euo pipefail
@@ -129,8 +131,8 @@ jobs:
           fi
           gh repo clone Arnime/vcpkg "$RUNNER_TEMP/vcpkg"
           cd "$RUNNER_TEMP/vcpkg"
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "$COMMIT_AUTHOR_NAME"
+          git config user.email "$COMMIT_AUTHOR_EMAIL"
           if git remote get-url upstream >/dev/null 2>&1; then
             git remote set-url upstream https://github.com/microsoft/vcpkg.git
           else
@@ -140,7 +142,7 @@ jobs:
           git fetch --no-tags origin "$BRANCH" || true
           if git show-ref --verify --quiet "refs/remotes/origin/$BRANCH"; then
             git checkout -B "$BRANCH" "origin/$BRANCH"
-            git rebase upstream/master
+            git rebase --exec 'if [ "$(git log -1 --format=%ae)" = "41898282+github-actions[bot]@users.noreply.github.com" ]; then git commit --amend --reset-author --no-edit; fi' upstream/master
           else
             git checkout -B "$BRANCH" upstream/master
           fi
@@ -188,6 +190,8 @@ jobs:
           TAG: ${{ needs.context.outputs.tag }}
           VERSION: ${{ needs.context.outputs.version }}
           WRITE_ENABLED: ${{ needs.context.outputs.write_enabled }}
+          COMMIT_AUTHOR_NAME: ${{ github.actor }}
+          COMMIT_AUTHOR_EMAIL: ${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com
         shell: bash
         run: |
           set -euo pipefail
@@ -208,8 +212,8 @@ jobs:
           fi
           gh repo clone Arnime/conan-center-index "$RUNNER_TEMP/conan-center-index"
           cd "$RUNNER_TEMP/conan-center-index"
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "$COMMIT_AUTHOR_NAME"
+          git config user.email "$COMMIT_AUTHOR_EMAIL"
           if git remote get-url upstream >/dev/null 2>&1; then
             git remote set-url upstream https://github.com/conan-io/conan-center-index.git
           else
@@ -219,7 +223,7 @@ jobs:
           git fetch --no-tags origin "$BRANCH" || true
           if git show-ref --verify --quiet "refs/remotes/origin/$BRANCH"; then
             git checkout -B "$BRANCH" "origin/$BRANCH"
-            git rebase upstream/master
+            git rebase --exec 'if [ "$(git log -1 --format=%ae)" = "41898282+github-actions[bot]@users.noreply.github.com" ]; then git commit --amend --reset-author --no-edit; fi' upstream/master
           else
             git checkout -B "$BRANCH" upstream/master
           fi
