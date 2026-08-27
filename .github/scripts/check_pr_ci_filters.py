@@ -29,7 +29,6 @@ EXPECTATIONS = {
         "cpp/CMakeLists.txt",
         "source_changed",
     ),
-    ".github/workflows/codeql.yml": ("python/src/**", "python/poetry.lock"),
     ".github/workflows/security.yml": ("python/src/**", "python/poetry.lock"),
 }
 ALWAYS_REPORTED_COVERAGE = {
@@ -97,6 +96,17 @@ def _check_codeql_pins() -> list[str]:
         return [".github/workflows/codeql.yml: missing immutable init/analyze pins"]
     if len(set(codeql_pins.values())) != 1:
         return [".github/workflows/codeql.yml: init and analyze must use the same pin"]
+    return []
+
+
+def _check_codeql_all_prs() -> list[str]:
+    """Return errors when CodeQL can be skipped for a pull request."""
+    content = _read(".github/workflows/codeql.yml")
+    required_trigger = "    pull_request:\n        branches: [main]"
+    if required_trigger not in content:
+        return [".github/workflows/codeql.yml: missing pull-request trigger for main"]
+    if f"{required_trigger}\n        paths:" in content:
+        return [".github/workflows/codeql.yml: CodeQL must run on every pull request"]
     return []
 
 
@@ -462,6 +472,7 @@ def main() -> None:
         _check_expected_snippets,
         _check_coverage_contracts,
         _check_codeql_pins,
+        _check_codeql_all_prs,
         _check_slsa_pins,
         _check_python_release,
         _check_release_orchestrator,
