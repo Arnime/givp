@@ -17,10 +17,10 @@ from givp.examples.synthetic_hydropower.optimization import (
 
 __all__ = [
     "CascadeConfig",
+    "OptimizationDefinition",
     "PlantConfig",
     "PowerScheduleResult",
     "SimulationResult",
-    "OptimizationDefinition",
     "evaluate_power_vector",
     "load_optimization_definition",
     "project_power_vector",

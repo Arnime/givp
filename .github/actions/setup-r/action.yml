@@ -30,12 +30,16 @@ runs:
         use-public-rspm: true
     - if: inputs.dependencies == ''
       uses: r-lib/actions/setup-r-dependencies@a51a8012b0aab7c32ef9d19bf54da93f3254335e # v2
+      env:
+        RENV_PROJECT: ${{ github.workspace }}/${{ inputs.working-directory }}
       with:
         working-directory: ${{ inputs.working-directory }}
         extra-packages: ${{ inputs.extra-packages }}
         cache: ${{ inputs.cache }}
     - if: inputs.dependencies != ''
       uses: r-lib/actions/setup-r-dependencies@a51a8012b0aab7c32ef9d19bf54da93f3254335e # v2
+      env:
+        RENV_PROJECT: ${{ github.workspace }}/${{ inputs.working-directory }}
       with:
         working-directory: ${{ inputs.working-directory }}
         dependencies: ${{ inputs.dependencies }}
