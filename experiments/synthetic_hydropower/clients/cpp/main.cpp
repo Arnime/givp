@@ -51,10 +51,11 @@ int main(int argc, char* argv[]) {
         command_path == nullptr ? "synthetic-hydropower" : command_path;
 #if defined(_WIN32)
     const std::string command =
-        "type " + shell_quote(argv[1]) + " | " + shell_quote(executable) + " worker";
+        "echo " + shell_quote(request.dump()) + " | " + shell_quote(executable) + " worker";
 #else
     const std::string command =
-        "cat " + shell_quote(argv[1]) + " | " + shell_quote(executable) + " worker";
+        "printf '%s\\n' " + shell_quote(request.dump()) + " | PYTHONUNBUFFERED=1 " +
+        shell_quote(executable) + " worker";
 #endif
     std::array<char, 512> buffer{};
     std::string response_text;
