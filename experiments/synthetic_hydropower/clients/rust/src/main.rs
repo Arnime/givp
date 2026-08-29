@@ -10,7 +10,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let request: serde_json::Value = serde_json::from_str(&fs::read_to_string(request_path)?)?;
     let command = env::var("SYNTHETIC_HYDROPOWER_COMMAND")
         .unwrap_or_else(|_| "synthetic-hydropower".to_owned());
-    let mut worker = Command::new(command)
+    let mut worker_command = Command::new(command);
+    if cfg!(unix) {
+        worker_command.env("PYTHONUNBUFFERED", "1");
+    }
+    let mut worker = worker_command
         .arg("worker")
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())

@@ -3,6 +3,7 @@ name = "synthetic-hydropower-client"
 version = "0.1.0"
 edition = "2021"
 publish = false
+default-run = "synthetic-hydropower-client"
 
 [dependencies]
 givp = { path = "../../../../rust" }
