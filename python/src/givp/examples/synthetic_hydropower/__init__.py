@@ -8,12 +8,22 @@ from givp.examples.synthetic_hydropower.model import (
     simulate_cascade,
     simulate_power_schedule,
 )
+from givp.examples.synthetic_hydropower.optimization import (
+    OptimizationDefinition,
+    evaluate_power_vector,
+    load_optimization_definition,
+    project_power_vector,
+)
 
 __all__ = [
     "CascadeConfig",
     "PlantConfig",
     "PowerScheduleResult",
     "SimulationResult",
+    "OptimizationDefinition",
+    "evaluate_power_vector",
+    "load_optimization_definition",
+    "project_power_vector",
     "simulate_cascade",
     "simulate_power_schedule",
 ]

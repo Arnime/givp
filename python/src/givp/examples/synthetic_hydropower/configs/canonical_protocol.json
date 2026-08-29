@@ -1,0 +1,11 @@
+{
+  "cascade": {
+    "periods": 24,
+    "period_hours": 1.0,
+    "travel_time_steps": 1,
+    "level_penalty_weight": 10000.0,
+    "unit_switch_penalty_weight": 250.0,
+    "minimum_state_duration_hours": 8,
+    "early_switch_penalty_weight": 500.0
+  }
+}

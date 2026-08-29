@@ -1,5 +1,6 @@
 """Tests for the synthetic hydropower command-line boundary."""
 
+import json
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -109,3 +110,32 @@ def test_cli_writes_scenario_series_and_summary(
     assert len(scenario.splitlines()) == 3
     assert '"scenario": "case"' in summary
     assert '"energy_mwh": 20.0' in summary
+
+
+def test_balance_command_writes_a_json_protocol_response(tmp_path: Path) -> None:
+    """Evaluate an arbitrary canonical-horizon schedule outside benchmark paths."""
+    request_path = tmp_path / "request.json"
+    output_path = tmp_path / "response.json"
+    request_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "synthetic-hydropower/v1",
+                "requests": [
+                    {
+                        "case_id": "off",
+                        "incremental_inflow_m3s": [[0.0] * 24, [0.0] * 24],
+                        "target_power_mw": [[0.0] * 24, [0.0] * 24],
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    cli_module.main(
+        ["balance", "--request", str(request_path), "--output", str(output_path)]
+    )
+
+    response = json.loads(output_path.read_text(encoding="utf-8"))
+    assert response["schema_version"] == "synthetic-hydropower/v1"
+    assert response["results"][0]["case_id"] == "off"
