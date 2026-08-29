@@ -1,0 +1,15 @@
+cmake_minimum_required(VERSION 3.21)
+project(synthetic_hydropower_client LANGUAGES CXX)
+
+find_package(nlohmann_json CONFIG REQUIRED)
+add_executable(synthetic_hydropower_client main.cpp)
+target_compile_features(synthetic_hydropower_client PRIVATE cxx_std_17)
+target_link_libraries(synthetic_hydropower_client PRIVATE nlohmann_json::nlohmann_json)
+
+set(GIVP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GIVP_BUILD_BENCHMARKS OFF CACHE BOOL "" FORCE)
+set(GIVP_BUILD_FUZZ OFF CACHE BOOL "" FORCE)
+add_subdirectory(../../../../cpp givp-source EXCLUDE_FROM_ALL)
+add_executable(synthetic_hydropower_optimize optimize.cpp)
+target_compile_features(synthetic_hydropower_optimize PRIVATE cxx_std_17)
+target_link_libraries(synthetic_hydropower_optimize PRIVATE givp::givp nlohmann_json::nlohmann_json)
