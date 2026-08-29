@@ -45,6 +45,7 @@ Notebooks/Resultados_Dissertacao/
 Notebooks/*/*.png
 
 # R build artifacts
+renv/
 givp.Rcheck/
 *.tar.gz
 r/*.Rcheck/
@@ -84,3 +85,5 @@ CLAUDE.md
 .codex/
 
 experiments/synthetic_hydropower/docs/
+experiments/synthetic_hydropower/output/
+experiments/synthetic_hydropower/clients/rust/target/
