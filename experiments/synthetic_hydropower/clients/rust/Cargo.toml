@@ -1,0 +1,13 @@
+[package]
+name = "synthetic-hydropower-client"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+givp = { path = "../../../../rust" }
+serde_json = "1"
+
+[[bin]]
+name = "synthetic-hydropower-optimize"
+path = "src/optimize.rs"
