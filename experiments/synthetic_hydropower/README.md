@@ -144,6 +144,12 @@ por lote. Os schemas, um exemplo canônico e clientes mínimos ficam em
 `interop/v1/` e `clients/`. Eles chamam o modelo de referência; não duplicam
 equações nem incorporam parâmetros físicos aos outros pacotes GIVP.
 
+O mesmo protocolo permite validar os 252 casos do balanço determinístico por
+R, Julia, Rust e C++, sem criar quatro referências concorrentes. As respostas
+derivadas são gravadas somente em `output/` (ignorado pelo Git) e comparadas aos
+CSVs congelados em tolerância `1e-6`. O procedimento e os comandos por linguagem
+estão em [`clients/README.md`](clients/README.md).
+
 ## Otimização multilíngue
 
 `interop/v1/optimization_definition.json` estabelece uma execução comum do

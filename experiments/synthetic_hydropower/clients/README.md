@@ -33,6 +33,44 @@ pacotes GIVP de cada linguagem. No Windows, os adaptadores iniciam
 wrapper `.cmd`. Chamadas unitárias a processos externos são inadequadas para
 experimentos grandes; cada demo mantém um worker ativo durante a otimização.
 
+## Validar o balanço determinístico completo
+
+O protocolo `deterministic_balance` congelado contém 252 agendas: os sete
+cenários de afluência cruzados com as seis potências constantes de A e as seis
+de B. R, Julia, Rust e C++ podem avaliar o lote completo, mas suas saídas são
+**artefatos derivados de interoperabilidade**, nunca novos `reference_results`.
+Cada cliente chama a mesma referência física Python e grava uma resposta JSON;
+o script Python transforma essa resposta nas tabelas canônicas e a compara com
+os CSVs congelados em tolerância `1e-6`.
+
+Partindo da raiz do checkout, crie o lote JSON Lines uma vez:
+
+```powershell
+cd python
+$protocol = Resolve-Path "..\experiments\synthetic_hydropower\benchmarks\v1.0.0\protocols\deterministic_balance"
+$version = Split-Path (Split-Path $protocol -Parent) -Parent
+poetry run python ..\experiments\synthetic_hydropower\scripts\validate_deterministic_interop.py `
+  --inflows (Join-Path $version "inputs\inflows.csv") `
+  --schedules (Join-Path $protocol "inputs\power_schedules.csv") `
+  --request-output ..\experiments\synthetic_hydropower\output\interop\deterministic_balance\request.json `
+  --reference-dir (Join-Path $protocol "reference_results") `
+  --output-dir ..\experiments\synthetic_hydropower\output\interop\deterministic_balance\python
+```
+
+Os clientes aceitam agora `client <request.json> [response.json]`. Passe o
+segundo argumento para gravar a resposta em
+`experiments/synthetic_hydropower/output/interop/deterministic_balance/<linguagem>/`.
+Depois valide-a com o mesmo comando, trocando `--request-output` por
+`--response .../<linguagem>/response.json` e `--output-dir` pela pasta da
+linguagem. O resultado esperado é `validated 12348 rows`: 12.096 observações
+horárias e 252 linhas-resumo.
+
+No Windows, execute o R com `Rscript --vanilla` e a biblioteca do `renv` já
+ativada para evitar carregar `.Rprofile` duas vezes. Rust e C++ devem usar os
+comandos WSL abaixo. O cliente C++ lê o lote por redirecionamento de entrada;
+assim, o tamanho das 252 agendas não fica sujeito ao limite de argumentos do
+shell.
+
 ## Executar uma demonstração por linguagem
 
 Todos os comandos abaixo usam apenas a definição congelada `typical`: são 24

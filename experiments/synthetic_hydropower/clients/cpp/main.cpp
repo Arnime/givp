@@ -1,5 +1,6 @@
 #include <array>
 #include <cstdlib>
+#include <filesystem>
 #include <cstdio>
 #include <fstream>
 #include <iostream>
@@ -34,8 +35,10 @@ std::string shell_quote(const std::string& value) {
 }  // namespace
 
 int main(int argc, char* argv[]) {
-    if (argc != 2) {
-        throw std::runtime_error("usage: synthetic_hydropower_client <batch-request.json>");
+    if (argc < 2 || argc > 3) {
+        throw std::runtime_error(
+            "usage: synthetic_hydropower_client <batch-request.json> [response.json]"
+        );
     }
     std::ifstream input(argv[1]);
     if (!input) {
@@ -51,11 +54,11 @@ int main(int argc, char* argv[]) {
         command_path == nullptr ? "synthetic-hydropower" : command_path;
 #if defined(_WIN32)
     const std::string command =
-        "echo " + shell_quote(request.dump()) + " | " + shell_quote(executable) + " worker";
+        "type " + shell_quote(argv[1]) + " | " + shell_quote(executable) + " worker";
 #else
     const std::string command =
-        "printf '%s\\n' " + shell_quote(request.dump()) + " | PYTHONUNBUFFERED=1 " +
-        shell_quote(executable) + " worker";
+        "PYTHONUNBUFFERED=1 " + shell_quote(executable) + " worker < " +
+        shell_quote(argv[1]);
 #endif
     std::array<char, 512> buffer{};
     std::string response_text;
@@ -72,6 +75,17 @@ int main(int argc, char* argv[]) {
         throw std::runtime_error(
             response.at("error").at("message").get<std::string>()
         );
+    }
+    if (argc == 3) {
+        const auto output_parent = std::filesystem::path(argv[2]).parent_path();
+        if (!output_parent.empty()) {
+            std::filesystem::create_directories(output_parent);
+        }
+        std::ofstream output(argv[2]);
+        if (!output) {
+            throw std::runtime_error("unable to write the worker response");
+        }
+        output << response.dump(2) << '\n';
     }
     std::cout << "received " << response.at("results").size() << " hydraulic result(s)\n";
 }

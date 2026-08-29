@@ -14,6 +14,16 @@ from givp.examples.synthetic_hydropower.benchmark import (
     run_deterministic_benchmark,
     save_deterministic_benchmark,
 )
+from givp.examples.synthetic_hydropower.benchmark.deterministic.interop import (
+    build_batch_request,
+    compare_interop_artifacts,
+    run_from_worker_response,
+    write_interop_artifacts,
+)
+from givp.examples.synthetic_hydropower.interop import (
+    canonical_cascade_config,
+    evaluate_batch,
+)
 from givp.examples.synthetic_hydropower.paths import (
     default_config_path,
     default_definition_path,
@@ -160,3 +170,74 @@ def test_deterministic_definition_requires_exactly_two_plants(
 
     with pytest.raises(ValueError, match="exactly two plants"):
         load_deterministic_definition(invalid_config, definition_path)
+
+
+def test_interop_batch_reconstructs_all_frozen_cases() -> None:
+    """Translate the immutable inputs into one ordered 252-case protocol batch."""
+    version_dir = _version_dir("v1.0.0")
+    protocol_dir = version_dir / "protocols" / "deterministic_balance"
+    request = build_batch_request(
+        pd.read_csv(version_dir / "inputs" / "inflows.csv"),
+        pd.read_csv(protocol_dir / "inputs" / "power_schedules.csv"),
+        periods=24,
+    )
+
+    assert request["schema_version"] == "synthetic-hydropower/v1"
+    requests = request["requests"]
+    assert isinstance(requests, list)
+    assert len(requests) == 252
+    assert requests[0]["case_id"] == "dry_stable__a_off__b_off"
+    assert np.asarray(requests[-1]["target_power_mw"]).shape == (2, 24)
+
+
+def test_interop_response_requires_every_scheduled_case() -> None:
+    """Reject a transport response that silently omits a requested schedule."""
+    version_dir = _version_dir("v1.0.0")
+    protocol_dir = version_dir / "protocols" / "deterministic_balance"
+    inflows = pd.read_csv(version_dir / "inputs" / "inflows.csv")
+    schedules = pd.read_csv(protocol_dir / "inputs" / "power_schedules.csv")
+    first_case = schedules["case_id"].iloc[0]
+    response = evaluate_batch(
+        build_batch_request(
+            inflows,
+            schedules[schedules["case_id"] == first_case],
+            periods=24,
+        )
+    )
+
+    with pytest.raises(ValueError, match="missing cases"):
+        run_from_worker_response(
+            response, inflows, schedules, canonical_cascade_config()
+        )
+
+
+@pytest.mark.integration
+def test_worker_response_reproduces_the_frozen_deterministic_tables(
+    tmp_path: Path,
+) -> None:
+    """Validate the Python worker path used by all non-Python clients."""
+    version_dir = _version_dir("v1.0.0")
+    protocol_dir = version_dir / "protocols" / "deterministic_balance"
+    inflows_path = version_dir / "inputs" / "inflows.csv"
+    schedules_path = protocol_dir / "inputs" / "power_schedules.csv"
+    response = evaluate_batch(
+        build_batch_request(
+            pd.read_csv(inflows_path), pd.read_csv(schedules_path), periods=24
+        )
+    )
+
+    artifacts = write_interop_artifacts(
+        response,
+        inflows_path,
+        schedules_path,
+        canonical_cascade_config(),
+        tmp_path,
+        decimal_places=6,
+    )
+    report = compare_interop_artifacts(
+        artifacts, protocol_dir / "reference_results", tolerance=1e-6
+    )
+
+    assert all(item["passed"] for item in report.values())
+    assert report["balance_time_series"]["rows"] == 12_096
+    assert report["balance_summary"]["rows"] == 252

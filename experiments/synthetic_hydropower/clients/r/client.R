@@ -3,19 +3,26 @@
 library(jsonlite)
 library(processx)
 
-worker_command <- Sys.getenv("SYNTHETIC_HYDROPOWER_COMMAND", "synthetic-hydropower")
-request_path <- commandArgs(trailingOnly = TRUE)[1]
+worker_command <- Sys.getenv(
+  "SYNTHETIC_HYDROPOWER_COMMAND", "synthetic-hydropower"
+)
+arguments <- commandArgs(trailingOnly = TRUE)
+request_path <- arguments[1]
+response_path <- arguments[2]
 if (is.na(request_path)) {
-  stop("usage: Rscript client.R <batch-request.json>")
+  stop("usage: Rscript client.R <batch-request.json> [response.json]")
 }
 
 request <- fromJSON(request_path, simplifyVector = FALSE)
 
 is_windows_launcher <- function(command) {
-  .Platform$OS.type == "windows" && grepl("\\.cmd$", command, ignore.case = TRUE)
+  .Platform$OS.type == "windows" &&
+    grepl("\\.cmd$", command, ignore.case = TRUE)
 }
 
-run_windows_batch <- function(command, input_path) {
+run_windows_batch <- function(
+  command, input_path, destination_path = NA_character_
+) {
   worker_script <- sub("\\.cmd$", "", command, ignore.case = TRUE)
   python_executable <- file.path(dirname(command), "python.exe")
   if (!file.exists(python_executable) || !file.exists(worker_script)) {
@@ -24,21 +31,42 @@ run_windows_batch <- function(command, input_path) {
 
   output_path <- tempfile("synthetic-hydropower-response-", fileext = ".json")
   on.exit(unlink(output_path), add = TRUE)
-  result <- processx::run(
+  result <- system2(
     python_executable,
-    args = c("-u", worker_script, "balance", "--request", input_path, "--output", output_path),
-    error_on_status = FALSE
+    args = c(
+      "-u", shQuote(worker_script), "balance", "--request", shQuote(input_path),
+      "--output", shQuote(output_path)
+    ),
+    stdout = FALSE,
+    stderr = TRUE
   )
-  if (result$status != 0L) {
-    stop("the hydropower batch command failed: ", result$stderr)
+  if (!identical(attr(result, "status"), NULL) &&
+        attr(result, "status") != 0L) {
+    stop(
+      "the hydropower batch command failed: ",
+      paste(result, collapse = "\n")
+    )
+  }
+  if (!is.na(destination_path)) {
+    dir.create(
+      dirname(destination_path), recursive = TRUE, showWarnings = FALSE
+    )
+    if (!file.copy(output_path, destination_path, overwrite = TRUE)) {
+      stop("unable to copy the hydropower response to: ", destination_path)
+    }
+    return(NULL)
   }
   fromJSON(output_path, simplifyVector = FALSE)
 }
 
 run_persistent_worker <- function(command, payload) {
-  worker <- process$new(command, args = "worker", stdin = "|", stdout = "|", stderr = "|")
+  worker <- process$new(
+    command, args = "worker", stdin = "|", stdout = "|", stderr = "|"
+  )
   on.exit(worker$kill(), add = TRUE)
-  worker$write_input(paste0(toJSON(payload, auto_unbox = TRUE, digits = NA), "\n"))
+  worker$write_input(
+    paste0(toJSON(payload, auto_unbox = TRUE, digits = NA), "\n")
+  )
   io_status <- worker$poll_io(5000)
   if (io_status[["output"]] != "ready") {
     worker_error <- paste(worker$read_error_lines(), collapse = "\n")
@@ -48,13 +76,22 @@ run_persistent_worker <- function(command, payload) {
 }
 
 response <- if (is_windows_launcher(worker_command)) {
-  run_windows_batch(worker_command, request_path)
+  run_windows_batch(worker_command, request_path, response_path)
 } else {
   run_persistent_worker(worker_command, request)
 }
 
-if (!is.null(response$error)) {
+if (!is.null(response) && !is.null(response$error)) {
   stop(response$error$message)
 }
-cat("received", length(response$results), "hydraulic result(s)\n")
-str(response$results[[1]]$simulation$level_m)
+if (!is.null(response) && !is.na(response_path)) {
+  write_json(
+    response, response_path, auto_unbox = TRUE, digits = NA, pretty = TRUE
+  )
+}
+if (is.null(response)) {
+  cat("wrote hydraulic response to", response_path, "\n")
+} else {
+  cat("received", length(response$results), "hydraulic result(s)\n")
+  str(response$results[[1]]$simulation$level_m)
+}
