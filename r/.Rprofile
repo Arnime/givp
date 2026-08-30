@@ -1,2 +1,5 @@
 project <- Sys.getenv("RENV_PROJECT", unset = getwd())
-source(file.path(project, "renv", "activate.R"))
+activate <- file.path(project, "renv", "activate.R")
+if (file.exists(activate)) {
+  source(activate)
+}

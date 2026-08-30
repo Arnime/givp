@@ -2,7 +2,7 @@
   "benchmark_id": "synthetic-hydropower-v1.0.0",
   "checksums_sha256": {
     "benchmark_definition.json": "492c6346e8b0ba8f1e252cd754bfa23e5f3e9eb5a4f608106d4c012a5fe9acd2",
-    "config/base.json": "74dd5838d5a4b3f158f9080103c8aaae29736bf1e63a92e58c24a5e489f35351",
+    "config/base.json": "1fd5f7f26d2e72c3b24bc18a87259f6b783220be62260b8a1d80d20cef9d45cd",
     "data_provenance.json": "17b1559b92a63f5cb3d3fdf2e8cfb8bc349677dd494766673cdbd608359e2277",
     "inputs/inflows.csv": "60602588f173535ff686155ba410d3caaa7ca345480cf765af7c0b08d193e67a",
     "protocols/deterministic_balance/definition.json": "c2d5b039b8577868de7c9458c74df65e6b5f5848557c1023012646384f9b198e",
