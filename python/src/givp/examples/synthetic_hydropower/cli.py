@@ -15,6 +15,7 @@ from givp.examples.synthetic_hydropower.paths import (
     default_config_path,
     default_definition_path,
     default_output_dir,
+    validate_balance_paths,
     validate_cli_paths,
 )
 from givp.examples.synthetic_hydropower.runner import (
@@ -54,10 +55,11 @@ def main(argv: Sequence[str] | None = None) -> None:
 
 def _run_balance(request_path: Path, output_path: Path) -> None:
     """Evaluate one protocol batch and atomically persist its JSON response."""
-    payload = json.loads(request_path.read_text(encoding="utf-8"))
+    request, output = validate_balance_paths(request_path, output_path)
+    payload = json.loads(request.read_text(encoding="utf-8"))
     response = evaluate_batch(payload)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(
         json.dumps(response, allow_nan=False, indent=2) + "\n", encoding="utf-8"
     )
 
