@@ -162,7 +162,9 @@ def test_evaluation_and_summary_reject_malformed_worker_responses(
 ) -> None:
     """Fail explicitly instead of inventing an objective from invalid transport data."""
     definition = _definition()
-    monkeypatch.setattr(optimization_module, "evaluate_batch", lambda _: {})
+    monkeypatch.setattr(
+        "givp.examples.synthetic_hydropower.optimization.evaluate_batch", lambda _: {}
+    )
     with pytest.raises(RuntimeError, match="one result"):
         evaluate_power_vector(np.zeros(48), definition)
 
