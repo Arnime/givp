@@ -2,9 +2,16 @@
 
 from __future__ import annotations
 
+import json
+from collections.abc import Callable
+from pathlib import Path
+from typing import cast
+
 import numpy as np
 import pandas as pd
+import pytest
 
+import givp.examples.synthetic_hydropower.optimization as optimization_module
 from givp.examples.synthetic_hydropower.interop import canonical_cascade_config
 from givp.examples.synthetic_hydropower.optimization import (
     evaluate_power_vector,
@@ -20,6 +27,18 @@ def _definition():  # type: ignore[no-untyped-def]
     return load_optimization_definition(
         project_root() / "interop" / "v1" / "optimization_definition.json"
     )
+
+
+def _definition_payload() -> dict[str, object]:
+    """Load a mutable copy of the versioned optimization fixture."""
+    path = project_root() / "interop" / "v1" / "optimization_definition.json"
+    return cast(dict[str, object], json.loads(path.read_text(encoding="utf-8")))
+
+
+def _write_definition(path: Path, payload: object) -> Path:
+    """Write an explicit local optimization-definition fixture."""
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    return path
 
 
 def test_projection_uses_the_nearest_valid_operating_power() -> None:
@@ -87,3 +106,70 @@ def test_definition_is_anchored_to_the_frozen_typical_case_and_config() -> None:
             for plant in ("A", "B")
         ],
     )
+
+
+def test_definition_exposes_raw_givp_bounds() -> None:
+    """Expose exactly one zero-to-maximum bound for every A-then-B decision."""
+    definition = _definition()
+
+    assert len(definition.bounds) == 48
+    assert definition.bounds[0] == (0.0, definition.maximum_power_mw[0])
+    assert definition.bounds[-1] == (0.0, definition.maximum_power_mw[1])
+
+
+@pytest.mark.parametrize(
+    ("mutator", "message"),
+    [
+        (lambda payload: payload.clear(), "schema_version"),
+        (lambda payload: payload.update(periods=0), "periods"),
+        (lambda payload: payload.update(scenario=""), "scenario"),
+        (lambda payload: payload.update(power_bounds_mw=[]), "power_bounds_mw"),
+        (
+            lambda payload: payload["power_bounds_mw"].update(minimum=[-1.0, 0.0]),  # type: ignore[index]
+            "power bounds",
+        ),
+        (
+            lambda payload: payload.update(incremental_inflow_m3s=[[-1.0] * 24, [0.0] * 24]),
+            "non-negative",
+        ),
+        (lambda payload: payload.update(optimizer=[]), "optimizer"),
+    ],
+)
+def test_definition_rejects_invalid_versioned_documents(
+    tmp_path: Path, mutator: Callable[[dict[str, object]], None], message: str
+) -> None:
+    """Keep malformed shared definitions out of every native-language client."""
+    payload = _definition_payload()
+    mutator(payload)
+
+    with pytest.raises(ValueError, match=message):
+        load_optimization_definition(_write_definition(tmp_path / "definition.json", payload))
+
+
+@pytest.mark.parametrize(
+    ("vector", "message"),
+    [([0.0] * 47, "48 values"), ([float("nan")] * 48, "finite")],
+)
+def test_projection_rejects_invalid_raw_vectors(
+    vector: list[float], message: str
+) -> None:
+    """Reject vectors that cannot represent a full finite hourly schedule."""
+    with pytest.raises(ValueError, match=message):
+        project_power_vector(vector, _definition())
+
+
+def test_evaluation_and_summary_reject_malformed_worker_responses(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Fail explicitly instead of inventing an objective from invalid transport data."""
+    definition = _definition()
+    monkeypatch.setattr(optimization_module, "evaluate_batch", lambda _: {})
+    with pytest.raises(RuntimeError, match="one result"):
+        evaluate_power_vector(np.zeros(48), definition)
+
+    for result, message in [
+        ({}, "power and simulation"),
+        ({"power": {}, "simulation": {"objective": float("nan")}}, "objective"),
+    ]:
+        with pytest.raises(ValueError, match=message):
+            summarize_result(result)

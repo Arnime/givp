@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from dataclasses import fields
 from io import StringIO
+from typing import cast
 
 import numpy as np
 import pandas as pd
@@ -126,10 +127,70 @@ def test_worker_reports_an_invalid_power_schedule_without_crashing() -> None:
 def test_protocol_rejects_duplicate_case_identifiers() -> None:
     """Keep a batch result unambiguous for callers that match by case identifier."""
     payload = _zero_request()
-    payload["requests"].append(payload["requests"][0])  # type: ignore[index]
+    requests = cast(list[dict[str, object]], payload["requests"])
+    requests.append(requests[0])
 
     with pytest.raises(ProtocolError, match="unique"):
         parse_batch_request(payload, canonical_cascade_config())
+
+
+@pytest.mark.parametrize(
+    ("payload", "message"),
+    [
+        (None, "JSON object"),
+        ({"schema_version": PROTOCOL_VERSION, "requests": []}, "non-empty"),
+        (
+            {
+                "schema_version": PROTOCOL_VERSION,
+                "requests": ["not-an-object"],
+            },
+            "each request",
+        ),
+        (
+            {
+                "schema_version": PROTOCOL_VERSION,
+                "requests": [
+                    {
+                        "case_id": "negative-inflow",
+                        "incremental_inflow_m3s": [[-1.0] * 24, [0.0] * 24],
+                        "target_power_mw": [[0.0] * 24, [0.0] * 24],
+                    }
+                ],
+            },
+            "non-negative",
+        ),
+        (
+            {
+                "schema_version": PROTOCOL_VERSION,
+                "requests": [
+                    {
+                        "case_id": "non-numeric",
+                        "incremental_inflow_m3s": [["bad"] * 24, [0.0] * 24],
+                        "target_power_mw": [[0.0] * 24, [0.0] * 24],
+                    }
+                ],
+            },
+            "numeric",
+        ),
+    ],
+)
+def test_protocol_rejects_invalid_request_envelopes(
+    payload: object, message: str
+) -> None:
+    """Reject malformed request envelopes before any physical evaluation."""
+    with pytest.raises(ProtocolError, match=message):
+        parse_batch_request(payload, canonical_cascade_config())
+
+
+def test_worker_skips_blank_input_and_reports_invalid_json() -> None:
+    """Keep JSON Lines framing deterministic for blank and malformed records."""
+    output_stream = StringIO()
+
+    run_worker(StringIO("\n  \nnot-json\n"), output_stream)
+
+    responses = [json.loads(line) for line in output_stream.getvalue().splitlines()]
+    assert len(responses) == 1
+    assert responses[0]["error"]["code"] == "invalid_json"
 
 
 @pytest.mark.benchmark_regression
