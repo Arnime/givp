@@ -81,10 +81,9 @@ resultados, figuras e documentação são licenciados sob
 na raiz do repositório. A citação específica do benchmark está em
 [`CITATION.cff`](CITATION.cff).
 
-O Zenodo será o arquivo canônico e o DOI preferencial de citação. O HydroShare
-receberá um recurso complementar voltado à comunidade de hidrologia, ligado ao
-DOI Zenodo. Os identificadores serão inseridos após os depósitos manuais; até
-lá, não há DOI a ser citado.
+O Zenodo é o arquivo canônico e o DOI preferencial de citação:
+<https://doi.org/10.5281/zenodo.22185079>. O HydroShare receberá um recurso
+complementar voltado à comunidade de hidrologia, ligado a esse DOI de versão.
 
 O procedimento, metadados, escopo dos dois pacotes e verificações estão em
 [`PUBLICATION.md`](PUBLICATION.md). Ele gera arquivos a partir de um commit Git
