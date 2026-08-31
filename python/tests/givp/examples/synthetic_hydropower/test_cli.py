@@ -1,6 +1,8 @@
 """Tests for the synthetic hydropower command-line boundary."""
 
+import json
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from types import SimpleNamespace
 
 import numpy as np
@@ -11,6 +13,8 @@ from givp.examples.synthetic_hydropower.paths import (
     default_config_path,
     default_definition_path,
     default_output_dir,
+    project_root,
+    validate_balance_paths,
     validate_cli_paths,
 )
 
@@ -109,3 +113,48 @@ def test_cli_writes_scenario_series_and_summary(
     assert len(scenario.splitlines()) == 3
     assert '"scenario": "case"' in summary
     assert '"energy_mwh": 20.0' in summary
+
+
+def test_balance_command_writes_a_json_protocol_response() -> None:
+    """Evaluate a canonical-horizon schedule exchanged through temporary paths."""
+    with TemporaryDirectory() as directory:
+        request_path = Path(directory) / "request.json"
+        output_path = Path(directory) / "response.json"
+        request_path.write_text(
+            json.dumps(
+                {
+                    "schema_version": "synthetic-hydropower/v1",
+                    "requests": [
+                        {
+                            "case_id": "off",
+                            "incremental_inflow_m3s": [[0.0] * 24, [0.0] * 24],
+                            "target_power_mw": [[0.0] * 24, [0.0] * 24],
+                        }
+                    ],
+                }
+            ),
+            encoding="utf-8",
+        )
+
+        cli_module.main(
+            ["balance", "--request", str(request_path), "--output", str(output_path)]
+        )
+
+        response = json.loads(output_path.read_text(encoding="utf-8"))
+        assert response["schema_version"] == "synthetic-hydropower/v1"
+        assert response["results"][0]["case_id"] == "off"
+
+
+def test_balance_paths_reject_host_paths_outside_protocol_roots() -> None:
+    """Reject protocol I/O that would escape the checkout and temporary roots."""
+    with TemporaryDirectory() as directory:
+        request_path = Path(directory) / "request.json"
+        request_path.write_text("{}", encoding="utf-8")
+        external_path = project_root().parents[1] / ".gitignore"
+
+        with pytest.raises(ValueError, match="request path is outside"):
+            validate_balance_paths(external_path, Path(directory) / "response.json")
+        with pytest.raises(ValueError, match="output path is outside"):
+            validate_balance_paths(
+                request_path, project_root().parents[1] / "response.json"
+            )

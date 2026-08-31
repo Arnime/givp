@@ -603,7 +603,9 @@ def test_apply_path_relinking_to_pair_forward_and_backward_strategies(
 
     monkeypatch.setattr(engine_relinking, "path_relinking", fake_path)
     monkeypatch.setattr(
-        engine_relinking, "bidirectional_path_relinking", lambda *a, **k: pytest.fail()
+        engine_relinking,
+        "bidirectional_path_relinking",
+        lambda *a, **k: pytest.fail("forward and backward strategies must not be bidirectional"),
     )
 
     forward_cfg = CoreConfig(path_relink_strategy="forward", vnd_iterations=4)
@@ -658,7 +660,9 @@ def test_apply_path_relinking_to_pair_randomized_strategy(
 
     monkeypatch.setattr(engine_relinking, "path_relinking", fake_path)
     monkeypatch.setattr(
-        engine_relinking, "bidirectional_path_relinking", lambda *a, **k: pytest.fail()
+        engine_relinking,
+        "bidirectional_path_relinking",
+        lambda *a, **k: pytest.fail("the randomized strategy must select a single direction"),
     )
     monkeypatch.setattr(engine_relinking, "_new_rng", lambda seed=None: FakeRng(0))
     random_cfg = CoreConfig(path_relink_strategy="randomized", vnd_iterations=4)
@@ -696,7 +700,9 @@ def test_apply_path_relinking_to_pair_randomized_strategy_reversed_branch(
 
     monkeypatch.setattr(engine_relinking, "path_relinking", fake_path)
     monkeypatch.setattr(
-        engine_relinking, "bidirectional_path_relinking", lambda *a, **k: pytest.fail()
+        engine_relinking,
+        "bidirectional_path_relinking",
+        lambda *a, **k: pytest.fail("the randomized strategy must select a single direction"),
     )
     monkeypatch.setattr(engine_relinking, "_new_rng", lambda seed=None: FakeRng())
     random_cfg = CoreConfig(path_relink_strategy="randomized", vnd_iterations=4)
@@ -734,7 +740,9 @@ def test_apply_path_relinking_to_pair_random_alias_kept_compatible(
 
     monkeypatch.setattr(engine_relinking, "path_relinking", fake_path)
     monkeypatch.setattr(
-        engine_relinking, "bidirectional_path_relinking", lambda *a, **k: pytest.fail()
+        engine_relinking,
+        "bidirectional_path_relinking",
+        lambda *a, **k: pytest.fail("the random alias must select a single direction"),
     )
     monkeypatch.setattr(engine_relinking, "_new_rng", lambda seed=None: FakeRng())
     random_cfg = CoreConfig(path_relink_strategy="random", vnd_iterations=4)

@@ -8,6 +8,7 @@
       "maximorum_volume_hm3": 24.5,
       "min_level_m": 146.8,
       "max_level_m": 148.2,
+      "maximorum_level_m": 152.0,
       "head_m": 44.0,
       "efficiency": 0.94,
       "min_power_mw": 45.0,
@@ -30,8 +31,7 @@
       ],
       "sanitary_spill_flow_m3s": 5.0,
       "spill_response": 0.62,
-      "spill_response_exponent": 1.35,
-      "maximorum_level_m": 152.0
+      "spill_response_exponent": 1.35
     },
     {
       "name": "B",
@@ -41,6 +41,7 @@
       "maximorum_volume_hm3": 87.2,
       "min_level_m": 102.8,
       "max_level_m": 104.2,
+      "maximorum_level_m": 107.0,
       "head_m": 35.0,
       "efficiency": 0.93,
       "min_power_mw": 32.0,
@@ -63,8 +64,7 @@
       ],
       "sanitary_spill_flow_m3s": 18.0,
       "spill_response": 0.58,
-      "spill_response_exponent": 1.45,
-      "maximorum_level_m": 107.0
+      "spill_response_exponent": 1.45
     }
   ]
 }

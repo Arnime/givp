@@ -65,8 +65,9 @@ def test_path_relink_strategy_accepts_randomized_and_random_alias() -> None:
     ],
 )
 def test_positive_int_fields_reject_zero(field: str, value: int) -> None:
+    parameters = cast(dict[str, Any], {field: value})
     with pytest.raises(InvalidConfigError):
-        GIVPConfig(**cast(dict[str, Any], {field: value}))
+        GIVPConfig(**parameters)
 
 
 def test_perturbation_strength_negative_rejected() -> None:
@@ -87,8 +88,9 @@ def test_alpha_min_greater_than_alpha_max_rejected() -> None:
 
 @pytest.mark.parametrize("field", ["alpha_min", "alpha_max"])
 def test_alpha_bounds_out_of_range_rejected(field: str) -> None:
+    parameters = cast(dict[str, Any], {field: 1.5})
     with pytest.raises(InvalidConfigError):
-        GIVPConfig(**cast(dict[str, Any], {field: 1.5}))
+        GIVPConfig(**parameters)
 
 
 def test_time_limit_negative_rejected() -> None:

@@ -125,6 +125,48 @@ poetry install -E hydropower -E notebooks
 poetry run pytest tests/givp/examples/synthetic_hydropower
 ```
 
+## Interface multilíngue
+
+O balanço físico de referência continua sendo implementado somente em Python,
+mas pode ser chamado localmente por R, Julia, Rust e C++ pelo protocolo
+`synthetic-hydropower/v1`. O comando em lote recebe uma agenda de afluências e
+potências sintéticas e grava a resposta JSON completa, sem depender do GIVP:
+
+```powershell
+synthetic-hydropower balance `
+  --request experiments/synthetic_hydropower/interop/v1/zero_schedule_batch.json `
+  --output response.json
+```
+
+Para algoritmos que avaliam várias soluções, `synthetic-hydropower worker`
+mantém o processo Python ativo e usa uma linha JSON de entrada e uma de saída
+por lote. Os schemas, um exemplo canônico e clientes mínimos ficam em
+`interop/v1/` e `clients/`. Eles chamam o modelo de referência; não duplicam
+equações nem incorporam parâmetros físicos aos outros pacotes GIVP.
+
+O mesmo protocolo permite validar os 252 casos do balanço determinístico por
+R, Julia, Rust e C++, sem criar quatro referências concorrentes. As respostas
+derivadas são gravadas somente em `output/` (ignorado pelo Git) e comparadas aos
+CSVs congelados em tolerância `1e-6`. O procedimento e os comandos por linguagem
+estão em [`clients/README.md`](clients/README.md).
+
+## Otimização multilíngue
+
+`interop/v1/optimization_definition.json` estabelece uma execução comum do
+GIVP para Python, R, Julia, Rust e C++. Ela usa o cenário congelado `typical`,
+seed 44 e 48 potências horárias (A nas primeiras 24 posições e B nas demais).
+Cada potência candidata é projetada para desligada ou para o intervalo mínimo–
+máximo antes de ser enviada ao worker. O valor retornado ao otimizador é o
+objetivo físico canônico: energia entregue, penalidades de níveis, chaveamento
+e permanência mínima.
+
+Os notebooks `optimization_*.ipynb` demonstram a execução por linguagem. Eles
+precisam dos kernels Jupyter `ipykernel`, IRkernel, IJulia, evcxr e xeus-cling,
+respectivamente. Defina `GIVP_ROOT` como a raiz do checkout e
+`SYNTHETIC_HYDROPOWER_COMMAND` como o executável instalado antes de executá-los.
+Os notebooks podem salvar análises locais em `output/`; elas não alteram o
+benchmark congelado.
+
 Abra e execute o notebook para carregar primeiro o protocolo
 `deterministic_balance` do benchmark v1.0.0, sem chamar o GIVP. Ele informa os sete cenários e apresenta a matriz
 6×6 de potência de cada um. A comparação com o GIVP fica em uma seção opcional

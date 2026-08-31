@@ -17,6 +17,27 @@ parcelas de vertimento, defluência, volumes, níveis de montante e jusante,
 queda, penalidades e resíduo de massa. Seus CSVs usam seis casas decimais e são
 reproduzíveis a partir das afluências congeladas.
 
+#### Verificação pelos clientes de outras linguagens
+
+O protocolo também possui uma rota de verificação de interoperabilidade: os
+clientes R, Julia, Rust e C++ enviam as mesmas 252 agendas ao worker Python
+`synthetic-hydropower/v1`. Portanto, a física continua única e canônica no
+Python; o que se verifica nas demais linguagens é o contrato local de processo,
+JSON e transformação dos resultados em tabela.
+
+| Cliente | Casos enviados | Série horária | Resumo |
+| --- | ---: | ---: | ---: |
+| R | 252 | 12.096 ✓ | 252 ✓ |
+| Julia | 252 | 12.096 ✓ | 252 ✓ |
+| Rust | 252 | 12.096 ✓ | 252 ✓ |
+| C++ | 252 | 12.096 ✓ | 252 ✓ |
+
+Cada resposta é comparada aos CSVs deste diretório com tolerância `1e-6`. Os
+arquivos derivados são escritos em `experiments/synthetic_hydropower/output/`
+e não fazem parte deste benchmark congelado, de seus checksums ou de seus
+`reference_results`. Veja o procedimento em
+[`clients/README.md`](../../clients/README.md).
+
 ### `givp_optimization`
 
 É um experimento derivado que usa o GIVP para escolher solicitações de vazão.

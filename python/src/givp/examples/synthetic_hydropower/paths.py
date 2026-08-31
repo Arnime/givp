@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from importlib.resources import files
 from pathlib import Path
+from tempfile import gettempdir
 
 _PACKAGE_NAME = "givp.examples.synthetic_hydropower"
 
@@ -90,3 +91,45 @@ def validate_cli_paths(
         raise ValueError(
             "the CLI writes only to the synthetic hydropower benchmark output directory"
         )
+
+
+def validate_balance_paths(request_path: Path, output_path: Path) -> tuple[Path, Path]:
+    """Resolve batch I/O paths within the checkout or the system temporary area.
+
+    The file-oriented protocol client must be able to exchange transient JSON
+    files with native-language examples.  It must not, however, let a command
+    invocation read or overwrite arbitrary paths on the host.
+    """
+    request = _resolve_existing_file(request_path, "request")
+    output = output_path.expanduser().resolve(strict=False)
+    input_roots, output_roots = _balance_roots()
+    _require_within_roots(request, input_roots, "request")
+    _require_within_roots(output, output_roots, "output")
+    if request == output:
+        raise ValueError("request and output paths must differ")
+    return request, output
+
+
+def _resolve_existing_file(path: Path, label: str) -> Path:
+    try:
+        resolved = path.expanduser().resolve(strict=True)
+    except FileNotFoundError as error:
+        raise ValueError(f"{label} path does not exist") from error
+    if not resolved.is_file():
+        raise ValueError(f"{label} path must be a file")
+    return resolved
+
+
+def _balance_roots() -> tuple[tuple[Path, ...], tuple[Path, ...]]:
+    temporary_root = Path(gettempdir()).resolve(strict=True)
+    try:
+        checkout_root = project_root().resolve(strict=True)
+        output_root = default_output_dir().resolve(strict=False)
+    except RuntimeError:
+        return (temporary_root,), (temporary_root,)
+    return (checkout_root, temporary_root), (output_root, temporary_root)
+
+
+def _require_within_roots(path: Path, roots: tuple[Path, ...], label: str) -> None:
+    if not any(path == root or root in path.parents for root in roots):
+        raise ValueError(f"{label} path is outside the permitted protocol directories")

@@ -1,0 +1,108 @@
+name: Synthetic hydropower interoperability
+
+on:
+  pull_request:
+    paths:
+      - "python/src/givp/examples/synthetic_hydropower/**"
+      - "python/tests/givp/examples/synthetic_hydropower/**"
+      - "experiments/synthetic_hydropower/interop/**"
+      - "experiments/synthetic_hydropower/clients/**"
+      - "python/pyproject.toml"
+      - "python/poetry.lock"
+      - ".github/workflows/ci-hydropower-interop.yml"
+  push:
+    branches: [main]
+    paths:
+      - "python/src/givp/examples/synthetic_hydropower/**"
+      - "experiments/synthetic_hydropower/interop/**"
+      - "experiments/synthetic_hydropower/clients/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  GIVP_ROOT: ${{ github.workspace }}
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: ./.github/actions/setup-python
+        with:
+          python-version: "3.13"
+
+      - uses: ./.github/actions/setup-poetry
+
+      - name: Install the Python reference engine
+        run: bash .github/scripts/poetry-install.sh -E hydropower
+
+      - name: Expose the worker executable
+        run: |
+          virtualenv_path="$(poetry -C python env info -p)"
+          if [[ "$virtualenv_path" != /* ]]; then
+            virtualenv_path="$GITHUB_WORKSPACE/python/$virtualenv_path"
+          fi
+          echo "SYNTHETIC_HYDROPOWER_COMMAND=$(realpath "$virtualenv_path")/bin/synthetic-hydropower" >> "$GITHUB_ENV"
+
+      - uses: ./.github/actions/setup-r
+        with:
+          working-directory: r
+          extra-packages: any::R6, any::rlang, any::jsonlite, any::processx
+
+      - uses: ./.github/actions/setup-julia
+        with:
+          version: "1"
+          cache: false
+
+      - uses: ./.github/actions/setup-rust
+        with:
+          toolchain: stable
+          cache: false
+
+      - name: Install the C++ JSON dependency
+        run: sudo apt-get update && sudo apt-get install --yes nlohmann-json3-dev
+
+      - name: Smoke test the R client
+        run: Rscript experiments/synthetic_hydropower/clients/r/client.R experiments/synthetic_hydropower/interop/v1/zero_schedule_batch.json
+
+      - name: Install and optimise with R GIVP
+        run: |
+          R CMD INSTALL r
+          Rscript experiments/synthetic_hydropower/clients/r/optimize.R experiments/synthetic_hydropower/interop/v1/optimization_definition.json | tee /tmp/hydropower-r.json
+          poetry -C python run python ../experiments/synthetic_hydropower/clients/python/verify_demo.py /tmp/hydropower-r.json
+
+      - name: Smoke test the Julia client
+        run: julia --project=experiments/synthetic_hydropower/clients/julia -e 'using Pkg; Pkg.instantiate()'
+
+      - name: Run the Julia client
+        run: julia --project=experiments/synthetic_hydropower/clients/julia experiments/synthetic_hydropower/clients/julia/client.jl experiments/synthetic_hydropower/interop/v1/zero_schedule_batch.json
+
+      - name: Optimise with Julia GIVP
+        run: |
+          julia --project=julia -e 'using Pkg; Pkg.instantiate()'
+          julia --project=julia experiments/synthetic_hydropower/clients/julia/optimize.jl experiments/synthetic_hydropower/interop/v1/optimization_definition.json | tee /tmp/hydropower-julia.json
+          poetry -C python run python ../experiments/synthetic_hydropower/clients/python/verify_demo.py /tmp/hydropower-julia.json
+
+      - name: Smoke test the Rust client
+        run: cargo run --manifest-path experiments/synthetic_hydropower/clients/rust/Cargo.toml -- experiments/synthetic_hydropower/interop/v1/zero_schedule_batch.json
+
+      - name: Optimise with Rust GIVP
+        run: |
+          cargo run --manifest-path experiments/synthetic_hydropower/clients/rust/Cargo.toml --bin synthetic-hydropower-optimize -- experiments/synthetic_hydropower/interop/v1/optimization_definition.json | tee /tmp/hydropower-rust.json
+          poetry -C python run python ../experiments/synthetic_hydropower/clients/python/verify_demo.py /tmp/hydropower-rust.json
+
+      - name: Build and smoke test the C++ client
+        run: |
+          cmake -S experiments/synthetic_hydropower/clients/cpp -B /tmp/hydropower-client
+          cmake --build /tmp/hydropower-client --config Release
+          /tmp/hydropower-client/synthetic_hydropower_client experiments/synthetic_hydropower/interop/v1/zero_schedule_batch.json
+          /tmp/hydropower-client/synthetic_hydropower_optimize experiments/synthetic_hydropower/interop/v1/optimization_definition.json | tee /tmp/hydropower-cpp.json
+          poetry -C python run python ../experiments/synthetic_hydropower/clients/python/verify_demo.py /tmp/hydropower-cpp.json
+
+      - name: Optimise with Python GIVP
+        run: |
+          poetry -C python run python ../experiments/synthetic_hydropower/clients/python/optimize.py ../experiments/synthetic_hydropower/interop/v1/optimization_definition.json | tee /tmp/hydropower-python.json
+          poetry -C python run python ../experiments/synthetic_hydropower/clients/python/verify_demo.py /tmp/hydropower-python.json

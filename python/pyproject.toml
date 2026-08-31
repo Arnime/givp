@@ -108,6 +108,7 @@ core-metadata-version = "2.4"
 [tool.hatch.build.targets.wheel.force-include]
 "src/givp/py.typed" = "givp/py.typed"
 "src/givp/examples/synthetic_hydropower/configs/base.json" = "givp/examples/synthetic_hydropower/configs/base.json"
+"src/givp/examples/synthetic_hydropower/configs/canonical_protocol.json" = "givp/examples/synthetic_hydropower/configs/canonical_protocol.json"
 
 [tool.hatch.build.targets.sdist]
 core-metadata-version = "2.4"

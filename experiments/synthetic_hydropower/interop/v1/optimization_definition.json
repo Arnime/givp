@@ -1,0 +1,26 @@
+{
+  "schema_version": "synthetic-hydropower/optimization-v1",
+  "scenario": "typical",
+  "seed": 44,
+  "periods": 24,
+  "decision_order": ["A_t0_to_t23", "B_t0_to_t23"],
+  "power_bounds_mw": {
+    "minimum": [45.0, 32.0],
+    "maximum": [128.0, 98.0]
+  },
+  "projection": "nearest_operating_power",
+  "objective": "canonical_simulation_objective",
+  "optimizer": {
+    "max_iterations": 5,
+    "vnd_iterations": 2,
+    "ils_iterations": 1,
+    "num_candidates_per_step": 4,
+    "use_elite_pool": false,
+    "use_convergence_monitor": false,
+    "n_workers": 1
+  },
+  "incremental_inflow_m3s": [
+    [206.027329, 188.901099, 199.822666, 221.717927, 220.14638, 218.011133, 199.151169, 185.083051, 211.03331, 188.899185, 209.506995, 190.938321, 166.584702, 177.643851, 178.307855, 163.76456, 144.360927, 157.957771, 158.462126, 166.607434, 167.925623, 146.293516, 158.212107, 183.491443],
+    [49.813928, 67.17379, 59.085548, 63.564891, 77.57924, 68.250378, 66.917034, 70.626453, 67.157336, 62.210181, 66.111581, 75.648097, 65.517784, 60.196058, 56.927927, 57.915064, 55.463872, 46.911043, 53.585996, 51.574683, 61.163534, 52.503911, 62.447278, 51.005721]
+  ]
+}
