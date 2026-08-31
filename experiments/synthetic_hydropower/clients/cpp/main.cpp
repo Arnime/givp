@@ -1,18 +1,12 @@
-#include <array>
+#include <chrono>
 #include <cstdlib>
 #include <filesystem>
-#include <cstdio>
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
 #include <string>
 
 #include <nlohmann/json.hpp>
-
-#if defined(_WIN32)
-#define popen _popen
-#define pclose _pclose
-#endif
 
 namespace {
 
@@ -52,40 +46,36 @@ int main(int argc, char* argv[]) {
     const char* command_path = std::getenv("SYNTHETIC_HYDROPOWER_COMMAND");
     const std::string executable =
         command_path == nullptr ? "synthetic-hydropower" : command_path;
-#if defined(_WIN32)
-    const std::string command =
-        "type " + shell_quote(argv[1]) + " | " + shell_quote(executable) + " worker";
-#else
-    const std::string command =
-        "PYTHONUNBUFFERED=1 " + shell_quote(executable) + " worker < " +
-        shell_quote(argv[1]);
-#endif
-    std::array<char, 512> buffer{};
-    std::string response_text;
-    FILE* worker = popen(command.c_str(), "r");
-    if (worker == nullptr) {
-        throw std::runtime_error("unable to start synthetic-hydropower worker");
+    const bool keep_response = argc == 3;
+    const auto response_path = keep_response
+        ? std::filesystem::path(argv[2])
+        : std::filesystem::temp_directory_path() /
+            ("synthetic_hydropower_response_" +
+             std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()) +
+             ".json");
+    const auto output_parent = response_path.parent_path();
+    if (!output_parent.empty()) {
+        std::filesystem::create_directories(output_parent);
     }
-    while (fgets(buffer.data(), static_cast<int>(buffer.size()), worker) != nullptr) {
-        response_text += buffer.data();
+    const std::string command = shell_quote(executable) + " balance --request " +
+        shell_quote(argv[1]) + " --output " + shell_quote(response_path.string());
+    if (std::system(command.c_str()) != 0) {
+        throw std::runtime_error("synthetic-hydropower balance evaluation failed");
     }
-    pclose(worker);
-    const auto response = nlohmann::json::parse(response_text);
+    std::ifstream response_input(response_path);
+    if (!response_input) {
+        throw std::runtime_error("unable to read the worker response");
+    }
+    nlohmann::json response;
+    response_input >> response;
+    if (!keep_response) {
+        std::error_code remove_error;
+        std::filesystem::remove(response_path, remove_error);
+    }
     if (response.contains("error")) {
         throw std::runtime_error(
             response.at("error").at("message").get<std::string>()
         );
-    }
-    if (argc == 3) {
-        const auto output_parent = std::filesystem::path(argv[2]).parent_path();
-        if (!output_parent.empty()) {
-            std::filesystem::create_directories(output_parent);
-        }
-        std::ofstream output(argv[2]);
-        if (!output) {
-            throw std::runtime_error("unable to write the worker response");
-        }
-        output << response.dump(2) << '\n';
     }
     std::cout << "received " << response.at("results").size() << " hydraulic result(s)\n";
 }
