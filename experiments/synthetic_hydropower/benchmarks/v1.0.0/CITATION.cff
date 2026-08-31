@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: "If you use this benchmark, please cite it as below."
+type: dataset
+title: "Synthetic Two-Plant Hydropower Balance Benchmark"
+abstract: >
+  A reproducible synthetic benchmark for hourly water-balance modelling in a
+  two-plant hydropower cascade. Version 1.0.0 contains frozen inflow scenarios,
+  deterministic reference results, optimisation reference results, figures and
+  interoperability specifications.
+authors:
+  - family-names: "Mendes Pires Junior"
+    given-names: "Arnaldo"
+version: 1.0.0
+license: CC-BY-4.0
+repository-code: "https://github.com/Arnime/givp"
+keywords:
+  - hydropower
+  - water balance
+  - synthetic benchmark
+  - optimization
+  - GRASP
+  - reproducibility

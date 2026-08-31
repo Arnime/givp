@@ -85,8 +85,8 @@ segue de A para B. A potência é
 A função usada no experimento de otimização é `-energia_gerada +
 penalidade_de_nível + penalidade_de_chaveamento + penalidade_de_troca_antecipada`.
 A penalidade física de reservatório é quadrática para níveis de montante abaixo
-do mínimo ou acima do máximo. A cada período e para cada usina, o simulador acumula separadamente
-`w·max(0, nível_mínimo − nível_final)²` e
+do mínimo ou acima do máximo. A cada período e para cada usina, o simulador
+acumula separadamente `w·max(0, nível_mínimo − nível_final)²` e
 `w·max(0, nível_final − nível_máximo)²`; a soma das duas parcelas é a
 penalidade de nível. As duas parcelas de chaveamento são preferências suaves do
 experimento e não alteram as equações de conservação de massa.
@@ -134,7 +134,7 @@ potências sintéticas e grava a resposta JSON completa, sem depender do GIVP:
 
 ```powershell
 synthetic-hydropower balance `
-  --request experiments/synthetic_hydropower/interop/v1/zero_schedule_batch.json `
+  --request experiments/synthetic_hydropower/interop/v1/zero_schedule_batch.json`
   --output response.json
 ```
 
@@ -168,9 +168,9 @@ Os notebooks podem salvar análises locais em `output/`; elas não alteram o
 benchmark congelado.
 
 Abra e execute o notebook para carregar primeiro o protocolo
-`deterministic_balance` do benchmark v1.0.0, sem chamar o GIVP. Ele informa os sete cenários e apresenta a matriz
-6×6 de potência de cada um. A comparação com o GIVP fica em uma seção opcional
-e não modifica os CSVs canônicos.
+`deterministic_balance` do benchmark v1.0.0, sem chamar o GIVP. Ele informa os
+sete cenários e apresenta a matriz 6×6 de potência de cada um. A comparação com
+o GIVP fica em uma seção opcional e não modifica os CSVs canônicos.
 
 ## Notebook
 
@@ -180,9 +180,9 @@ automaticamente a configuração-base empacotada e cria
 `experiments/synthetic_hydropower/output/` para os resultados locais.
 
 O módulo experimental `notebooks/figures.py` concentra as figuras dos protocolos
-`givp_optimization` e `deterministic_balance` do benchmark v1.0.0. Ele permanece junto ao
-notebook porque transforma os resultados apenas para apresentação e não faz
-parte da API nem do wheel do GIVP.
+`givp_optimization` e `deterministic_balance` do benchmark v1.0.0. Ele permanece
+junto ao notebook porque transforma os resultados apenas para apresentação e não
+faz parte da API nem do wheel do GIVP.
 
 O cálculo determinístico pode ser refeito sem notebook pela API
 `givp.examples.synthetic_hydropower.benchmark`, usando explicitamente os
@@ -193,7 +193,8 @@ caminhos de `benchmarks/v1.0.0/config/base.json`,
 
 Os resultados locais são deliberadamente ignorados pelo Git para não confundir
 execuções parciais com uma referência científica. O procedimento para promover
-uma execução completa a benchmark versionado e publicá-la em nuvem está em
-[`benchmarks/README.md`](benchmarks/README.md). A publicação em uma release
-imutável e em um repositório de dados com DOI requer a conta de destino e uma
-autorização explícita.
+uma execução completa a benchmark versionado e publicar a referência congelada
+está em [`benchmarks/README.md`](benchmarks/README.md). A publicação usa o
+Zenodo como arquivo canônico e o HydroShare como recurso hidrológico
+complementar; detalhes, licenças e metadados estão em
+[`benchmarks/v1.0.0/PUBLICATION.md`](benchmarks/v1.0.0/PUBLICATION.md).

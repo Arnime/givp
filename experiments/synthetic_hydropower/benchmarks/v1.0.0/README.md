@@ -73,6 +73,24 @@ Cada protocolo também possui definição e manifesto próprios para deixar clar
 se o resultado veio do equacionamento determinístico ou de uma execução do
 GIVP.
 
+## Citação e publicação
+
+Este benchmark é um produto acadêmico distinto do software GIVP. Seus dados,
+resultados, figuras e documentação são licenciados sob
+[CC BY 4.0](LICENSE-DATA.md); o código-fonte do GIVP continua sob a licença MIT
+na raiz do repositório. A citação específica do benchmark está em
+[`CITATION.cff`](CITATION.cff).
+
+O Zenodo será o arquivo canônico e o DOI preferencial de citação. O HydroShare
+receberá um recurso complementar voltado à comunidade de hidrologia, ligado ao
+DOI Zenodo. Os identificadores serão inseridos após os depósitos manuais; até
+lá, não há DOI a ser citado.
+
+O procedimento, metadados, escopo dos dois pacotes e verificações estão em
+[`PUBLICATION.md`](PUBLICATION.md). Ele gera arquivos a partir de um commit Git
+exato e valida novamente os checksums deste manifesto dentro dos ZIPs antes de
+qualquer envio.
+
 ## Proveniência e independência
 
 Os parâmetros são sintéticos e perturbados, ancorados em faixas públicas. As
