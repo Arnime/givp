@@ -40,7 +40,12 @@ jobs:
         run: bash .github/scripts/poetry-install.sh -E hydropower
 
       - name: Expose the worker executable
-        run: echo "SYNTHETIC_HYDROPOWER_COMMAND=$(poetry -C python env info -p)/bin/synthetic-hydropower" >> "$GITHUB_ENV"
+        run: |
+          virtualenv_path="$(poetry -C python env info -p)"
+          if [[ "$virtualenv_path" != /* ]]; then
+            virtualenv_path="$GITHUB_WORKSPACE/python/$virtualenv_path"
+          fi
+          echo "SYNTHETIC_HYDROPOWER_COMMAND=$(realpath "$virtualenv_path")/bin/synthetic-hydropower" >> "$GITHUB_ENV"
 
       - uses: ./.github/actions/setup-r
         with:
