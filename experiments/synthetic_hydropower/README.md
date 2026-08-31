@@ -195,6 +195,7 @@ Os resultados locais são deliberadamente ignorados pelo Git para não confundir
 execuções parciais com uma referência científica. O procedimento para promover
 uma execução completa a benchmark versionado e publicar a referência congelada
 está em [`benchmarks/README.md`](benchmarks/README.md). A publicação usa o
-Zenodo como arquivo canônico e o HydroShare como recurso hidrológico
-complementar; detalhes, licenças e metadados estão em
+Zenodo como arquivo canônico
+(<https://doi.org/10.5281/zenodo.22185079>) e o HydroShare como recurso
+hidrológico complementar; detalhes, licenças e metadados estão em
 [`benchmarks/v1.0.0/PUBLICATION.md`](benchmarks/v1.0.0/PUBLICATION.md).

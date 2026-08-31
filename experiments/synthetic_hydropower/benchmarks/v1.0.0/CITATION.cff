@@ -11,6 +11,8 @@ authors:
   - family-names: "Mendes Pires Junior"
     given-names: "Arnaldo"
 version: 1.0.0
+doi: "10.5281/zenodo.22185079"
+url: "https://doi.org/10.5281/zenodo.22185079"
 license: CC-BY-4.0
 repository-code: "https://github.com/Arnime/givp"
 keywords:
