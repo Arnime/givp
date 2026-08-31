@@ -193,17 +193,15 @@ def _inflow_arrays(
 def _plant_period_matrix(
     frame: pd.DataFrame, value_column: str, periods: int, identifier: str
 ) -> NDArray[np.float64]:
-    values = np.vstack(
-        [
-            frame.loc[frame["plant"] == plant]
-            .sort_values("period")[value_column]
-            .to_numpy(dtype=np.float64)
-            for plant in _PLANT_NAMES
-        ]
-    )
-    if values.shape != (2, periods):
+    plant_values = [
+        frame.loc[frame["plant"] == plant]
+        .sort_values("period")[value_column]
+        .to_numpy(dtype=np.float64)
+        for plant in _PLANT_NAMES
+    ]
+    if any(values.size != periods for values in plant_values):
         raise ValueError(f"invalid plant-period matrix for {identifier!r}")
-    return values
+    return np.vstack(plant_values)
 
 
 def _result_payloads(response: object) -> dict[str, Mapping[str, object]]:

@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from copy import deepcopy
 from pathlib import Path
+from typing import Any, cast
 
 import pandas as pd
 import pytest
@@ -139,6 +141,48 @@ def test_rejects_bad_schedule_metadata_and_artifact_schema(tmp_path: Path) -> No
         )
     with pytest.raises(ValueError, match="column schema"):
         compare_interop_artifacts(artifacts, reference_dir, tolerance=1e-6)
+
+
+@pytest.mark.parametrize(
+    ("schedule", "message"),
+    [
+        (lambda frame: frame.iloc[0:0], "at least one case"),
+        (lambda frame: frame.iloc[:-1], "invalid plant-period matrix"),
+    ],
+)
+def test_rejects_empty_or_incomplete_power_schedules(
+    schedule: Callable[[pd.DataFrame], pd.DataFrame], message: str
+) -> None:
+    """Reject schedule tables that cannot represent a complete hydraulic case."""
+    _, schedules, _ = _one_case_inputs()
+
+    with pytest.raises(ValueError, match=message):
+        power_cases_from_schedule(schedule(schedules), periods=24)
+
+
+def test_rejects_empty_inflows_and_unexpected_worker_cases() -> None:
+    """Reject empty hydrology and result cases absent from the frozen schedule."""
+    inflows, schedules, response = _one_case_inputs()
+    with pytest.raises(ValueError, match="at least one scenario"):
+        run_from_worker_response(
+            response,
+            inflows.iloc[0:0],
+            schedules,
+            canonical_cascade_config(),
+        )
+
+    response_with_extra_case = deepcopy(response)
+    raw_results = cast(list[dict[str, Any]], response_with_extra_case["results"])
+    extra_case = deepcopy(raw_results[0])
+    extra_case["case_id"] = "unlisted-case"
+    raw_results.append(extra_case)
+    with pytest.raises(ValueError, match="unknown cases"):
+        run_from_worker_response(
+            response_with_extra_case,
+            inflows,
+            schedules,
+            canonical_cascade_config(),
+        )
 
 
 def _write_frame(path: Path, frame: pd.DataFrame) -> Path:
