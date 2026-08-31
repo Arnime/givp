@@ -11,7 +11,6 @@ import numpy as np
 import pandas as pd
 import pytest
 
-import givp.examples.synthetic_hydropower.optimization as optimization_module
 from givp.examples.synthetic_hydropower.interop import canonical_cascade_config
 from givp.examples.synthetic_hydropower.optimization import (
     evaluate_power_vector,
