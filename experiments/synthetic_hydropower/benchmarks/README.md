@@ -34,5 +34,6 @@ movidos para `reference_results/` nem incluídos nos manifests canônicos.
 O procedimento e os comandos para cada ambiente estão em
 [`clients/README.md`](../clients/README.md).
 
-Nenhum resultado é enviado automaticamente. Publicação em nuvem exige escolher
-e autorizar explicitamente a conta ou organização de destino.
+Nenhum resultado é enviado automaticamente. A publicação em Zenodo e
+HydroShare é manual, requer a conta do responsável e deve usar os pacotes
+verificados descritos em [`v1.0.0/PUBLICATION.md`](v1.0.0/PUBLICATION.md).

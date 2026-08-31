@@ -87,6 +87,7 @@ CLAUDE.md
 experiments/synthetic_hydropower/docs/
 experiments/synthetic_hydropower/output/
 experiments/synthetic_hydropower/clients/rust/target/
+experiments/synthetic_hydropower/publication/
 
 # Local language environments and build artifacts
 julia/.julia/

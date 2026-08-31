@@ -1,0 +1,2 @@
+# Reuse the canonical Python quality policy for repository-level Python scripts.
+extend = "python/pyproject.toml"
