@@ -54,13 +54,15 @@ Create a manual **Dataset** deposit with the following metadata:
 | Keywords | hydropower; water balance; synthetic benchmark; optimization; GRASP; reproducibility |
 | Related identifier | GitHub repository and exact commit archived in `publication.json` |
 
-Upload the Zenodo source ZIP, its `SHA256SUMS`, `publication.json`, this
-publication guide and the benchmark `CITATION.cff`. After publishing, record
-the version DOI in this document and in the experiment README. This DOI is the
-primary citation for the benchmark.
+The Zenodo source ZIP, its `SHA256SUMS`, `publication.json`, this publication
+guide and the benchmark `CITATION.cff` were deposited and published. The
+version DOI below is the primary citation for the benchmark.
 
-**Zenodo version DOI:** pending manual deposit  
-**Zenodo concept DOI:** pending manual deposit
+**Zenodo version DOI:** <https://doi.org/10.5281/zenodo.22185079>
+
+**Zenodo record:** <https://zenodo.org/records/22185079>
+**Zenodo concept DOI:** record it here only after confirming it in Zenodo; do
+not infer it from the version DOI.
 
 ## HydroShare resource — hydrology companion
 
@@ -80,6 +82,6 @@ core content immutable and assigns a DOI.
 
 ## Citation after deposit
 
-Use the rendered citation from this directory's `CITATION.cff`, adding the
-Zenodo version DOI. Cite the HydroShare DOI only when specifically referring to
-the hydrology-focused companion resource.
+Use the rendered citation from this directory's `CITATION.cff`, including the
+published Zenodo version DOI. Cite the HydroShare DOI only when specifically
+referring to the hydrology-focused companion resource.
