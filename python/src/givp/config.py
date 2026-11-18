@@ -71,6 +71,9 @@ class GIVPConfig:
                release the GIL (NumPy-heavy, Cython, Numba-compiled code) but
                provides no speedup for pure-Python objectives due to the GIL.
         time_limit: Wall-clock budget in seconds (0 = unlimited).
+        max_evaluations: Maximum physical objective evaluations (0 = unlimited).
+        continuous_move_scales: Relative bound-span scales sampled by continuous
+            VND and ILS moves.
         minimize: Boolean convenience flag. ``True`` (default) means
             minimization, ``False`` means maximization. When set, it overrides
             ``direction``.
@@ -101,6 +104,8 @@ class GIVPConfig:
     use_convergence_monitor: bool = True
     n_workers: int = 1
     time_limit: float = 0.0
+    max_evaluations: int = 0
+    continuous_move_scales: tuple[float, ...] = (0.05, 0.15, 0.35)
     minimize: bool | None = None
     direction: Direction = "minimize"
     integer_split: int | None = None
@@ -176,6 +181,29 @@ class GIVPConfig:
         if self.time_limit < 0:
             raise InvalidConfigError(
                 f"time_limit must be >= 0 (0 = unlimited), got {self.time_limit!r}"
+            )
+
+        if (
+            not isinstance(self.max_evaluations, int)
+            or isinstance(self.max_evaluations, bool)
+            or self.max_evaluations < 0
+        ):
+            raise InvalidConfigError(
+                "max_evaluations must be a non-negative integer "
+                f"(0 = unlimited), got {self.max_evaluations!r}"
+            )
+
+        if (
+            not self.continuous_move_scales
+            or any(
+                not isinstance(scale, (int, float))
+                or isinstance(scale, bool)
+                or not 0.0 < float(scale) <= 1.0
+                for scale in self.continuous_move_scales
+            )
+        ):
+            raise InvalidConfigError(
+                "continuous_move_scales must contain values in (0, 1]"
             )
 
         if self.integer_split is not None and self.integer_split < 0:

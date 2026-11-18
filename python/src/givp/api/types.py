@@ -13,4 +13,5 @@ from numpy.typing import NDArray
 BoundsLike = Sequence[tuple[float, float]] | tuple[Sequence[float], Sequence[float]]
 Direction = Literal["minimize", "maximize"]
 ObjectiveFn = Callable[[NDArray[np.float64]], float]
+RepairFn = Callable[[NDArray[np.float64]], NDArray[np.float64]]
 IterationCallback = Callable[[int, float, NDArray[np.float64]], None]

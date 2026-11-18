@@ -41,6 +41,7 @@ class TerminationReason(str, Enum):
     CONVERGED = "converged"
     MAX_ITERATIONS = "max_iterations"
     TIME_LIMIT = "time_limit"
+    EVALUATION_LIMIT = "evaluation_limit"
     EARLY_STOP = "early_stop"
     NO_FEASIBLE = "no_feasible"
     UNKNOWN = "unknown"
@@ -51,6 +52,8 @@ class TerminationReason(str, Enum):
         lower = message.lower()
         if "converge" in lower:
             return cls.CONVERGED
+        if "evaluation" in lower:
+            return cls.EVALUATION_LIMIT
         if "time" in lower:
             return cls.TIME_LIMIT
         if "early" in lower or "threshold" in lower:

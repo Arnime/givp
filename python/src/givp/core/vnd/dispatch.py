@@ -4,11 +4,24 @@ from collections.abc import Callable
 
 import numpy as np
 
-from givp.core.helpers import _expired
+from givp.core.helpers import _expired, _get_half
 from givp.core.vnd.flip import _neighborhood_flip
+from givp.core.vnd.layout import _group_layout
 from givp.core.vnd.multiflip import _neighborhood_multiflip
 from givp.core.vnd.pair import _neighborhood_swap
 from givp.core.vnd.structured import _neighborhood_block, _neighborhood_group
+
+
+def _applicable_neighborhood_indices(num_vars: int) -> tuple[int, ...]:
+    """Return only neighborhoods that can modify the configured layout."""
+    indices = [0]
+    half = _get_half(num_vars)
+    if 0 < half < num_vars:
+        indices.append(1)
+    if _group_layout(num_vars) is not None:
+        indices.extend((2, 3))
+    indices.append(4)
+    return tuple(indices)
 
 
 def _execute_neighborhood(
@@ -65,7 +78,9 @@ def _try_neighborhoods(
     deadline: float = 0.0,
 ) -> tuple[np.ndarray, float, bool]:
     """Try fixed-order neighborhoods and return the first improvement."""
-    for idx in range(4):
+    for idx in _applicable_neighborhood_indices(num_vars):
+        if idx == 4:
+            continue
         if _expired(deadline):
             return solution, current_benefit, False
         candidate, benefit = _execute_neighborhood(

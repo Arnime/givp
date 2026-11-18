@@ -5202,6 +5202,21 @@ files = [
 markers = {main = "extra == \"dev\" or extra == \"docs\""}
 
 [[package]]
+name = "pyswarm"
+version = "0.6"
+description = "Particle swarm optimization (PSO) with constraint support"
+optional = false
+python-versions = "*"
+groups = ["main", "benchmarks"]
+files = [
+    {file = "pyswarm-0.6.tar.gz", hash = "sha256:1401e8e39fc624b48db39f1e928b1fc4d8204b96aa6ce2ef97d192740972f2e1"},
+]
+markers = {main = "extra == \"benchmarks\""}
+
+[package.dependencies]
+numpy = "*"
+
+[[package]]
 name = "pytest"
 version = "9.1.1"
 description = "pytest: simple powerful testing with Python"
@@ -7375,7 +7390,7 @@ test = ["big-O", "jaraco.functools", "jaraco.itertools", "jaraco.test", "more_it
 type = ["pytest-mypy (>=1.0.1) ; platform_python_implementation != \"PyPy\""]
 
 [extras]
-benchmarks = ["matplotlib", "optuna", "pandas", "pymoo"]
+benchmarks = ["matplotlib", "optuna", "pandas", "pymoo", "pyswarm"]
 dev = ["black", "build", "hypothesis", "mypy", "pre-commit", "pytest", "pytest-benchmark", "pytest-cov", "pytest-xdist", "ruff", "scikit-learn-stubs", "tomli", "tqdm"]
 docs = ["build", "idna", "markdown", "mkdocs", "mkdocs-material", "mkdocstrings", "pymdown-extensions"]
 fuzz = ["atheris"]
@@ -7385,4 +7400,4 @@ notebooks = ["ipykernel", "jupyter", "jupyter-server", "matplotlib", "mistune", 
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<3.16"
-content-hash = "1d49e730ff0165dcfd1e94cc0058f064c27da77f0a7cb3ef8966e35f0fa9ac54"
+content-hash = "9532f7618746f96cb6012ba891078538361fd891c473ba4a38a01281bef0ab49"
