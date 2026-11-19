@@ -102,7 +102,7 @@ def _sign_flip_p_value(values: list[float]) -> float:
         >= observed - 1e-12
         for signs in itertools.product((-1.0, 1.0), repeat=len(values))
     )
-    return exceedances / (2 ** len(values))
+    return float(exceedances / (2 ** len(values)))
 
 
 def analyze_validation(

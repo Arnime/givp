@@ -127,6 +127,8 @@ def _run_process(
             raise TrialExecutionError(
                 f"optimizer worker exited without a result (exit code {process.exitcode})"
             ) from error
+        if not isinstance(payload, dict):
+            raise TrialExecutionError("optimizer worker returned an invalid payload")
         process.join(timeout=5.0)
         if process.is_alive():
             process.terminate()
@@ -266,12 +268,30 @@ def _run_multi_trial(
                 )
                 trial.set_user_attr("run_records", records)
                 raise
-            objective_value = float(result["objective"])
+            raw_objective = result["objective"]
+            raw_evaluations = result["evaluations"]
+            raw_iterations = result["iterations"]
+            raw_elapsed = result["elapsed_seconds"]
+            if (
+                isinstance(raw_objective, bool)
+                or not isinstance(raw_objective, (int, float))
+                or isinstance(raw_evaluations, bool)
+                or not isinstance(raw_evaluations, int)
+                or isinstance(raw_iterations, bool)
+                or not isinstance(raw_iterations, int)
+                or isinstance(raw_elapsed, bool)
+                or not isinstance(raw_elapsed, (int, float))
+            ):
+                raise TrialExecutionError("optimizer worker returned invalid metrics")
+            objective_value = float(raw_objective)
+            evaluations = raw_evaluations
+            iterations = raw_iterations
+            elapsed_seconds = float(raw_elapsed)
             scenario_gap = _scenario_score(
                 objective_value, references.get(definition.scenario, 0.0)
             )
             seed_objectives.append(objective_value)
-            seed_evaluations.append(int(result["evaluations"]))
+            seed_evaluations.append(evaluations)
             seed_scores.append(scenario_gap)
             records.append(
                 {
@@ -280,9 +300,9 @@ def _run_multi_trial(
                     "status": "complete",
                     "objective": objective_value,
                     "normalized_gap": scenario_gap,
-                    "evaluations": int(result["evaluations"]),
-                    "iterations": int(result["iterations"]),
-                    "elapsed_seconds": float(result["elapsed_seconds"]),
+                    "evaluations": evaluations,
+                    "iterations": iterations,
+                    "elapsed_seconds": elapsed_seconds,
                     "termination": str(result["termination"]),
                 }
             )

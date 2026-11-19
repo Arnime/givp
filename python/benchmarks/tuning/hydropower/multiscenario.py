@@ -458,10 +458,11 @@ def _remaining_screen_trial_budget(
     trials: Sequence[optuna.trial.FrozenTrial], target_trials: int
 ) -> int:
     """Count completed/started screening trials, excluding queued warm starts."""
-    attempted = sum(
-        trial.user_attrs.get("campaign_phase", "screen") == "screen"
-        and trial.state != optuna.trial.TrialState.WAITING
+    attempted: int = sum(
+        1
         for trial in trials
+        if trial.user_attrs.get("campaign_phase", "screen") == "screen"
+        and trial.state != optuna.trial.TrialState.WAITING
     )
     return max(0, target_trials - attempted)
 
@@ -512,7 +513,7 @@ def _build_validation_profile(
     payload["profile_kind"] = "givp-global-robust-final-validation"
     payload["optimizer_seeds"] = list(seeds)
     payload["max_evaluations"] = 15000
-    return payload
+    return dict(payload)
 
 
 def _param_importances(
