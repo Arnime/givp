@@ -21,6 +21,32 @@ from givp.core.helpers import _set_repair, _set_seed
 from givp.result import AlgorithmMeta, OptimizeResult, TerminationReason
 
 
+def _normalize_repair(
+    repair: RepairFn | None,
+    lower: Sequence[float],
+    upper: Sequence[float],
+    num_vars: int,
+) -> RepairFn | None:
+    """Wrap a repair callback with shape, finiteness, and bounds checks."""
+    if repair is None:
+        return None
+
+    def normalized_repair(candidate: np.ndarray) -> np.ndarray:
+        repaired = np.asarray(repair(candidate.copy()), dtype=float)
+        if repaired.shape != (num_vars,):
+            raise ValueError(
+                "repair must return a one-dimensional vector with "
+                f"{num_vars} values, got {repaired.shape}"
+            )
+        if not np.all(np.isfinite(repaired)):
+            raise ValueError("repair must return only finite values")
+        if np.any(repaired < lower) or np.any(repaired > upper):
+            raise ValueError("repair returned values outside the configured bounds")
+        return repaired
+
+    return normalized_repair
+
+
 def givp(
     func: ObjectiveFn,
     bounds: BoundsLike,
@@ -51,22 +77,7 @@ def givp(
         inferred_num_vars,
     )
 
-    def normalized_repair(candidate: np.ndarray) -> np.ndarray:
-        if repair is None:
-            return candidate
-        repaired = np.asarray(repair(candidate.copy()), dtype=float)
-        if repaired.shape != (inferred_num_vars,):
-            raise ValueError(
-                "repair must return a one-dimensional vector with "
-                f"{inferred_num_vars} values, got {repaired.shape}"
-            )
-        if not np.all(np.isfinite(repaired)):
-            raise ValueError("repair must return only finite values")
-        if np.any(repaired < lower) or np.any(repaired > upper):
-            raise ValueError("repair returned values outside the configured bounds")
-        return repaired
-
-    _set_repair(normalized_repair if repair is not None else None)
+    _set_repair(_normalize_repair(repair, lower, upper, inferred_num_vars))
 
     if cfg.integer_split is None:
         cfg = GIVPConfig(**{**cfg.__dict__, "integer_split": inferred_num_vars})

@@ -501,15 +501,17 @@ def test_max_iterations_is_tuned_when_a_minimum_is_given() -> None:
 
 
 def test_max_iterations_stays_fixed_without_a_minimum() -> None:
-    trial = optuna.create_study().ask()
+    study = optuna.create_study()
+    trial = study.ask()
 
     config = _suggest_config(trial, max_iter=80, time_limit=300.0)
 
     assert config.max_iterations == 80
     assert "max_iterations" not in trial.params
+    invalid_trial = optuna.create_study().ask()
     with pytest.raises(ValueError, match="max_iter_min"):
         _suggest_config(
-            optuna.create_study().ask(),
+            invalid_trial,
             max_iter=80,
             time_limit=300.0,
             max_iter_min=81,

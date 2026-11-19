@@ -126,6 +126,15 @@ class GIVPConfig:
 
     def _validate_numeric_fields(self) -> None:
         """Validate numeric ranges; raises ``InvalidConfigError`` on failure."""
+        self._validate_positive_integer_fields()
+        self._validate_perturbation_strength()
+        self._validate_alpha_fields()
+        self._validate_execution_limits()
+        self._validate_move_scales()
+        self._validate_integer_split()
+
+    def _validate_positive_integer_fields(self) -> None:
+        """Validate integer options that must be greater than zero."""
         positive_int = {
             "max_iterations": self.max_iterations,
             "vnd_iterations": self.vnd_iterations,
@@ -143,6 +152,8 @@ class GIVPConfig:
                     f"{name} must be a positive integer, got {value!r}"
                 )
 
+    def _validate_perturbation_strength(self) -> None:
+        """Validate the ILS perturbation magnitude."""
         if (
             not isinstance(self.perturbation_strength, int)
             or self.perturbation_strength < 0
@@ -152,6 +163,8 @@ class GIVPConfig:
                 f"got {self.perturbation_strength!r}"
             )
 
+    def _validate_alpha_fields(self) -> None:
+        """Validate alpha ranges and the path-relinking strategy."""
         if not 0.0 <= self.alpha <= 1.0:
             raise InvalidConfigError(f"alpha must be in [0, 1], got {self.alpha!r}")
         if not 0.0 <= self.alpha_min <= 1.0:
@@ -178,6 +191,8 @@ class GIVPConfig:
                 f"alpha_min ({self.alpha_min}) must be <= alpha_max ({self.alpha_max})"
             )
 
+    def _validate_execution_limits(self) -> None:
+        """Validate wall-clock and objective evaluation limits."""
         if self.time_limit < 0:
             raise InvalidConfigError(
                 f"time_limit must be >= 0 (0 = unlimited), got {self.time_limit!r}"
@@ -193,6 +208,8 @@ class GIVPConfig:
                 f"(0 = unlimited), got {self.max_evaluations!r}"
             )
 
+    def _validate_move_scales(self) -> None:
+        """Validate the continuous neighborhood move scale vector."""
         if (
             not self.continuous_move_scales
             or any(
@@ -206,6 +223,8 @@ class GIVPConfig:
                 "continuous_move_scales must contain values in (0, 1]"
             )
 
+    def _validate_integer_split(self) -> None:
+        """Validate the boundary between integer and continuous variables."""
         if self.integer_split is not None and self.integer_split < 0:
             raise InvalidConfigError(
                 f"integer_split must be >= 0 or None, got {self.integer_split!r}"

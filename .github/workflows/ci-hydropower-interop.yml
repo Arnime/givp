@@ -48,6 +48,8 @@ jobs:
           echo "SYNTHETIC_HYDROPOWER_COMMAND=$(realpath "$virtualenv_path")/bin/synthetic-hydropower" >> "$GITHUB_ENV"
 
       - uses: ./.github/actions/setup-r
+        env:
+          R_LIB_FOR_PAK: ${{ runner.temp }}/r-lib-for-pak
         with:
           working-directory: r
           extra-packages: any::R6, any::rlang, any::jsonlite, any::processx

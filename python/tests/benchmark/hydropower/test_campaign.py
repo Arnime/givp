@@ -171,13 +171,17 @@ def test_campaign_rejects_missing_seeds() -> None:
 
 def test_campaign_refuses_to_mix_profiles_in_one_directory(tmp_path: Path) -> None:
     """Resuming with another profile would silently mix incomparable runs."""
-    benchmark = _load_benchmark(_benchmark_root())
-    first = _load_profile(_interop() / "budget_matched.json")
-    second = _load_profile(_interop() / "sog_reproduction.json")
+    benchmark_root = _benchmark_root()
+    interop_root = _interop()
+    budget_profile_path = interop_root / "budget_matched.json"
+    sog_profile_path = interop_root / "sog_reproduction.json"
+    benchmark = _load_benchmark(benchmark_root)
+    first = _load_profile(budget_profile_path)
+    second = _load_profile(sog_profile_path)
     _write_metadata(
         tmp_path,
-        _benchmark_root(),
-        _interop() / "budget_matched.json",
+        benchmark_root,
+        budget_profile_path,
         first,
         benchmark,
     )
@@ -198,18 +202,18 @@ def test_campaign_refuses_to_mix_profiles_in_one_directory(tmp_path: Path) -> No
     with pytest.raises(ValueError, match="different profile"):
         _write_metadata(
             tmp_path,
-            _benchmark_root(),
-            _interop() / "sog_reproduction.json",
+            benchmark_root,
+            sog_profile_path,
             second,
             benchmark,
         )
-    overridden = _load_profile(_interop() / "budget_matched.json")
+    overridden = _load_profile(budget_profile_path)
     _apply_campaign_overrides(overridden, givp_variant="current", max_evaluations=None)
     with pytest.raises(ValueError, match="different profile"):
         _write_metadata(
             tmp_path,
-            _benchmark_root(),
-            _interop() / "budget_matched.json",
+            benchmark_root,
+            budget_profile_path,
             overridden,
             benchmark,
         )
@@ -218,8 +222,10 @@ def test_campaign_refuses_to_mix_profiles_in_one_directory(tmp_path: Path) -> No
 def test_campaign_rejects_metadata_without_propagated_time_limits(
     tmp_path: Path,
 ) -> None:
-    benchmark = _load_benchmark(_benchmark_root())
-    profile = _load_profile(_interop() / "balanced_hyperparameters.json")
+    benchmark_root = _benchmark_root()
+    profile_path = _interop() / "balanced_hyperparameters.json"
+    benchmark = _load_benchmark(benchmark_root)
+    profile = _load_profile(profile_path)
     _write_metadata(
         tmp_path,
         _benchmark_root(),
@@ -236,8 +242,8 @@ def test_campaign_rejects_metadata_without_propagated_time_limits(
     with pytest.raises(ValueError, match="different profile"):
         _write_metadata(
             tmp_path,
-            _benchmark_root(),
-            _interop() / "balanced_hyperparameters.json",
+            benchmark_root,
+            profile_path,
             profile,
             benchmark,
         )
