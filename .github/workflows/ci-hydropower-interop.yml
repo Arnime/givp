@@ -53,6 +53,7 @@ jobs:
         with:
           working-directory: r
           extra-packages: any::R6, any::rlang, any::jsonlite, any::processx
+          pak-version: none
 
       - uses: ./.github/actions/setup-julia
         with:

@@ -21,6 +21,10 @@ inputs:
     description: Enable dependency caching.
     required: false
     default: "true"
+  pak-version:
+    description: pak version for r-lib/actions, or none to use a preinstalled pak.
+    required: false
+    default: stable
 runs:
   using: composite
   steps:
@@ -28,6 +32,12 @@ runs:
       with:
         r-version: ${{ inputs.r-version }}
         use-public-rspm: true
+    - if: inputs.pak-version == 'none'
+      name: Install pak without sudo
+      shell: bash
+      run: |
+        mkdir -p "$R_LIB_FOR_PAK"
+        Rscript -e 'install.packages("pak", lib = Sys.getenv("R_LIB_FOR_PAK"), repos = sprintf("https://r-lib.github.io/p/pak/%s/%s/%s/%s", "stable", .Platform$pkgType, R.Version()$os, R.Version()$arch))'
     - if: inputs.dependencies == ''
       uses: r-lib/actions/setup-r-dependencies@a51a8012b0aab7c32ef9d19bf54da93f3254335e # v2
       env:
@@ -36,6 +46,7 @@ runs:
         working-directory: ${{ inputs.working-directory }}
         extra-packages: ${{ inputs.extra-packages }}
         cache: ${{ inputs.cache }}
+        pak-version: ${{ inputs.pak-version }}
     - if: inputs.dependencies != ''
       uses: r-lib/actions/setup-r-dependencies@a51a8012b0aab7c32ef9d19bf54da93f3254335e # v2
       env:
@@ -45,3 +56,4 @@ runs:
         dependencies: ${{ inputs.dependencies }}
         extra-packages: ${{ inputs.extra-packages }}
         cache: ${{ inputs.cache }}
+        pak-version: ${{ inputs.pak-version }}
