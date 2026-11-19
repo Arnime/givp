@@ -49,7 +49,7 @@ jobs:
 
       - uses: ./.github/actions/setup-r
         env:
-          R_LIB_FOR_PAK: ${{ runner.temp }}/r-lib-for-pak
+          R_LIB_FOR_PAK: ${{ runner.temp }}/Library
         with:
           working-directory: r
           extra-packages: any::R6, any::rlang, any::jsonlite, any::processx
