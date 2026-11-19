@@ -19,6 +19,7 @@ from typing import Any, cast
 
 import pytest
 
+import benchmarks.tuning.hydropower as hydropower_tuning_cli
 from benchmarks.comparison import cli as comparison_cli
 from benchmarks.reporting import cli as reporting_cli
 from benchmarks.tuning import cli as tuning_cli
@@ -30,6 +31,7 @@ from benchmarks.tuning import cli as tuning_cli
 
 _BENCHMARK_COMMANDS: dict[str, ModuleType] = {
     "tune_hyperparams": tuning_cli,
+    "tune_hydropower": hydropower_tuning_cli,
     "run_literature_comparison": comparison_cli,
     "generate_report": reporting_cli,
 }
@@ -134,6 +136,52 @@ def test_tune_hyperparams_smoke(tmp_path: Path) -> None:
 # ---------------------------------------------------------------------------
 # run_literature_comparison smoke test
 # ---------------------------------------------------------------------------
+
+
+@pytest.mark.slow
+def test_tune_hydropower_smoke(tmp_path: Path) -> None:
+    """tune_hydropower.main() produces a valid GIVP config for the typical scenario."""
+    output = tmp_path / "best_hydropower_config.json"
+    repo_root = Path(__file__).resolve().parents[3]
+    benchmark_root = (
+        repo_root / "experiments" / "synthetic_hydropower" / "benchmarks" / "v1.0.0"
+    )
+
+    exit_code = _run_script_main(
+        "tune_hydropower",
+        [
+            "--benchmark-root",
+            str(benchmark_root),
+            "--scenario",
+            "typical",
+            "--n-trials",
+            "1",
+            "--n-eval-seeds",
+            "1",
+            "--max-iter",
+            "10",
+            "--time-limit",
+            "15",
+            "--sampler-seed",
+            "0",
+            "--output",
+            str(output),
+        ],
+    )
+
+    assert exit_code == 0, "tune_hydropower.main() returned non-zero exit code"
+    assert output.exists(), "Output JSON not created"
+
+    data = _read_json(output)
+    assert "best_params" in data, "JSON missing 'best_params' key"
+    assert "metadata" in data, "JSON missing 'metadata' key"
+    assert data["metadata"]["n_trials"] == 1
+    assert data["metadata"]["scenario"] == "typical"
+
+    from givp import GIVPConfig
+
+    cfg = GIVPConfig(**data["best_params"])
+    assert cfg.max_iterations > 0
 
 
 @pytest.mark.slow

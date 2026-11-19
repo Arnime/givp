@@ -1,0 +1,239 @@
+{
+  "metadata": {
+    "scenarios": [
+      "downstream_dominant",
+      "dry_stable",
+      "dry_variable",
+      "flood",
+      "typical",
+      "upstream_peak",
+      "wet_rising"
+    ],
+    "n_trials": 16,
+    "n_completed_trials": 20,
+    "n_eval_seeds_per_screening_trial": 3,
+    "screening_seeds": [
+      1,
+      2,
+      3
+    ],
+    "extension_seeds": [
+      4,
+      5,
+      6,
+      7
+    ],
+    "validation_seeds": [
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      56,
+      57,
+      58
+    ],
+    "sampler": "TPESampler",
+    "sampler_seed": 42,
+    "n_startup_trials": 4,
+    "max_iter": 80,
+    "time_limit": 300.0,
+    "per_execution_timeout_seconds": 330.0,
+    "max_evaluations": 15000,
+    "score_weights": {
+      "balanced_priority_protected": 0.75,
+      "mean_two_worst_scenarios": 0.25,
+      "priority_scenario_group": 0.5,
+      "protected_scenario_group": 0.5
+    },
+    "non_regression_margin_normalized": 0.05,
+    "best_trial_number": 15,
+    "best_value": 0.4380977457545929,
+    "selected_scenario_scores": {
+      "downstream_dominant": 0.2852197995920854,
+      "dry_stable": 0.28001269027377956,
+      "dry_variable": 1.3595565308984074,
+      "flood": -5.50981259326124e-06,
+      "typical": 0.0034649299720333343,
+      "upstream_peak": 0.0004919104226743701,
+      "wet_rising": 0.0022562894138372356
+    },
+    "extension_source_trials": [
+      0,
+      5,
+      15
+    ],
+    "validation_profile_output": "..\\experiments\\synthetic_hydropower\\output\\givp_global_robust_v1\\validation_profile.json",
+    "de_reference": {
+      "downstream_dominant": -2574.6063583444934,
+      "dry_stable": 7857.1310306368205,
+      "dry_variable": 1692.8204704616196,
+      "flood": -4860.745847464075,
+      "typical": -3868.4876608999284,
+      "upstream_peak": -4271.385141965957,
+      "wet_rising": -4432.278607884923
+    },
+    "reference": {
+      "downstream_dominant": -2574.6063583444934,
+      "dry_stable": 7857.1310306368205,
+      "dry_variable": 1692.8204704616196,
+      "flood": -4860.745847464075,
+      "typical": -3868.4876608999284,
+      "upstream_peak": -4271.385141965957,
+      "wet_rising": -4432.278607884923
+    },
+    "reference_algorithms": [
+      "DE",
+      "PSO",
+      "UPSO"
+    ],
+    "reference_winners": {
+      "downstream_dominant": "UPSO",
+      "dry_stable": "UPSO",
+      "dry_variable": "UPSO",
+      "flood": "UPSO",
+      "typical": "UPSO",
+      "upstream_peak": "UPSO",
+      "wet_rising": "PSO"
+    },
+    "reference_runs": [
+      "..\\experiments\\synthetic_hydropower\\output\\givp_global_tuning_pilot\\reference.csv"
+    ],
+    "max_iter_min": null,
+    "param_importances": {},
+    "seed_configs": [
+      "..\\experiments\\synthetic_hydropower\\output\\givp_global_tuning_pilot\\bestconfig.json",
+      "..\\experiments\\synthetic_hydropower\\interop\\v1\\tuned_hyperparameters.json",
+      "..\\experiments\\synthetic_hydropower\\interop\\v1\\tuned_hyperparameters_v2.json",
+      "..\\experiments\\synthetic_hydropower\\interop\\v1\\tuned_hyperparameters_v4.json"
+    ],
+    "benchmark_root": "..\\experiments\\synthetic_hydropower\\benchmarks\\v1.0.0"
+  },
+  "best_trial_params": {
+    "alpha": 0.20703150776307455,
+    "adaptive_alpha": true,
+    "alpha_min": 0.12638639389728779,
+    "alpha_max": 0.27517135794693776,
+    "use_elite_pool": false,
+    "vnd_iterations": 62,
+    "ils_iterations": 8,
+    "perturbation_strength": 8,
+    "num_candidates_per_step": 16
+  },
+  "best_params": {
+    "max_iterations": 80,
+    "alpha": 0.20703150776307455,
+    "vnd_iterations": 62,
+    "ils_iterations": 8,
+    "perturbation_strength": 8,
+    "use_elite_pool": false,
+    "elite_size": 5,
+    "path_relink_frequency": 10,
+    "path_relink_strategy": "bidirectional",
+    "adaptive_alpha": true,
+    "alpha_min": 0.12638639389728779,
+    "alpha_max": 0.27517135794693776,
+    "num_candidates_per_step": 16,
+    "use_cache": true,
+    "cache_size": 12000,
+    "early_stop_threshold": 80,
+    "use_convergence_monitor": false,
+    "n_workers": 1,
+    "time_limit": 300.0,
+    "max_evaluations": 15000,
+    "continuous_move_scales": [
+      0.05,
+      0.15,
+      0.35
+    ],
+    "minimize": true,
+    "direction": "minimize",
+    "integer_split": null,
+    "group_size": 24
+  },
+  "validation_profile": {
+    "schema_version": "synthetic-hydropower/sog-comparison-v1",
+    "profile_kind": "givp-global-robust-final-validation",
+    "benchmark_version": "v1.0.0",
+    "max_evaluations": 15000,
+    "optimizer_seeds": [
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      56,
+      57,
+      58
+    ],
+    "profiles": {
+      "DE": {
+        "source": "Runtime-calibrated from the SOG SciPy differential-evolution profile",
+        "max_iterations": 20,
+        "population_multiplier": 5,
+        "strategy": "best1bin",
+        "mutation": [
+          0.5,
+          1.0
+        ],
+        "recombination": 0.9,
+        "tolerance": 0.05,
+        "initialization": "latinhypercube",
+        "polish": false,
+        "source_workers": -1,
+        "execution_workers": 1
+      },
+      "PSO": {
+        "source": "SOG seed-validation PSO notebook (pyswarm)",
+        "max_generations": 100,
+        "population_size": 200,
+        "inertia": 0.5,
+        "c1": 1.0,
+        "c2": 1.0
+      },
+      "UPSO": {
+        "source": "SOG UPSO-labelled validation notebook and legacy unified-swarm controls",
+        "max_generations": 75,
+        "population_size": 200,
+        "unification_factor": 0.3,
+        "neighborhood_size": 3,
+        "w_min": 0.6,
+        "w_max": 0.9,
+        "c1": 0.6,
+        "c2": 0.4
+      },
+      "GIVP": {
+        "max_iterations": 80,
+        "alpha": 0.20703150776307455,
+        "vnd_iterations": 62,
+        "ils_iterations": 8,
+        "perturbation_strength": 8,
+        "use_elite_pool": false,
+        "elite_size": 5,
+        "path_relink_frequency": 10,
+        "path_relink_strategy": "bidirectional",
+        "adaptive_alpha": true,
+        "alpha_min": 0.12638639389728779,
+        "alpha_max": 0.27517135794693776,
+        "num_candidates_per_step": 16,
+        "use_cache": true,
+        "cache_size": 12000,
+        "early_stop_threshold": 80,
+        "use_convergence_monitor": false,
+        "n_workers": 1,
+        "source": "Selected from the paired-seed global robust tuning campaign",
+        "ablation_variant": "combined",
+        "time_limit_seconds": 300.0
+      }
+    },
+    "notes": [
+      "GIVP settings selected from study givp_global_robust_v1 after screening and seed extension.",
+      "Independent paired validation uses optimizer seeds 49 through 58.",
+      "All compared algorithms use a 300-second limit and a maximum of 15000 physical objective evaluations."
+    ]
+  }
+}

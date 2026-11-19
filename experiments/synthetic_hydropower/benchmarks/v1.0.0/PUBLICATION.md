@@ -66,19 +66,19 @@ not infer it from the version DOI.
 
 ## HydroShare resource — hydrology companion
 
-Create one public HydroShare resource from the HydroShare ZIP. Use the same
-title and version, the CC BY 4.0 license, the abstract from `CITATION.cff`, and
-metadata that describes a synthetic 24-hour, two-plant cascade rather than a
-real operational system. Include units, the seven frozen scenarios, the two
-protocols, limitations and the public references in `data_provenance.json`.
+The public HydroShare resource was created from the HydroShare ZIP. It uses the
+same title and version, the CC BY 4.0 license, the abstract from `CITATION.cff`,
+and metadata that describes a synthetic 24-hour, two-plant cascade rather than
+a real operational system. It includes units, the seven frozen scenarios, the
+two protocols, limitations and the public references in `data_provenance.json`.
 
 Add the Zenodo version DOI as a related resource and state that Zenodo is the
-canonical archive and preferred citation. Review title, authorship, contents
-and metadata before selecting **Publish**: HydroShare publication makes the
-core content immutable and assigns a DOI.
+canonical archive and preferred citation. HydroShare publication makes the core
+content immutable and assigns a DOI.
 
-**HydroShare resource URL:** pending manual deposit  
-**HydroShare DOI:** pending manual publication
+**HydroShare resource URL:** <https://www.hydroshare.org/resource/4d1e221b0638437f98847addc3e709c6>
+
+**HydroShare DOI:** <https://doi.org/10.4211/hs.4d1e221b0638437f98847addc3e709c6>
 
 ## Citation after deposit
 

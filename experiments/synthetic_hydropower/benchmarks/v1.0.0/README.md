@@ -1,51 +1,52 @@
-# Benchmark sintético de cascata hidrelétrica — v1.0.0
+# Synthetic Hydropower Cascade Benchmark — v1.0.0
 
-Esta é a única versão do benchmark acadêmico. Ela compartilha a mesma cascata,
-os mesmos parâmetros físicos e as mesmas sete afluências congeladas entre dois
-protocolos complementares.
+This is the only version of the academic benchmark. It shares the same cascade,
+physical parameters, and seven frozen inflow series across two complementary
+protocols.
 
-## Protocolos
+## Protocols
 
 ### `deterministic_balance`
 
-É a referência física canônica e não executa o GIVP. Para cada cenário, cruza
-seis metas constantes de potência em A com seis em B durante 24 horas. São 36
-combinações por cenário e 252 casos no total.
+This is the canonical physical reference and does not run GIVP. For each
+scenario, it crosses six constant power targets for A with six for B over a
+24-hour period. This produces 36 combinations per scenario and 252 cases in
+total.
 
-O protocolo registra potência solicitada e realizada, déficit, status, vazões,
-parcelas de vertimento, defluência, volumes, níveis de montante e jusante,
-queda, penalidades e resíduo de massa. Seus CSVs usam seis casas decimais e são
-reproduzíveis a partir das afluências congeladas.
+The protocol records requested and delivered power, deficit, status, flows,
+spill components, discharge, volumes, upstream and downstream levels, head,
+penalties, and mass-balance residual. Its CSV files use six decimal places and
+are reproducible from the frozen inflow series.
 
-#### Verificação pelos clientes de outras linguagens
+#### Verification by Clients in Other Languages
 
-O protocolo também possui uma rota de verificação de interoperabilidade: os
-clientes R, Julia, Rust e C++ enviam as mesmas 252 agendas ao worker Python
-`synthetic-hydropower/v1`. Portanto, a física continua única e canônica no
-Python; o que se verifica nas demais linguagens é o contrato local de processo,
-JSON e transformação dos resultados em tabela.
+The protocol also provides an interoperability verification route: the R,
+Julia, Rust, and C++ clients send the same 252 schedules to the Python worker
+`synthetic-hydropower/v1`. Therefore, the physics remains unique and canonical
+in Python; the other languages verify the local process, JSON, and result-to-
+table transformation contracts.
 
-| Cliente | Casos enviados | Série horária | Resumo |
+| Client | Cases sent | Hourly series | Summary |
 | --- | ---: | ---: | ---: |
 | R | 252 | 12.096 ✓ | 252 ✓ |
 | Julia | 252 | 12.096 ✓ | 252 ✓ |
 | Rust | 252 | 12.096 ✓ | 252 ✓ |
 | C++ | 252 | 12.096 ✓ | 252 ✓ |
 
-Cada resposta é comparada aos CSVs deste diretório com tolerância `1e-6`. Os
-arquivos derivados são escritos em `experiments/synthetic_hydropower/output/`
-e não fazem parte deste benchmark congelado, de seus checksums ou de seus
-`reference_results`. Veja o procedimento em
+Each response is compared with the CSV files in this directory using a `1e-6`
+tolerance. Derived files are written to
+`experiments/synthetic_hydropower/output/` and are not part of this frozen
+benchmark, its checksums, or its `reference_results`. See the procedure in
 [`clients/README.md`](../../clients/README.md).
 
 ### `givp_optimization`
 
-É um experimento derivado que usa o GIVP para escolher solicitações de vazão.
-O balanço hidráulico continua sendo calculado pelo mesmo modelo sintético. Seus
-resultados são referências estocásticas e podem apresentar pequenas diferenças
-entre ambientes; não definem os resultados canônicos do balanço determinístico.
+This is a derived experiment that uses GIVP to select flow requests. The
+hydraulic balance continues to be calculated by the same synthetic model. Its
+results are stochastic references and may show small differences between
+environments; they do not define the canonical deterministic-balance results.
 
-## Estrutura
+## Structure
 
 ```text
 v1.0.0/
@@ -68,35 +69,36 @@ v1.0.0/
       figures/
 ```
 
-O manifesto raiz registra o SHA-256 de todos os JSONs, CSVs e PNGs canônicos.
-Cada protocolo também possui definição e manifesto próprios para deixar claro
-se o resultado veio do equacionamento determinístico ou de uma execução do
-GIVP.
+The root manifest records the SHA-256 values of all canonical JSON, CSV, and
+PNG files. Each protocol also has its own definition and manifest, making clear
+whether a result came from deterministic equations or a GIVP execution.
 
-## Citação e publicação
+## Citation and Publication
 
-Este benchmark é um produto acadêmico distinto do software GIVP. Seus dados,
-resultados, figuras e documentação são licenciados sob
-[CC BY 4.0](LICENSE-DATA.md); o código-fonte do GIVP continua sob a licença MIT
-na raiz do repositório. A citação específica do benchmark está em
+This benchmark is an academic product distinct from the GIVP software. Its
+data, results, figures, and documentation are licensed under
+[CC BY 4.0](LICENSE-DATA.md); the GIVP source code remains under the MIT license
+at the repository root. The benchmark-specific citation is in
 [`CITATION.cff`](CITATION.cff).
 
-O Zenodo é o arquivo canônico e o DOI preferencial de citação:
-<https://doi.org/10.5281/zenodo.22185079>. O HydroShare receberá um recurso
-complementar voltado à comunidade de hidrologia, ligado a esse DOI de versão.
+Zenodo is the canonical archive and the preferred DOI for citation:
+<https://doi.org/10.5281/zenodo.22185079>. The supplementary HydroShare resource
+for the hydrology community is published at
+<https://doi.org/10.4211/hs.4d1e221b0638437f98847addc3e709c6>.
 
-O procedimento, metadados, escopo dos dois pacotes e verificações estão em
-[`PUBLICATION.md`](PUBLICATION.md). Ele gera arquivos a partir de um commit Git
-exato e valida novamente os checksums deste manifesto dentro dos ZIPs antes de
-qualquer envio.
+The procedure, metadata, scope of the two packages, and verification steps are
+described in [`PUBLICATION.md`](PUBLICATION.md). It generates files from an
+exact Git commit and revalidates this manifest's checksums inside the ZIP files
+before any submission.
 
-## Proveniência e independência
+## Provenance and Independence
 
-Os parâmetros são sintéticos e perturbados, ancorados em faixas públicas. As
-usinas A e B são aproximações acadêmicas inspiradas em informações publicadas
-sobre Monte Claro e 14 de Julho, sem representar sua operação oficial.
+The parameters are synthetic and perturbed, anchored in publicly available
+ranges. Plants A and B are academic approximations inspired by published
+information about Monte Claro and 14 de Julho, without representing their
+official operation.
 
-Nenhum código, série histórica, tabela operacional ou coeficiente proprietário
-do SOG2 foi incorporado. Essa organização documenta independência técnica, mas
-não constitui parecer jurídico e não substitui análise de patente, contratos ou
-obrigações de confidencialidade.
+No SOG2 code, historical series, operating table, or proprietary coefficient has
+been incorporated. This organization documents technical independence, but it
+does not constitute legal advice and does not replace analysis of patents,
+contracts, or confidentiality obligations.

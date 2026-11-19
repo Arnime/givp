@@ -31,12 +31,17 @@ class EvaluatorError(GivpError, RuntimeError):
     """Raised when the user-supplied evaluator misbehaves in a fatal way."""
 
 
+class EvaluationLimitReached(RuntimeError):
+    """Internal signal that the physical-evaluation budget is exhausted."""
+
+
 class EmptyPoolError(GivpError, RuntimeError):
     """Raised when an operation is attempted on an empty elite pool."""
 
 
 __all__ = [
     "EmptyPoolError",
+    "EvaluationLimitReached",
     "EvaluatorError",
     "GivpError",
     "InvalidBoundsError",

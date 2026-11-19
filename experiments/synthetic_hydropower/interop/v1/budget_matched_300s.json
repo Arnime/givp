@@ -1,0 +1,70 @@
+{
+  "schema_version": "synthetic-hydropower/sog-comparison-v2",
+  "profile_kind": "budget-matched-time-limited",
+  "benchmark_version": "v1.0.0",
+  "max_evaluations": 15000,
+  "optimizer_seeds": [44, 45, 46, 47, 48],
+  "profiles": {
+    "DE": {
+      "source": "SOG DE wrapper with the CA_*_DE seed-validation notebook controls",
+      "engine": "scipy.optimize.differential_evolution",
+      "max_iterations": 100,
+      "population_multiplier": 20,
+      "strategy": "best1bin",
+      "mutation": [0.5, 1.0],
+      "recombination": 0.9,
+      "tolerance": 0.09,
+      "initialization": "latinhypercube",
+      "updating": "deferred",
+      "polish": false,
+      "source_workers": -1,
+      "execution_workers": 1
+    },
+    "PSO": {
+      "source": "SOG PSO wrapper with the CA_*_PSO seed-validation notebook controls",
+      "engine": "pyswarm 0.6 pso",
+      "max_generations": 250,
+      "population_size": 200,
+      "inertia": 0.5,
+      "c1": 1.0,
+      "c2": 1.0
+    },
+    "UPSO": {
+      "source": "SOG UPSO-labelled notebooks: pyswarm PSO with c1=0.6 and c2=0.4",
+      "engine": "pyswarm 0.6 pso",
+      "max_generations": 250,
+      "population_size": 200,
+      "inertia": 0.5,
+      "c1": 0.6,
+      "c2": 0.4
+    },
+    "GIVP": {
+      "source": "SOG GIVP Optuna best configuration",
+      "ablation_variant": "combined",
+      "max_iterations": 40,
+      "alpha": 0.17,
+      "vnd_iterations": 15,
+      "ils_iterations": 5,
+      "perturbation_strength": 8,
+      "use_elite_pool": true,
+      "elite_size": 4,
+      "path_relink_frequency": 10,
+      "adaptive_alpha": true,
+      "alpha_min": 0.1,
+      "alpha_max": 0.18,
+      "num_candidates_per_step": 15,
+      "use_cache": true,
+      "cache_size": 10000,
+      "early_stop_threshold": 36,
+      "use_convergence_monitor": true,
+      "n_workers": 2,
+      "time_limit_seconds": 300
+    }
+  },
+  "notes": [
+    "SOG-compatible controls with a shared cap of 15000 physical objective evaluations and a 300-second wall-clock limit per run for every algorithm.",
+    "If either limit is reached, the optimizer returns the best point evaluated so far.",
+    "A physical objective call already in progress is allowed to finish before the wall-clock limit stops the optimizer.",
+    "GIVP cache hits do not consume the physical-evaluation budget."
+  ]
+}

@@ -12,6 +12,7 @@ from pymoo.optimize import minimize
 from pymoo.problems.functional import FunctionalProblem
 
 from benchmarks.common.models import Objective
+from benchmarks.comparison.upso import UPSO
 
 
 def run_pymoo(
@@ -33,6 +34,8 @@ def run_pymoo(
 
     if algorithm_name == "PSO":
         algorithm = PSO()
+    elif algorithm_name == "UPSO":
+        algorithm = UPSO(max_generations=max_iter)
     elif algorithm_name == "GA":
         algorithm = GA()
     elif algorithm_name == "CMA-ES":
