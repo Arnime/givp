@@ -70,14 +70,14 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument(
         "--algorithms",
         nargs="+",
-        default=["GIVP-full", "DE", "PSO", "GA", "CMA-ES", "SA"],
+        default=["GIVP-full", "DE", "PSO", "UPSO", "GA", "CMA-ES", "SA"],
         choices=list(ALGO_DESCRIPTIONS),
         metavar="ALGO",
         help=(
             "Algorithms to include.  Choices: "
             f"{list(ALGO_DESCRIPTIONS)}.  "
-            "DE and SA require scipy. PSO/GA/CMA-ES require pymoo.  "
-            "Default: GIVP-full DE PSO GA CMA-ES SA."
+            "DE and SA require scipy. PSO/UPSO/GA/CMA-ES require pymoo.  "
+            "Default: GIVP-full DE PSO UPSO GA CMA-ES SA."
         ),
     )
     p.add_argument(

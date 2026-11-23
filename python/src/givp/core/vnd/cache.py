@@ -7,6 +7,7 @@ from collections.abc import Callable
 import numpy as np
 
 from givp.core.cache import EvaluationCache
+from givp.core.helpers import _repair_solution
 
 
 def _create_cached_cost_fn(
@@ -15,6 +16,7 @@ def _create_cached_cost_fn(
     """Wrap an objective function with the optional VND evaluation cache."""
 
     def cached_cost_fn(solution: np.ndarray) -> float:
+        _repair_solution(solution)
         if cache is not None:
             cached = cache.get(solution)
             if cached is not None:

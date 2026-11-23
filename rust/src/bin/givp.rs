@@ -299,6 +299,6 @@ mod tests {
 
     #[test]
     fn test_main_test_variant() {
-        main();
+        let _exit_code = main();
     }
 }

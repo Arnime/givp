@@ -11,7 +11,7 @@ import cloudpickle
 import numpy as np
 
 from givp.core.cache import EvaluationCache
-from givp.core.helpers import _safe_evaluate
+from givp.core.helpers import _repair_solution, _safe_evaluate
 
 _log = logging.getLogger(__name__)
 
@@ -20,6 +20,7 @@ def _evaluate_with_cache(
     cand: np.ndarray, evaluator: Callable, cache: EvaluationCache | None
 ) -> float:
     """Evaluate a candidate using the cache when available."""
+    _repair_solution(cand)
     if cache is not None:
         cached_cost = cache.get(cand)
         if cached_cost is not None:

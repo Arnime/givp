@@ -98,6 +98,12 @@ def test_time_limit_negative_rejected() -> None:
         GIVPConfig(time_limit=-1.0)
 
 
+@pytest.mark.parametrize("value", [-1, 1.5, True])
+def test_max_evaluations_rejects_invalid_values(value: object) -> None:
+    with pytest.raises(InvalidConfigError):
+        GIVPConfig(max_evaluations=cast(int, value))
+
+
 def test_integer_split_negative_rejected() -> None:
     with pytest.raises(InvalidConfigError):
         GIVPConfig(integer_split=-1)

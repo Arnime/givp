@@ -1,0 +1,32 @@
+{
+  "description": "Competitor reference curated for the seven-scenario GIVP pilot; historical UPSO rows intentionally excluded.",
+  "algorithm_sources": {
+    "DE": "experiments\\synthetic_hydropower\\output\\time_limited_v2_300s_no_pso\\runs.csv",
+    "PSO": "experiments\\synthetic_hydropower\\results\\true_upso_pso_budget_matched_300s\\runs.csv",
+    "UPSO": "experiments\\synthetic_hydropower\\results\\true_upso_pso_budget_matched_300s\\runs.csv"
+  },
+  "row_counts": {
+    "DE": 35,
+    "PSO": 35,
+    "UPSO": 35
+  },
+  "scenarios": [
+    "downstream_dominant",
+    "dry_stable",
+    "dry_variable",
+    "flood",
+    "typical",
+    "upstream_peak",
+    "wet_rising"
+  ],
+  "optimizer_seeds": [
+    44,
+    45,
+    46,
+    47,
+    48
+  ],
+  "max_evaluations": 15000,
+  "configured_time_limit_seconds": 300,
+  "maximum_observed_elapsed_seconds": 300.1031437999918
+}

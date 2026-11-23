@@ -55,7 +55,7 @@ def _execute(
         value, iterations, evaluations = run_de(objective, bounds, seed, max_iter)
     elif algorithm == "SA":
         value, iterations, evaluations = run_sa(objective, bounds, seed, max_iter)
-    elif algorithm in {"PSO", "GA", "CMA-ES"}:
+    elif algorithm in {"PSO", "UPSO", "GA", "CMA-ES"}:
         value, iterations, evaluations = run_pymoo(
             algorithm, objective, bounds, seed, max_iter
         )

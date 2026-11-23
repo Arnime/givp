@@ -37,3 +37,5 @@ O procedimento e os comandos para cada ambiente estão em
 Nenhum resultado é enviado automaticamente. A publicação em Zenodo e
 HydroShare é manual, requer a conta do responsável e deve usar os pacotes
 verificados descritos em [`v1.0.0/PUBLICATION.md`](v1.0.0/PUBLICATION.md).
+O recurso complementar do HydroShare está publicado em
+<https://doi.org/10.4211/hs.4d1e221b0638437f98847addc3e709c6>.

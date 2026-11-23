@@ -7,7 +7,10 @@ import numpy as np
 from givp.core.cache import EvaluationCache
 from givp.core.helpers import _new_rng
 from givp.core.vnd.cache import _create_cached_cost_fn
-from givp.core.vnd.dispatch import _execute_neighborhood
+from givp.core.vnd.dispatch import (
+    _applicable_neighborhood_indices,
+    _execute_neighborhood,
+)
 
 
 def local_search_vnd_adaptive(
@@ -29,7 +32,8 @@ def local_search_vnd_adaptive(
     cached_cost_fn = _create_cached_cost_fn(cost_fn, cache)
     current_benefit = cached_cost_fn(current_solution)
     sensitivity = np.zeros(num_vars, dtype=float)
-    scores = np.ones(5, dtype=float)
+    applicable = np.asarray(_applicable_neighborhood_indices(num_vars), dtype=np.intp)
+    scores = np.ones(len(applicable), dtype=float)
     rng = _new_rng()
     iteration = 0
     no_improve_count = 0
@@ -39,7 +43,8 @@ def local_search_vnd_adaptive(
         old_solution = current_solution.copy()
         probabilities = np.maximum(scores / scores.sum(), min_probability)
         probabilities /= probabilities.sum()
-        neighborhood_idx = int(rng.choice(5, p=probabilities))
+        score_idx = int(rng.choice(len(applicable), p=probabilities))
+        neighborhood_idx = int(applicable[score_idx])
         candidate, benefit = _execute_neighborhood(
             neighborhood_idx, cached_cost_fn, current_solution, current_benefit,
             num_vars, use_first_improvement, lower_arr, upper_arr, sensitivity,
@@ -48,7 +53,7 @@ def local_search_vnd_adaptive(
             improvement = current_benefit - benefit
             np.copyto(current_solution, candidate)
             current_benefit = benefit
-            scores[neighborhood_idx] += (
+            scores[score_idx] += (
                 reward_factor * improvement / max(abs(old_benefit), 1e-10)
             )
             sensitivity[np.abs(current_solution - old_solution) > 1e-12] += improvement
