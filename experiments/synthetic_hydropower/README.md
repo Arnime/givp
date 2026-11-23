@@ -104,6 +104,66 @@ sensibilidade.
 
 ## Executar
 
+### Nova busca global do GIVP
+
+A preparação de tuning usa uma configuração global nos sete cenários, sementes de
+triagem `1–3` e seeds de extensão `4–7`. O estudo executa 16 trials de triagem,
+reavalia a configuração incumbente e até dois candidatos nos seeds de extensão,
+e grava métricas por cenário e seed. Cada execução roda em processo isolado com
+timeout externo de 330 s; uma execução que exceda o timeout invalida o trial.
+O comando abaixo apenas representa a campanha; não é executado pelos testes.
+
+Execute a partir do diretório `python/`, substituindo os caminhos de saída se
+necessário:
+
+```powershell
+poetry run python -m benchmarks.tuning.hydropower.multiscenario `
+  --benchmark-root ../experiments/synthetic_hydropower/benchmarks/v1.0.0 `
+  --scenarios downstream_dominant dry_stable dry_variable flood typical upstream_peak wet_rising `
+  --n-trials 16 --n-eval-seeds 3 --eval-seed-start 1 `
+  --time-limit 300 --max-iter 80 `
+  --study-name givp_global_robust_v1 `
+  --storage sqlite:///../experiments/synthetic_hydropower/output/givp_global_robust_v1/study.db `
+  --reference-runs ../experiments/synthetic_hydropower/output/givp_global_tuning_pilot/reference.csv `
+  --reference-algorithms DE PSO UPSO `
+  --seed-config ../experiments/synthetic_hydropower/output/givp_global_tuning_pilot/bestconfig.json `
+  --seed-config ../experiments/synthetic_hydropower/interop/v1/tuned_hyperparameters.json `
+  --seed-config ../experiments/synthetic_hydropower/interop/v1/tuned_hyperparameters_v2.json `
+  --seed-config ../experiments/synthetic_hydropower/interop/v1/tuned_hyperparameters_v4.json `
+  --validation-profile-template ../experiments/synthetic_hydropower/output/givp_global_tuning_validation/validation_profile.json `
+  --validation-profile-output ../experiments/synthetic_hydropower/output/givp_global_robust_v1/validation_profile.json `
+  --trials-csv ../experiments/synthetic_hydropower/output/givp_global_robust_v1/trials.csv `
+  --output ../experiments/synthetic_hydropower/output/givp_global_robust_v1/bestconfig.json
+```
+
+Depois da busca, o perfil gerado congela DE, PSO e UPSO do template e fixa o
+holdout em `49–58`. A validação só começa quando for explicitamente iniciada:
+
+```powershell
+poetry run python -m benchmarks.comparison.hydropower.campaign `
+  --benchmark-root ../experiments/synthetic_hydropower/benchmarks/v1.0.0 `
+  --profile ../experiments/synthetic_hydropower/output/givp_global_robust_v1/validation_profile.json `
+  --output-dir ../experiments/synthetic_hydropower/output/givp_global_robust_v1/validation `
+  --algorithms DE PSO UPSO GIVP --replications 10
+
+poetry run python -m benchmarks.tuning.hydropower.validation `
+  --runs ../experiments/synthetic_hydropower/output/givp_global_robust_v1/validation/runs.csv `
+  --reference-runs ../experiments/synthetic_hydropower/output/givp_global_tuning_pilot/reference.csv `
+  --profile ../experiments/synthetic_hydropower/output/givp_global_robust_v1/validation_profile.json `
+  --output ../experiments/synthetic_hydropower/output/givp_global_robust_v1/validation/report.json
+```
+
+O relatório calcula diferenças normalizadas com peso igual entre os dois grupos
+de cenários, intervalos bootstrap reamostrando seeds em bloco, testes exatos de
+troca de sinal com ajuste de Holm e gaps médios por cenário. A campanha final
+não é iniciada pelo comando de tuning.
+
+Na triagem, o score é `0,75 × média balanceada dos grupos + 0,25 × média dos
+dois piores gaps`; cada grupo (prioritário e protegido) recebe metade da média
+balanceada. Finalistas precisam ficar até `0,05` acima da incumbente em cada
+cenário protegido. As execuções individuais registram cenário, seed, objetivo,
+número de avaliações e iterações, duração, status e motivo de término.
+
 O arquivo empacotado
 `python/src/givp/examples/synthetic_hydropower/configs/base.json` contém
 exclusivamente os parâmetros das duas usinas sintéticas. Horizonte, cenários,
@@ -114,10 +174,125 @@ Os parâmetros finais documentados para o GIVP na dissertação são usados no
 notebook: 40 iterações, $\alpha=0{,}17$, VND=15, ILS=5, perturbação=8,
 15 candidatos por passo, conjunto elite de tamanho 4 e PR a cada 10 iterações.
 O cache de 10.000 avaliações e o monitor de convergência seguem o protocolo
-descrito. O orçamento de 900 s dos experimentos completos do SOG não é
-transportado para esta instância sintética de 24 períodos; os valores finais de
-$\alpha_{min}$, $\alpha_{max}$, limiar de parada e número de trabalhadores não
-foram publicados na tabela de resultados e permanecem nos padrões do GIVP.
+descrito. Para a campanha de comparação, o perfil versionado inclui também o
+orçamento de 900 s, $\alpha_{min}=0{,}10$, $\alpha_{max}=0{,}18$, limiar de
+parada 36 e dois trabalhadores, conforme a configuração Optuna do SOG usada
+como referência histórica.
+
+### Comparação com os algoritmos do SOG
+
+DE, PSO e UPSO são executados exatamente como o SOG os executa hoje, a partir de
+uma transcrição do comportamento dos invólucros do SOG (sem importar código,
+dados ou coeficientes do SOG). A rastreabilidade de cada parâmetro está em
+[`docs/SOG_ALGORITHM_MAPPING.md`](docs/SOG_ALGORITHM_MAPPING.md):
+
+- **DE**: `scipy.optimize.differential_evolution` com `best1bin`, população
+  20 × D, 100 iterações, mutação (0,5; 1), recombinação 0,9, inicialização
+  `latinhypercube`, atualização `deferred`, `tol=0,09` e sem polimento.
+- **PSO**: `pyswarm` 0.6 com 200 partículas, 250 iterações, inércia 0,5 e
+  $c_1=c_2=1{,}0$.
+- **UPSO rotulado pelo SOG**: os notebooks atuais usam o mesmo invólucro
+  `pyswarm.pso` do PSO, com $c_1=0{,}6$, $c_2=0{,}4$ e inércia 0,5. Os perfis
+  históricos de reprodução preservam esse comportamento, que não é um UPSO
+  unificado.
+- **UPSO unificado**: a campanha específica usa a combinação de velocidades
+  global e local, melhor local em anel, fator de unificação 0,3,
+  $c_1=0{,}6$, $c_2=0{,}4$ e inércia linear de 0,9 a 0,6. É uma variante
+  experimental distinta, não atribuída ao SOG.
+- **GIVP**: a configuração Optuna do SOG descrita acima.
+
+Como no SOG, cada execução fixa uma vez a seed global do NumPy antes de chamar o
+SciPy e o `pyswarm`. Por isso o `pyswarm` está fixado na versão 0.6: as versões
+1.x são uma reescrita compilada com gerador próprio, que não reproduz as
+trajetórias do SOG.
+
+Os perfis de comparação usam as seeds pareadas `44` a `48`, os sete cenários
+congelados, o mesmo vetor de 48 potências e a mesma projeção física:
+
+| Perfil | Uso | Parada |
+|---|---|---|
+| [`interop/v1/sog_reproduction.json`](interop/v1/sog_reproduction.json) | descreve o comportamento das configurações do SOG | critérios nativos e limite de 900 s por execução para todos |
+| [`interop/v1/budget_matched.json`](interop/v1/budget_matched.json) | comparação estatística | teto exato de 15.000 avaliações físicas e limite de 900 s por execução para todos |
+| [`interop/v1/budget_matched_300s.json`](interop/v1/budget_matched_300s.json) | comparação com teto de cinco minutos por execução | teto de 15.000 avaliações físicas e limite de 300 s por execução para todos |
+| [`interop/v1/budget_matched_300s_givp_80.json`](interop/v1/budget_matched_300s_givp_80.json) | piloto controlado do GIVP | mesmas condições do perfil de 300 s; `max_iterations` do GIVP aumentado de 40 para 80 |
+| [`interop/v1/budget_matched_300s_upso_w03_c1wmin_c2wmax.json`](interop/v1/budget_matched_300s_upso_w03_c1wmin_c2wmax.json) | análise exploratória de sensibilidade do UPSO | mesmas condições do perfil de 300 s; hipótese `c1=0,6`, `c2=0,9`, `omega=0,3`; não confirmada como configuração do SOG |
+| [`interop/v1/budget_matched_300s_true_upso.json`](interop/v1/budget_matched_300s_true_upso.json) | comparação direta de PSO com UPSO unificado real | PSO e UPSO usam os mesmos seeds, até 15.000 avaliações e limite de 300 s |
+
+O perfil `budget_matched_300s.json` preserva o wrapper PSO que os notebooks do
+SOG chamam de UPSO. Para uma comparação entre **PSO e UPSO unificado**, use
+`budget_matched_300s_true_upso.json`; nesse perfil o campo `engine` seleciona
+explicitamente a implementação UPSO local/global.
+
+Nos perfis `budget-matched`, a chamada que ultrapassaria o teto é interrompida
+antes de chegar ao simulador, e o algoritmo devolve o melhor ponto já avaliado
+com término `evaluation_limit`; ao atingir o prazo, os algoritmos devolvem o
+melhor ponto avaliado com término `time_limit`. O limite de tempo configurado
+no bloco GIVP é compartilhado pelos quatro adaptadores. Uma avaliação física já
+iniciada pode terminar depois do prazo antes de o otimizador ser interrompido.
+Os acertos de cache do GIVP não contam como avaliação física. A reavaliação
+final do vetor projetado é pós-processamento e não entra no orçamento. Cada
+execução registra em `runs.csv` o perfil, as
+avaliações, as iterações, o tempo, o motivo do término e as métricas hidráulicas
+(energia, déficit, vertimento e níveis finais). O `campaign_metadata.json`
+registra seeds, perfil efetivo com os limites compartilhados, versões das
+bibliotecas e os commits do GIVP e do SOG de referência. Diretórios de saída
+criados antes da aplicação do limite a todos os algoritmos devem ser substituídos
+por um novo `--output-dir`; a campanha os recusa para evitar misturar resultados.
+
+O experimento completo tem 140 execuções por perfil (sete cenários, quatro
+algoritmos e cinco seeds). Uma interrupção pode ser retomada sem recalcular as
+execuções já concluídas. Os resultados ficam em `output/`, fora do benchmark
+congelado e ignorados pelo Git.
+
+```powershell
+cd python
+poetry run python -m benchmarks.comparison.hydropower.campaign `
+  --benchmark-root ../experiments/synthetic_hydropower/benchmarks/v1.0.0 `
+  --profile ../experiments/synthetic_hydropower/interop/v1/budget_matched.json `
+  --replications 5 `
+  --output-dir ../experiments/synthetic_hydropower/output/sog_budget_matched
+
+poetry run python -m benchmarks.comparison.hydropower.reporting `
+  --runs ../experiments/synthetic_hydropower/output/sog_budget_matched/runs.csv `
+  --output-dir ../experiments/synthetic_hydropower/output/sog_budget_matched/report
+```
+
+Para o perfil de reprodução, troque o perfil por `sog_reproduction.json` e use
+outro diretório, por exemplo `output/sog_reproduction`.
+
+O renderizador produz tabelas CSV e LaTeX, intervalos de confiança de 95%,
+ranking, boxplots de objetivo, energia, déficit, vertimento e níveis finais,
+mapa de calor, taxas de vitória e Wilcoxon pareado unilateral com correção de
+Holm. O cenário `flood` também é relatado separadamente como guarda de robustez.
+
+> **Resultados anteriores são testes técnicos.** Os diretórios já existentes em
+> `output/` (`synthetic_hydropower_algorithm_comparison*`,
+> `givp_tuned_7scenarios_5replications`, `structural_comparison_preliminary`)
+> foram gerados com o perfil legado `hyperparameters.json` e os perfis
+> `balanced_*`/`tuned_*` (schema v1). Neles, o PSO usava o `pyswarm` 1.x e o
+> UPSO era um enxame unificado que não existe no SOG. Esses resultados não
+> servem como resultados da dissertação. Resultados UPSO de campanhas sem o
+> mesmo limite temporal dos demais algoritmos são excluídos das comparações.
+> Os perfis SOG que rotulam o wrapper PSO como UPSO não devem ser apresentados
+> como resultados de UPSO unificado. Para esse algoritmo, use a campanha
+> `budget_matched_300s_true_upso.json`.
+
+As cinco variantes da ablação podem ser executadas nos cenários de triagem sem
+editar o perfil. Use diretórios de saída diferentes para `current`, `groups`,
+`repair`, `multiscale` e `combined`:
+
+```powershell
+cd python
+poetry run python -m benchmarks.comparison.hydropower.campaign `
+  --benchmark-root ../experiments/synthetic_hydropower/benchmarks/v1.0.0 `
+  --profile ../experiments/synthetic_hydropower/interop/v1/budget_matched.json `
+  --algorithms GIVP --scenarios dry_stable typical flood `
+  --replications 3 --givp-variant combined `
+  --output-dir ../experiments/synthetic_hydropower/output/ablation/combined
+```
+
+O tuning usa seeds `0`, `1` e `2`; as seeds `44` a `48` ficam reservadas para
+a comparação final e não participam da seleção de hiperparâmetros.
 
 ```powershell
 cd python
@@ -197,5 +372,6 @@ uma execução completa a benchmark versionado e publicar a referência congelad
 está em [`benchmarks/README.md`](benchmarks/README.md). A publicação usa o
 Zenodo como arquivo canônico
 (<https://doi.org/10.5281/zenodo.22185079>) e o HydroShare como recurso
-hidrológico complementar; detalhes, licenças e metadados estão em
+hidrológico complementar (<https://doi.org/10.4211/hs.4d1e221b0638437f98847addc3e709c6>);
+detalhes, licenças e metadados estão em
 [`benchmarks/v1.0.0/PUBLICATION.md`](benchmarks/v1.0.0/PUBLICATION.md).

@@ -26,6 +26,10 @@ htmlcov/
 python/benchmarks/.results/
 site/
 results_quick.json
+# Local-only ad hoc summary script
+/analyze_results.py
+# Local-only ad hoc summary script
+/analyze_results.py
 
 # Julia coverage files
 *.cov

@@ -2,23 +2,42 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 import numpy as np
 
-from givp.core.helpers import _get_group_size, _get_half
+from givp.core.helpers import (
+    _get_continuous_move_scales,
+    _get_group_size,
+    _get_half,
+)
 
 
-def _group_layout(num_vars: int) -> tuple[int, int, int] | None:
-    """Infer grouped variable layout ``(half, n_groups, n_steps)`` when valid."""
-    half = _get_half(num_vars)
-    if half <= 0 or half >= num_vars:
+@dataclass(frozen=True)
+class GroupLayout:
+    """Structured continuous groups with an optional paired integer tail."""
+
+    continuous_size: int
+    n_groups: int
+    n_steps: int
+    paired_integer: bool
+
+
+def _group_layout(num_vars: int) -> GroupLayout | None:
+    """Infer continuous groups for fully continuous or paired mixed vectors."""
+    split = _get_half(num_vars)
+    if split <= 0:
         return None
     n_steps = _get_group_size()
     if n_steps is None or n_steps < 1:
         return None
-    n_groups = half // n_steps
-    if n_groups < 1 or n_groups * n_steps != half:
+    paired_integer = split < num_vars
+    if paired_integer and num_vars - split != split:
         return None
-    return half, n_groups, n_steps
+    n_groups = split // n_steps
+    if n_groups < 1 or n_groups * n_steps != split:
+        return None
+    return GroupLayout(split, n_groups, n_steps, paired_integer)
 
 
 def _sign_from_delta(delta: float) -> int:
@@ -33,7 +52,7 @@ def _sign_from_delta(delta: float) -> int:
 def _apply_group_perturbation(
     solution: np.ndarray,
     old_cont: np.ndarray,
-    old_int: np.ndarray,
+    old_int: np.ndarray | None,
     start: int,
     half: int,
     n_steps: int,
@@ -44,13 +63,16 @@ def _apply_group_perturbation(
     """Apply a correlated perturbation to all steps of one group."""
     end = start + n_steps
     span = upper_arr[start:end] - lower_arr[start:end]
-    base_delta = rng.uniform(-0.05, 0.05)
-    noise = rng.uniform(-0.02, 0.02, size=n_steps)
+    scale = float(rng.choice(np.asarray(_get_continuous_move_scales())))
+    base_delta = rng.uniform(-scale, scale)
+    noise = rng.uniform(-0.4 * scale, 0.4 * scale, size=n_steps)
     solution[start:end] = np.clip(
         old_cont + (base_delta + noise) * span,
         lower_arr[start:end],
         upper_arr[start:end],
     )
+    if old_int is None:
+        return
     delta_int = _sign_from_delta(base_delta)
     int_start = half + start
     for step_idx in range(n_steps):
@@ -71,6 +93,7 @@ def _apply_block_perturbation(
     lower_arr: np.ndarray,
     upper_arr: np.ndarray,
     base_delta: float,
+    paired_integer: bool = True,
 ) -> None:
     """Apply a coordinated perturbation to a step block across all groups."""
     int_delta = _sign_from_delta(base_delta)
@@ -78,7 +101,6 @@ def _apply_block_perturbation(
         offset = group_idx * n_steps
         for step_idx in range(block_start, block_end):
             cont_idx = offset + step_idx
-            int_idx = half + cont_idx
             span = upper_arr[cont_idx] - lower_arr[cont_idx]
             solution[cont_idx] = float(
                 np.clip(
@@ -87,8 +109,10 @@ def _apply_block_perturbation(
                     upper_arr[cont_idx],
                 )
             )
-            lo = int(np.ceil(lower_arr[int_idx]))
-            hi = int(np.floor(upper_arr[int_idx]))
-            solution[int_idx] = float(
-                np.clip(int(np.rint(old_vals[int_idx])) + int_delta, lo, hi)
-            )
+            if paired_integer:
+                int_idx = half + cont_idx
+                lo = int(np.ceil(lower_arr[int_idx]))
+                hi = int(np.floor(upper_arr[int_idx]))
+                solution[int_idx] = float(
+                    np.clip(int(np.rint(old_vals[int_idx])) + int_delta, lo, hi)
+                )

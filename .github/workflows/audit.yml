@@ -40,10 +40,21 @@ jobs:
                   sudo apt-get install -y pkg-config gfortran libopenblas-dev
             - name: Install
               run: |
-                  bash .github/scripts/poetry-install.sh --no-root --only main,audit
+                  bash .github/scripts/poetry-install.sh --no-root --only main
                   bash .github/scripts/install-package-editable.sh
-            - name: Validate lock and audit dependencies
+            - name: Install audit tools in an isolated environment
+              env:
+                  POETRY_VIRTUALENVS_CREATE: "true"
+                  POETRY_VIRTUALENVS_IN_PROJECT: "false"
+                  POETRY_VIRTUALENVS_PATH: ${{ runner.temp }}/audit-venvs
+              run: |
+                  poetry -C python sync --no-root --only audit
+            - name: Validate lock and audit project dependencies
               run: |
                   poetry -C python check --lock
-                  poetry -C python run pip-audit --local --skip-editable \
+                  PROJECT_SITE_PACKAGES="$(poetry -C python run python -c 'import sysconfig; print(sysconfig.get_paths()["purelib"])')"
+                  POETRY_VIRTUALENVS_CREATE=true \
+                  POETRY_VIRTUALENVS_IN_PROJECT=false \
+                  POETRY_VIRTUALENVS_PATH="$RUNNER_TEMP/audit-venvs" \
+                    poetry -C python run pip-audit --path "$PROJECT_SITE_PACKAGES" --skip-editable \
                     --cache-dir "$RUNNER_TEMP/pip-audit-cache"

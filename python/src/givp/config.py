@@ -71,6 +71,9 @@ class GIVPConfig:
                release the GIL (NumPy-heavy, Cython, Numba-compiled code) but
                provides no speedup for pure-Python objectives due to the GIL.
         time_limit: Wall-clock budget in seconds (0 = unlimited).
+        max_evaluations: Maximum physical objective evaluations (0 = unlimited).
+        continuous_move_scales: Relative bound-span scales sampled by continuous
+            VND and ILS moves.
         minimize: Boolean convenience flag. ``True`` (default) means
             minimization, ``False`` means maximization. When set, it overrides
             ``direction``.
@@ -101,6 +104,8 @@ class GIVPConfig:
     use_convergence_monitor: bool = True
     n_workers: int = 1
     time_limit: float = 0.0
+    max_evaluations: int = 0
+    continuous_move_scales: tuple[float, ...] = (0.05, 0.15, 0.35)
     minimize: bool | None = None
     direction: Direction = "minimize"
     integer_split: int | None = None
@@ -121,6 +126,15 @@ class GIVPConfig:
 
     def _validate_numeric_fields(self) -> None:
         """Validate numeric ranges; raises ``InvalidConfigError`` on failure."""
+        self._validate_positive_integer_fields()
+        self._validate_perturbation_strength()
+        self._validate_alpha_fields()
+        self._validate_execution_limits()
+        self._validate_move_scales()
+        self._validate_integer_split()
+
+    def _validate_positive_integer_fields(self) -> None:
+        """Validate integer options that must be greater than zero."""
         positive_int = {
             "max_iterations": self.max_iterations,
             "vnd_iterations": self.vnd_iterations,
@@ -138,6 +152,8 @@ class GIVPConfig:
                     f"{name} must be a positive integer, got {value!r}"
                 )
 
+    def _validate_perturbation_strength(self) -> None:
+        """Validate the ILS perturbation magnitude."""
         if (
             not isinstance(self.perturbation_strength, int)
             or self.perturbation_strength < 0
@@ -147,6 +163,8 @@ class GIVPConfig:
                 f"got {self.perturbation_strength!r}"
             )
 
+    def _validate_alpha_fields(self) -> None:
+        """Validate alpha ranges and the path-relinking strategy."""
         if not 0.0 <= self.alpha <= 1.0:
             raise InvalidConfigError(f"alpha must be in [0, 1], got {self.alpha!r}")
         if not 0.0 <= self.alpha_min <= 1.0:
@@ -173,11 +191,40 @@ class GIVPConfig:
                 f"alpha_min ({self.alpha_min}) must be <= alpha_max ({self.alpha_max})"
             )
 
+    def _validate_execution_limits(self) -> None:
+        """Validate wall-clock and objective evaluation limits."""
         if self.time_limit < 0:
             raise InvalidConfigError(
                 f"time_limit must be >= 0 (0 = unlimited), got {self.time_limit!r}"
             )
 
+        if (
+            not isinstance(self.max_evaluations, int)
+            or isinstance(self.max_evaluations, bool)
+            or self.max_evaluations < 0
+        ):
+            raise InvalidConfigError(
+                "max_evaluations must be a non-negative integer "
+                f"(0 = unlimited), got {self.max_evaluations!r}"
+            )
+
+    def _validate_move_scales(self) -> None:
+        """Validate the continuous neighborhood move scale vector."""
+        if (
+            not self.continuous_move_scales
+            or any(
+                not isinstance(scale, (int, float))
+                or isinstance(scale, bool)
+                or not 0.0 < float(scale) <= 1.0
+                for scale in self.continuous_move_scales
+            )
+        ):
+            raise InvalidConfigError(
+                "continuous_move_scales must contain values in (0, 1]"
+            )
+
+    def _validate_integer_split(self) -> None:
+        """Validate the boundary between integer and continuous variables."""
         if self.integer_split is not None and self.integer_split < 0:
             raise InvalidConfigError(
                 f"integer_split must be >= 0 or None, got {self.integer_split!r}"

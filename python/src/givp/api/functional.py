@@ -8,8 +8,8 @@ from collections.abc import Sequence
 
 import numpy as np
 
-from givp.api.objective import _wrap_objective
-from givp.api.types import BoundsLike, IterationCallback, ObjectiveFn
+from givp.api.objective import ObjectiveState, _wrap_objective
+from givp.api.types import BoundsLike, IterationCallback, ObjectiveFn, RepairFn
 from givp.api.validation import (
     _normalize_bounds,
     _normalize_initial_guesses,
@@ -17,8 +17,34 @@ from givp.api.validation import (
 )
 from givp.config import GIVPConfig
 from givp.core import grasp_ils_vnd
-from givp.core.helpers import _set_seed
+from givp.core.helpers import _set_repair, _set_seed
 from givp.result import AlgorithmMeta, OptimizeResult, TerminationReason
+
+
+def _normalize_repair(
+    repair: RepairFn | None,
+    lower: Sequence[float],
+    upper: Sequence[float],
+    num_vars: int,
+) -> RepairFn | None:
+    """Wrap a repair callback with shape, finiteness, and bounds checks."""
+    if repair is None:
+        return None
+
+    def normalized_repair(candidate: np.ndarray) -> np.ndarray:
+        repaired = np.asarray(repair(candidate.copy()), dtype=float)
+        if repaired.shape != (num_vars,):
+            raise ValueError(
+                "repair must return a one-dimensional vector with "
+                f"{num_vars} values, got {repaired.shape}"
+            )
+        if not np.all(np.isfinite(repaired)):
+            raise ValueError("repair must return only finite values")
+        if np.any(repaired < lower) or np.any(repaired > upper):
+            raise ValueError("repair returned values outside the configured bounds")
+        return repaired
+
+    return normalized_repair
 
 
 def givp(
@@ -32,6 +58,7 @@ def givp(
     initial_guess: Sequence[float] | None = None,
     initial_guesses: Sequence[Sequence[float]] | None = None,
     iteration_callback: IterationCallback | None = None,
+    repair: RepairFn | None = None,
     seed: int | None = None,
     verbose: bool = False,
 ) -> OptimizeResult:
@@ -50,10 +77,19 @@ def givp(
         inferred_num_vars,
     )
 
+    _set_repair(_normalize_repair(repair, lower, upper, inferred_num_vars))
+
     if cfg.integer_split is None:
         cfg = GIVPConfig(**{**cfg.__dict__, "integer_split": inferred_num_vars})
     nfev_counter = [0]
-    wrapped = _wrap_objective(func, resolved_direction, nfev_counter)
+    incumbent = ObjectiveState()
+    wrapped = _wrap_objective(
+        func,
+        resolved_direction,
+        nfev_counter,
+        cfg.max_evaluations,
+        incumbent,
+    )
 
     solution, core_value, actual_nit, termination_message = grasp_ils_vnd(
         wrapped,
@@ -66,6 +102,9 @@ def givp(
         initial_guesses=warm_start_guesses,
     )
 
+    if not np.isfinite(core_value) and incumbent.solution is not None:
+        solution = incumbent.solution.tolist()
+        core_value = incumbent.cost
     x = np.asarray(solution, dtype=float)
     sign = -1.0 if resolved_direction == "maximize" else 1.0
     fun_value = sign * float(core_value)

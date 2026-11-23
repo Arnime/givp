@@ -1,0 +1,209 @@
+{
+  "benchmark_id": "synthetic-hydropower-v1.0.0/deterministic-balance",
+  "benchmark_root": "experiments/synthetic_hydropower/benchmarks/v1.0.0",
+  "profile_path": "reports/synthetic_hydropower/givp_global_robust_v1/validation_profile.json",
+  "profile_kind": "givp-global-robust-final-validation",
+  "profile": {
+    "schema_version": "synthetic-hydropower/sog-comparison-v1",
+    "profile_kind": "givp-global-robust-final-validation",
+    "benchmark_version": "v1.0.0",
+    "max_evaluations": 15000,
+    "optimizer_seeds": [
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      56,
+      57,
+      58
+    ],
+    "profiles": {
+      "DE": {
+        "source": "Runtime-calibrated from the SOG SciPy differential-evolution profile",
+        "max_iterations": 20,
+        "population_multiplier": 5,
+        "strategy": "best1bin",
+        "mutation": [
+          0.5,
+          1.0
+        ],
+        "recombination": 0.9,
+        "tolerance": 0.05,
+        "initialization": "latinhypercube",
+        "polish": false,
+        "source_workers": -1,
+        "execution_workers": 1,
+        "time_limit_seconds": 300.0,
+        "max_evaluations": 15000
+      },
+      "PSO": {
+        "source": "SOG seed-validation PSO notebook (pyswarm)",
+        "max_generations": 100,
+        "population_size": 200,
+        "inertia": 0.5,
+        "c1": 1.0,
+        "c2": 1.0,
+        "time_limit_seconds": 300.0,
+        "max_evaluations": 15000
+      },
+      "UPSO": {
+        "source": "SOG UPSO-labelled validation notebook and legacy unified-swarm controls",
+        "max_generations": 75,
+        "population_size": 200,
+        "unification_factor": 0.3,
+        "neighborhood_size": 3,
+        "w_min": 0.6,
+        "w_max": 0.9,
+        "c1": 0.6,
+        "c2": 0.4,
+        "time_limit_seconds": 300.0,
+        "max_evaluations": 15000
+      },
+      "GIVP": {
+        "max_iterations": 80,
+        "alpha": 0.20703150776307455,
+        "vnd_iterations": 62,
+        "ils_iterations": 8,
+        "perturbation_strength": 8,
+        "use_elite_pool": false,
+        "elite_size": 5,
+        "path_relink_frequency": 10,
+        "path_relink_strategy": "bidirectional",
+        "adaptive_alpha": true,
+        "alpha_min": 0.12638639389728779,
+        "alpha_max": 0.27517135794693776,
+        "num_candidates_per_step": 16,
+        "use_cache": true,
+        "cache_size": 12000,
+        "early_stop_threshold": 80,
+        "use_convergence_monitor": false,
+        "n_workers": 1,
+        "source": "Selected from the paired-seed global robust tuning campaign",
+        "ablation_variant": "combined",
+        "time_limit_seconds": 300.0,
+        "selected_trial_number": 15,
+        "selection_robust_score": 0.4380977457545929,
+        "selection_scenario_scores": {
+          "downstream_dominant": 0.2852197995920854,
+          "dry_stable": 0.28001269027377956,
+          "dry_variable": 1.3595565308984074,
+          "flood": -5.50981259326124e-06,
+          "typical": 0.0034649299720333343,
+          "upstream_peak": 0.0004919104226743701,
+          "wet_rising": 0.0022562894138372356
+        },
+        "max_evaluations": 15000
+      }
+    },
+    "notes": [
+      "Validation used the selected global robust tuning configuration: trial 15 (extension trial 19).",
+      "Tuning used optimizer seeds 1 through 7. Independent validation uses held-out optimizer seeds 49 through 58.",
+      "GIVP per-run limits: 300 seconds and 15000 physical evaluations."
+    ]
+  },
+  "optimizer_seeds": [
+    49,
+    50,
+    51,
+    52,
+    53,
+    54,
+    55,
+    56,
+    57,
+    58
+  ],
+  "scenarios": [
+    {
+      "definition": {
+        "name": "dry_stable",
+        "inflow_a_m3s": 75.0,
+        "inflow_b_m3s": 22.0,
+        "variability": 0.03,
+        "profile": "stable"
+      },
+      "seed": 42
+    },
+    {
+      "definition": {
+        "name": "dry_variable",
+        "inflow_a_m3s": 100.0,
+        "inflow_b_m3s": 28.0,
+        "variability": 0.16,
+        "profile": "alternating"
+      },
+      "seed": 43
+    },
+    {
+      "definition": {
+        "name": "typical",
+        "inflow_a_m3s": 180.0,
+        "inflow_b_m3s": 60.0,
+        "variability": 0.1,
+        "profile": "daily"
+      },
+      "seed": 44
+    },
+    {
+      "definition": {
+        "name": "upstream_peak",
+        "inflow_a_m3s": 250.0,
+        "inflow_b_m3s": 45.0,
+        "variability": 0.12,
+        "profile": "peak"
+      },
+      "seed": 45
+    },
+    {
+      "definition": {
+        "name": "downstream_dominant",
+        "inflow_a_m3s": 140.0,
+        "inflow_b_m3s": 145.0,
+        "variability": 0.1,
+        "profile": "daily"
+      },
+      "seed": 46
+    },
+    {
+      "definition": {
+        "name": "wet_rising",
+        "inflow_a_m3s": 240.0,
+        "inflow_b_m3s": 90.0,
+        "variability": 0.08,
+        "profile": "rising"
+      },
+      "seed": 47
+    },
+    {
+      "definition": {
+        "name": "flood",
+        "inflow_a_m3s": 390.0,
+        "inflow_b_m3s": 155.0,
+        "variability": 0.12,
+        "profile": "peak"
+      },
+      "seed": 48
+    }
+  ],
+  "evaluation_accounting": "evaluations counts physical objective calls made by the optimizer; GIVP cache hits and the final projected re-evaluation are excluded",
+  "software": {
+    "python": "3.12.10",
+    "givp": "1.0.1",
+    "numpy": "2.2.6",
+    "scipy": "1.15.3",
+    "pyswarm": "0.6"
+  },
+  "givp_git_commit": "36c6010c709352cc030e2515a0f9a853a225dad9",
+  "sog_reference": {
+    "notebook_repository_commit": "9194f6351ae0adccff0f83c7ddc7c01c5f7d46b2",
+    "backend_repository_commit": "280c876930d6eaef555c9236a8eab0562681e9b6",
+    "wrappers": "app/internal/modules/algoritmo/otimizacao/{de,pso,utils}.py"
+  },
+  "result_files": {
+    "runs": "runs.csv",
+    "solutions": "best_solutions.jsonl.gz"
+  }
+}

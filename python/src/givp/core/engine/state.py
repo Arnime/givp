@@ -7,7 +7,7 @@ import numpy as np
 from givp.core.cache import EvaluationCache
 from givp.core.convergence import ConvergenceMonitor
 from givp.core.elite import ElitePool
-from givp.core.helpers import _CoreConfigProto, _new_rng, logger
+from givp.core.helpers import _CoreConfigProto, _new_rng, _repair_solution, logger
 
 
 def _initialize_optimization_components(
@@ -38,10 +38,10 @@ def _prepare_initial_array(
 ) -> np.ndarray:
     """Build the first candidate from a warm start or random sample."""
     if initial_guesses:
-        return np.array(initial_guesses[0], dtype=float)
+        return _repair_solution(np.array(initial_guesses[0], dtype=float))
     rng = _new_rng()
-    return np.asarray(
-        lower_arr + (upper_arr - lower_arr) * rng.random(size=num_vars)
+    return _repair_solution(
+        np.asarray(lower_arr + (upper_arr - lower_arr) * rng.random(size=num_vars))
     )
 
 
@@ -60,6 +60,7 @@ def _maybe_apply_warm_start(
     warm_cost = float("inf")
     for index, initial_guess in enumerate(initial_guesses):
         candidate = np.array(initial_guess, dtype=float)
+        _repair_solution(candidate)
         candidate_cost = cost_fn(candidate)
         if elite_pool is not None:
             elite_pool.add(candidate.copy(), candidate_cost)

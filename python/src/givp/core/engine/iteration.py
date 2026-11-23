@@ -79,7 +79,8 @@ def _run_iteration_step(
     solution = construct_grasp(
         num_vars, lower_arr, upper_arr, cost_fn, initial_guess, alpha=alpha,
         num_candidates_per_step=config.num_candidates_per_step,
-        cache=cache, n_workers=config.n_workers,
+        cache=cache,
+        n_workers=1 if config.max_evaluations > 0 else config.n_workers,
     )
     solution = local_search_vnd(
         cost_fn, solution, num_vars, config.vnd_iterations,

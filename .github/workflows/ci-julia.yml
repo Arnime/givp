@@ -71,6 +71,12 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      # Julia 1.9 ships libopenlibm.so with an executable-stack flag that
+      # glibc >= 2.41 refuses to load; re-allow it for that version only.
+      - name: Allow executable stacks for Julia 1.9 on Linux
+        if: runner.os == 'Linux' && matrix.julia-version == '1.9'
+        run: echo "GLIBC_TUNABLES=glibc.rtld.execstack=2" >> "$GITHUB_ENV"
+
       - uses: ./.github/actions/setup-julia
         continue-on-error: true
         with:
@@ -411,7 +417,7 @@ jobs:
             using Pkg
             Pkg.add(["JET"])
             using GIVPOptimizer, JET
-            result = JET.report_package("GIVPOptimizer"; ignored_modules=(Base, Core))
+            result = JET.report_package(GIVPOptimizer; ignored_modules=(Base, Core))
             reports = JET.get_reports(result)
             if !isempty(reports)
               for r in reports
