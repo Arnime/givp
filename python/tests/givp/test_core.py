@@ -69,9 +69,11 @@ from givp.core.helpers import (
     _ensure_verbose_handler,
     _get_group_size,
     _get_half,
+    _new_rng,
     _safe_evaluate,
     _set_group_size,
     _set_integer_split,
+    _set_seed,
     logger,
 )
 from givp.core.vnd import dispatch as core_vnd
@@ -79,7 +81,10 @@ from givp.core.vnd import flip as vnd_flip
 from givp.core.vnd import multiflip as vnd_multiflip
 from givp.core.vnd import pair as vnd_pair
 from givp.core.vnd.cache import _create_cached_cost_fn
-from givp.core.vnd.dispatch import _execute_neighborhood
+from givp.core.vnd.dispatch import (
+    _applicable_neighborhood_indices,
+    _execute_neighborhood,
+)
 from givp.core.vnd.flip import (
     _search_continuous_flip_module,
     _search_integer_flip_module,
@@ -93,9 +98,11 @@ from givp.core.vnd.structured import _neighborhood_block, _neighborhood_group
 def reset_context() -> Generator:
     _set_integer_split(None)
     _set_group_size(None)
+    _set_seed(None)
     yield
     _set_integer_split(None)
     _set_group_size(None)
+    _set_seed(None)
 
 
 def quad(x: np.ndarray) -> float:
@@ -873,6 +880,41 @@ def test_local_search_vnd_with_group_size() -> None:
         upper_arr=np.ones(6),
     )
     assert out.shape == sol.shape
+
+
+def test_group_layout_supports_fully_continuous_groups() -> None:
+    _set_integer_split(48)
+    _set_group_size(24)
+    layout = _group_layout(48)
+    assert layout is not None
+    assert layout.continuous_size == 48
+    assert layout.n_groups == 2
+    assert layout.n_steps == 24
+    assert not layout.paired_integer
+
+
+def test_fully_continuous_layout_excludes_paired_neighborhood() -> None:
+    _set_integer_split(48)
+    _set_group_size(24)
+    assert _applicable_neighborhood_indices(48) == (0, 2, 3, 4)
+
+
+def test_mixed_layout_preserves_all_neighborhoods() -> None:
+    _set_integer_split(4)
+    _set_group_size(2)
+    assert _applicable_neighborhood_indices(8) == (0, 1, 2, 3, 4)
+
+
+def test_seeded_random_stream_advances_without_reinitializing() -> None:
+    _set_seed(44)
+    first = _new_rng().random(4)
+    second = _new_rng().random(4)
+    _set_seed(44)
+    replay_first = _new_rng().random(4)
+    replay_second = _new_rng().random(4)
+    np.testing.assert_array_equal(first, replay_first)
+    np.testing.assert_array_equal(second, replay_second)
+    assert not np.array_equal(first, second)
 
 
 def test_neighborhood_group_with_layout() -> None:
@@ -2266,6 +2308,7 @@ def test_try_neighborhoods_group_neighborhood_improves(
         monkeypatch, group_fn=lambda *a, **kw: (improved_sol, 0.0)
     )
     _set_integer_split(1)
+    _set_group_size(1)
     sol = np.array([1.0, 1.0])
     _, cost, improved_flag = core_vnd._try_neighborhoods(
         quad,
@@ -2325,6 +2368,7 @@ def test_try_neighborhoods_block_neighborhood_improves(
         monkeypatch, block_fn=lambda *a, **kw: (improved_sol, 0.0)
     )
     _set_integer_split(1)
+    _set_group_size(1)
     sol = np.array([1.0, 1.0])
     _, cost, improved_flag = core_vnd._try_neighborhoods(
         quad,

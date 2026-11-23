@@ -21,7 +21,7 @@ from typing import cast
 
 import numpy as np
 
-from givp.core.helpers import _get_half
+from givp.core.helpers import _get_continuous_move_scales, _get_half
 
 __all__ = [
     "_modify_indices_for_multiflip",
@@ -65,11 +65,12 @@ def _try_continuous_move_module(
     lower_arr: np.ndarray | None,
     upper_arr: np.ndarray | None,
 ) -> tuple[bool, float]:
-    """Perturb *sol[idx]* by +/-5% of its span; accept if strictly better."""
+    """Perturb one coordinate on local, intermediate, or global scales."""
     old = sol[idx]
     if lower_arr is not None and upper_arr is not None:
         span = upper_arr[idx] - lower_arr[idx]
-        perturb = rng.uniform(-0.05 * span, 0.05 * span)
+        scale = float(rng.choice(np.asarray(_get_continuous_move_scales())))
+        perturb = rng.uniform(-scale * span, scale * span)
     else:
         perturb = rng.uniform(-0.1, 0.1)
     new_val = old + perturb
@@ -111,7 +112,10 @@ def _modify_indices_for_multiflip(
     if cont_indices.size > 0:
         if lower_arr is not None and upper_arr is not None:
             spans = upper_arr[cont_indices] - lower_arr[cont_indices]
-            perturb = rng.uniform(-0.05, 0.05, size=cont_indices.size) * spans
+            scales = rng.choice(
+                np.asarray(_get_continuous_move_scales()), size=cont_indices.size
+            )
+            perturb = rng.uniform(-1.0, 1.0, size=cont_indices.size) * scales * spans
         else:
             perturb = rng.uniform(-0.1, 0.1, size=cont_indices.size)
         new_vals = solution[cont_indices] + perturb
@@ -147,8 +151,10 @@ def _perturb_index(
     else:
         if lower_arr is not None and upper_arr is not None:
             span = upper_arr[idx] - lower_arr[idx]
-            # P15: amplitude aumentada para +/-15% para diversificacao efetiva
-            delta = rng.uniform(-0.15 * span, 0.15 * span)
+            base_scales = _get_continuous_move_scales()
+            ils_scales = np.asarray([min(1.0, max(0.15, value * 2)) for value in base_scales])
+            scale = float(rng.choice(ils_scales))
+            delta = rng.uniform(-scale * span, scale * span)
             perturbed[idx] = float(np.clip(old + delta, lower_arr[idx], upper_arr[idx]))
         else:
             delta = rng.normal(scale=0.12 * (abs(old) + 1e-6))

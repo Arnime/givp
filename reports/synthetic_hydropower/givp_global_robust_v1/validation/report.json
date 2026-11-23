@@ -1,0 +1,101 @@
+{
+  "holdout_seeds": [
+    49,
+    50,
+    51,
+    52,
+    53,
+    54,
+    55,
+    56,
+    57,
+    58
+  ],
+  "scenarios": [
+    "downstream_dominant",
+    "dry_stable",
+    "dry_variable",
+    "flood",
+    "typical",
+    "upstream_peak",
+    "wet_rising"
+  ],
+  "normalization_scales": {
+    "downstream_dominant": 2574.6063583444934,
+    "dry_stable": 7857.1310306368205,
+    "dry_variable": 1692.8204704616196,
+    "flood": 4860.745847464075,
+    "typical": 3868.4876608999284,
+    "upstream_peak": 4271.385141965957,
+    "wet_rising": 4432.278607884923
+  },
+  "confidence_method": "20,000 percentile bootstrap resamples of complete seed blocks",
+  "hypothesis_test": "exact two-sided sign-flip test over weighted seed-block gaps",
+  "holm_family": [
+    "DE",
+    "PSO",
+    "UPSO"
+  ],
+  "comparisons": {
+    "DE": {
+      "mean_weighted_normalized_gap": -4.150530662987451,
+      "seed_block_bootstrap_95pct_ci": [
+        -4.553444771775175,
+        -3.745029857411802
+      ],
+      "paired_sign_flip_p_value": 0.001953125,
+      "holm_adjusted_p_value": 0.005859375,
+      "scenario_mean_normalized_gaps": {
+        "downstream_dominant": -1.5138435376207113,
+        "dry_stable": -1.5957720916411406,
+        "dry_variable": -1.1743378763613284,
+        "flood": -26.546347627327634,
+        "typical": -0.11097650585125678,
+        "upstream_peak": -0.15240429746528142,
+        "wet_rising": -0.9108771722286821
+      },
+      "no_scenario_regression_over_0_05": true,
+      "superiority_supported": true
+    },
+    "PSO": {
+      "mean_weighted_normalized_gap": -0.6366048417449839,
+      "seed_block_bootstrap_95pct_ci": [
+        -1.0276456249643593,
+        -0.2549573336262259
+      ],
+      "paired_sign_flip_p_value": 0.015625,
+      "holm_adjusted_p_value": 0.03125,
+      "scenario_mean_normalized_gaps": {
+        "downstream_dominant": -0.7461160141272306,
+        "dry_stable": -0.5271646534078445,
+        "dry_variable": -2.312515380815843,
+        "flood": -0.39267754170872315,
+        "typical": -0.07534072214191168,
+        "upstream_peak": -0.014367367426334043,
+        "wet_rising": -0.0038349420132200327
+      },
+      "no_scenario_regression_over_0_05": true,
+      "superiority_supported": true
+    },
+    "UPSO": {
+      "mean_weighted_normalized_gap": 0.41555651375633607,
+      "seed_block_bootstrap_95pct_ci": [
+        0.1578324318881724,
+        0.6800853612838622
+      ],
+      "paired_sign_flip_p_value": 0.01953125,
+      "holm_adjusted_p_value": 0.03125,
+      "scenario_mean_normalized_gaps": {
+        "downstream_dominant": 0.4540091701792459,
+        "dry_stable": 0.28871283457540625,
+        "dry_variable": 1.7593837475040437,
+        "flood": 0.08017948467934066,
+        "typical": 0.0028767655292051496,
+        "upstream_peak": 0.0011893894106963288,
+        "wet_rising": 0.00022730920874085568
+      },
+      "no_scenario_regression_over_0_05": false,
+      "superiority_supported": false
+    }
+  }
+}

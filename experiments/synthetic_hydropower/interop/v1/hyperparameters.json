@@ -1,0 +1,73 @@
+{
+  "schema_version": "synthetic-hydropower/sog-comparison-v1",
+  "benchmark_version": "v1.0.0",
+  "max_evaluations": 15000,
+  "optimizer_seeds": [44, 45, 46, 47, 48],
+  "profiles": {
+    "DE": {
+      "source": "SOG seed-validation differential-evolution notebook",
+      "max_iterations": 100,
+      "population_multiplier": 20,
+      "strategy": "best1bin",
+      "mutation": [0.5, 1.0],
+      "recombination": 0.9,
+      "tolerance": 0.09,
+      "initialization": "latinhypercube",
+      "polish": false,
+      "source_workers": -1,
+      "execution_workers": 1
+      ,"max_evaluations": 15000
+    },
+    "PSO": {
+      "source": "SOG seed-validation PSO notebook (pyswarm)",
+      "max_generations": 250,
+      "population_size": 200,
+      "inertia": 0.5,
+      "c1": 1.0,
+      "c2": 1.0
+      ,"max_evaluations": 15000
+    },
+    "UPSO": {
+      "source": "SOG UPSO-labelled validation notebook and legacy unified-swarm controls",
+      "max_generations": 250,
+      "population_size": 200,
+      "unification_factor": 0.3,
+      "neighborhood_size": 3,
+      "w_min": 0.6,
+      "w_max": 0.9,
+      "c1": 0.6,
+      "c2": 0.4
+      ,"max_evaluations": 15000
+    },
+    "GIVP": {
+      "source": "SOG GIVP Optuna best configuration (two-worker variant)",
+      "ablation_variant": "combined",
+      "max_iterations": 40,
+      "alpha": 0.17,
+      "vnd_iterations": 15,
+      "ils_iterations": 5,
+      "perturbation_strength": 8,
+      "use_elite_pool": true,
+      "elite_size": 4,
+      "path_relink_frequency": 10,
+      "adaptive_alpha": true,
+      "alpha_min": 0.1,
+      "alpha_max": 0.18,
+      "num_candidates_per_step": 15,
+      "use_cache": true,
+      "cache_size": 10000,
+      "early_stop_threshold": 36,
+      "use_convergence_monitor": true,
+      "n_workers": 2,
+      "time_limit_seconds": 900
+      ,"max_evaluations": 15000
+    }
+  },
+  "notes": [
+    "The seven inflow scenarios are frozen by benchmark v1.0.0 and are identical across the five paired stochastic seeds.",
+    "PSO is executed by pyswarm, preserving the engine and the population, inertia and acceleration controls of the SOG notebook.",
+    "DE uses one execution worker although the original SOG notebook requested all workers. This isolates the deterministic local physical evaluator from platform-dependent multiprocessing; all evolutionary controls are preserved.",
+    "UPSO is a true unified swarm with ring-local and global social targets. The SOG notebook labelled UPSO invoked the PSO wrapper, so the distinction is recorded rather than represented as an exact historical replay.",
+    "All algorithms share a maximum budget of 15000 physical objective evaluations; elapsed time is reported separately."
+  ]
+}

@@ -57,6 +57,63 @@ def test_minimize_sphere_returns_result(fast_config: GIVPConfig) -> None:
     assert result.nfev > 0
 
 
+def test_evaluation_limit_is_exact_and_preserves_incumbent() -> None:
+    config = GIVPConfig(
+        max_iterations=20,
+        vnd_iterations=20,
+        ils_iterations=3,
+        num_candidates_per_step=8,
+        max_evaluations=25,
+    )
+    result = givp(sphere, [(-1.0, 1.0)] * 4, config=config, seed=44)
+    assert result.nfev == 25
+    assert result.meta["termination_reason"] == "evaluation_limit"
+    assert np.isfinite(result.fun)
+
+
+def test_repair_is_applied_to_evaluations_and_result() -> None:
+    observed: list[np.ndarray] = []
+
+    def objective(values: np.ndarray) -> float:
+        observed.append(values.copy())
+        return float(np.sum(values))
+
+    def repair(values: np.ndarray) -> np.ndarray:
+        return np.where(values < 0.5, 0.0, 1.0)
+
+    result = givp(
+        objective,
+        [(0.0, 1.0)] * 3,
+        config=GIVPConfig(max_iterations=2, max_evaluations=12),
+        repair=repair,
+        seed=44,
+    )
+    assert observed
+    assert all(np.all(np.isin(values, (0.0, 1.0))) for values in observed)
+    assert np.all(np.isin(result.x, (0.0, 1.0)))
+
+
+@pytest.mark.parametrize(
+    "repair,match",
+    [
+        (lambda _values: np.zeros(2), "one-dimensional vector"),
+        (lambda values: np.full_like(values, np.nan), "finite"),
+        (lambda values: np.full_like(values, 2.0), "outside"),
+    ],
+)
+def test_repair_rejects_invalid_outputs(
+    repair: Callable[[np.ndarray], np.ndarray], match: str
+) -> None:
+    with pytest.raises(ValueError, match=match):
+        givp(
+            sphere,
+            [(0.0, 1.0)] * 3,
+            config=GIVPConfig(max_iterations=1),
+            repair=repair,
+            seed=44,
+        )
+
+
 def test_maximize_returns_value_in_original_sign(fast_config: GIVPConfig) -> None:
     bounds = [(-5.0, 5.0)] * 4
     result = givp(neg_sphere, bounds, direction="maximize", config=fast_config)
@@ -164,6 +221,17 @@ def test_invalid_initial_guess_outside_bounds_raises(fast_config: GIVPConfig) ->
             config=fast_config,
             initial_guess=[5.0, 5.0, 5.0],
         )
+
+
+def test_initial_guess_on_bounds_is_allowed(fast_config: GIVPConfig) -> None:
+    result = givp(
+        sphere,
+        [(0.0, 1.0)] * 3,
+        config=fast_config,
+        initial_guess=[0.0, 1.0, 0.0],
+        seed=44,
+    )
+    assert np.isfinite(result.fun)
 
 
 def test_invalid_bounds_via_core_validate() -> None:

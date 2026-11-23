@@ -1,0 +1,72 @@
+{
+  "schema_version": "synthetic-hydropower/sog-comparison-v1",
+  "profile_kind": "runtime-calibrated",
+  "benchmark_version": "v1.0.0",
+  "max_evaluations": 15000,
+  "optimizer_seeds": [44, 45, 46, 47, 48],
+  "profiles": {
+    "DE": {
+      "source": "Runtime-calibrated from the SOG SciPy differential-evolution profile",
+      "max_iterations": 20,
+      "population_multiplier": 5,
+      "strategy": "best1bin",
+      "mutation": [
+        0.5,
+        1.0
+      ],
+      "recombination": 0.9,
+      "tolerance": 0.05,
+      "initialization": "latinhypercube",
+      "polish": false,
+      "source_workers": -1,
+      "execution_workers": 1
+    },
+    "PSO": {
+      "source": "SOG seed-validation PSO notebook (pyswarm)",
+      "max_generations": 100,
+      "population_size": 200,
+      "inertia": 0.5,
+      "c1": 1.0,
+      "c2": 1.0
+    },
+    "UPSO": {
+      "source": "SOG UPSO-labelled validation notebook and legacy unified-swarm controls",
+      "max_generations": 75,
+      "population_size": 200,
+      "unification_factor": 0.3,
+      "neighborhood_size": 3,
+      "w_min": 0.6,
+      "w_max": 0.9,
+      "c1": 0.6,
+      "c2": 0.4
+    },
+    "GIVP": {
+      "source": "Runtime-calibrated from the SOG GIVP Optuna configuration",
+      "max_iterations": 80,
+      "alpha": 0.11,
+      "vnd_iterations": 78,
+      "ils_iterations": 12,
+      "perturbation_strength": 1,
+      "use_elite_pool": false,
+      "elite_size": 5,
+      "path_relink_frequency": 10,
+      "adaptive_alpha": true,
+      "alpha_min": 0.08,
+      "alpha_max": 0.27,
+      "num_candidates_per_step": 23,
+      "use_cache": true,
+      "cache_size": 12000,
+      "early_stop_threshold": 51,
+      "use_convergence_monitor": true,
+      "n_workers": 1,
+      "time_limit_seconds": 300
+    }
+  },
+  "notes": [
+    "This profile is for a balanced-runtime comparison and must not be described as an exact historical SOG replay.",
+    "DE keeps the SOG SciPy strategy and recombination but reduces the population and iteration budget to shorten the runtime while preserving the historical search behavior.",
+    "GIVP increases the iteration and local-search workload so it stays in the same runtime band as the PSO/UPSO swarm runs.",
+    "This balanced profile is intended for dissertation-style runtime comparisons and not for exact historical replay.",
+    "Final comparisons use the paired reproducible seeds 44 through 48 for every algorithm."
+  ]
+}

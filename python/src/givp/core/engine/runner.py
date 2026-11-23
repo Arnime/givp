@@ -24,11 +24,13 @@ from givp.core.engine.validation import _prepare_bounds
 from givp.core.helpers import (
     _CoreConfigProto,
     _expired,
+    _set_continuous_move_scales,
     _set_group_size,
     _set_integer_split,
     _time_mod,
     logger,
 )
+from givp.exceptions import EvaluationLimitReached
 
 
 def _run_grasp_loop(
@@ -64,11 +66,15 @@ def _run_grasp_loop(
                 )
             termination = "time limit"
             break
-        best_cost, best_solution, stagnation = _run_iteration_step(
-            iteration, cost_fn, num_vars, lower_arr, upper_arr, initial_arr,
-            config, callbacks, verbose, (best_cost, best_solution, stagnation),
-            deadline=deadline, start_time=start_time,
-        )
+        try:
+            best_cost, best_solution, stagnation = _run_iteration_step(
+                iteration, cost_fn, num_vars, lower_arr, upper_arr, initial_arr,
+                config, callbacks, verbose, (best_cost, best_solution, stagnation),
+                deadline=deadline, start_time=start_time,
+            )
+        except EvaluationLimitReached:
+            termination = "evaluation_limit"
+            break
         actual_nit = iteration + 1
         if _check_early_stopping(monitor, config, verbose):
             termination = "early_stop"
@@ -93,6 +99,7 @@ def grasp_ils_vnd(
     lower_arr, upper_arr = _prepare_bounds(lower, upper)
     _set_integer_split(config.integer_split)
     _set_group_size(config.group_size)
+    _set_continuous_move_scales(config.continuous_move_scales)
     initial_arr = _prepare_initial_array(
         initial_guesses, lower_arr, upper_arr, num_vars
     )

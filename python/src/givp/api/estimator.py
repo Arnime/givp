@@ -11,7 +11,7 @@ from numpy.typing import NDArray
 from sklearn.base import BaseEstimator
 
 from givp.api.functional import givp
-from givp.api.types import BoundsLike, IterationCallback, ObjectiveFn
+from givp.api.types import BoundsLike, IterationCallback, ObjectiveFn, RepairFn
 from givp.api.validation import _resolve_direction
 from givp.config import GIVPConfig
 from givp.result import OptimizeResult
@@ -32,6 +32,7 @@ class GIVPOptimizer(BaseEstimator):
         initial_guess: Sequence[float] | None = None,
         initial_guesses: Sequence[Sequence[float]] | None = None,
         iteration_callback: IterationCallback | None = None,
+        repair: RepairFn | None = None,
         seed: int | None = None,
         verbose: bool = False,
     ) -> None:
@@ -44,6 +45,7 @@ class GIVPOptimizer(BaseEstimator):
         self.initial_guess = initial_guess
         self.initial_guesses = initial_guesses
         self.iteration_callback = iteration_callback
+        self.repair = repair
         self.seed = seed
         self.verbose = verbose
 
@@ -68,6 +70,7 @@ class GIVPOptimizer(BaseEstimator):
             initial_guess=self.initial_guess,
             initial_guesses=self.initial_guesses,
             iteration_callback=self.iteration_callback,
+            repair=self.repair,
             seed=self.seed,
             verbose=self.verbose,
         )

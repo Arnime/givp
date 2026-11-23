@@ -1,0 +1,83 @@
+{
+  "schema_version": "synthetic-hydropower/sog-comparison-v1",
+  "profile_kind": "givp-global-robust-final-validation",
+  "benchmark_version": "v1.0.0",
+  "max_evaluations": 15000,
+  "optimizer_seeds": [
+    49,
+    50,
+    51,
+    52,
+    53,
+    54,
+    55,
+    56,
+    57,
+    58
+  ],
+  "profiles": {
+    "DE": {
+      "source": "Runtime-calibrated from the SOG SciPy differential-evolution profile",
+      "max_iterations": 20,
+      "population_multiplier": 5,
+      "strategy": "best1bin",
+      "mutation": [
+        0.5,
+        1.0
+      ],
+      "recombination": 0.9,
+      "tolerance": 0.05,
+      "initialization": "latinhypercube",
+      "polish": false,
+      "source_workers": -1,
+      "execution_workers": 1
+    },
+    "PSO": {
+      "source": "SOG seed-validation PSO notebook (pyswarm)",
+      "max_generations": 100,
+      "population_size": 200,
+      "inertia": 0.5,
+      "c1": 1.0,
+      "c2": 1.0
+    },
+    "UPSO": {
+      "source": "SOG UPSO-labelled validation notebook and legacy unified-swarm controls",
+      "max_generations": 75,
+      "population_size": 200,
+      "unification_factor": 0.3,
+      "neighborhood_size": 3,
+      "w_min": 0.6,
+      "w_max": 0.9,
+      "c1": 0.6,
+      "c2": 0.4
+    },
+    "GIVP": {
+      "max_iterations": 80,
+      "alpha": 0.20703150776307455,
+      "vnd_iterations": 62,
+      "ils_iterations": 8,
+      "perturbation_strength": 8,
+      "use_elite_pool": false,
+      "elite_size": 5,
+      "path_relink_frequency": 10,
+      "path_relink_strategy": "bidirectional",
+      "adaptive_alpha": true,
+      "alpha_min": 0.12638639389728779,
+      "alpha_max": 0.27517135794693776,
+      "num_candidates_per_step": 16,
+      "use_cache": true,
+      "cache_size": 12000,
+      "early_stop_threshold": 80,
+      "use_convergence_monitor": false,
+      "n_workers": 1,
+      "source": "Selected from the paired-seed global robust tuning campaign",
+      "ablation_variant": "combined",
+      "time_limit_seconds": 300.0
+    }
+  },
+  "notes": [
+    "GIVP settings selected from study givp_global_robust_v1 after screening and seed extension.",
+    "Independent paired validation uses optimizer seeds 49 through 58.",
+    "All compared algorithms use a 300-second limit and a maximum of 15000 physical objective evaluations."
+  ]
+}
