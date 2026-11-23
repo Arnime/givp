@@ -48,7 +48,7 @@ jobs:
             source_changed=false
             config_changed=false
             if git diff --name-only "$PR_BASE" HEAD -- python/src python/tests | grep -q .; then
-              echo 'versions=["3.10","3.11","3.12","3.13","3.14"]' >> "$GITHUB_OUTPUT"
+              echo 'versions=["3.11","3.12","3.13","3.14"]' >> "$GITHUB_OUTPUT"
               source_changed=true
             else
               echo 'versions=["3.13"]' >> "$GITHUB_OUTPUT"
@@ -64,7 +64,7 @@ jobs:
               echo 'validation_required=false' >> "$GITHUB_OUTPUT"
             fi
           else
-            echo 'versions=["3.10","3.11","3.12","3.13","3.14"]' >> "$GITHUB_OUTPUT"
+            echo 'versions=["3.11","3.12","3.13","3.14"]' >> "$GITHUB_OUTPUT"
             echo 'source_changed=true' >> "$GITHUB_OUTPUT"
             echo 'config_changed=true' >> "$GITHUB_OUTPUT"
             echo 'validation_required=true' >> "$GITHUB_OUTPUT"
@@ -92,7 +92,7 @@ jobs:
       - name: Lint
         run: poetry -C python run python -m ruff check src tests benchmarks fuzz
       - name: Type-check
-        # Mypy is configured to validate the package's Python 3.10 baseline.
+        # Mypy is configured to validate the package's Python 3.11 baseline.
         # Run it once on a stable interpreter; the full matrix still exercises
         # runtime compatibility, including Python 3.14.
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.13'

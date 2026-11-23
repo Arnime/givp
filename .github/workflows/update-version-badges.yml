@@ -34,7 +34,7 @@ jobs:
 
                   # --- Python: reads requires-python from python/pyproject.toml ---
                   pyproject = tomllib.loads(pathlib.Path("python/pyproject.toml").read_text())
-                  spec = pyproject["project"]["requires-python"]  # e.g. ">=3.10,<3.16"
+                  spec = pyproject["project"]["requires-python"]  # e.g. ">=3.11.5,<3.16"
                   lo = re.search(r">=(\d+\.\d+)", spec)
                   hi = re.search(r"<(\d+)\.(\d+)", spec)
                   if lo and hi:

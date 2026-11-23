@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from typing import cast
 
 import numpy as np
 import pandas as pd
@@ -29,7 +28,7 @@ def inflow_frame(inflows: Mapping[str, NDArray[np.float64]]) -> pd.DataFrame:
         for plant_index, plant in enumerate(("A", "B"))
         for period in range(values.shape[1])
     ]
-    return cast(pd.DataFrame, pd.DataFrame(rows))
+    return pd.DataFrame(rows)
 
 
 def schedule_frame(cases: Sequence[PowerCase]) -> pd.DataFrame:
@@ -48,7 +47,7 @@ def schedule_frame(cases: Sequence[PowerCase]) -> pd.DataFrame:
         for plant_index, plant in enumerate(("A", "B"))
         for period in range(case.target_power_mw.shape[1])
     ]
-    return cast(pd.DataFrame, pd.DataFrame(rows))
+    return pd.DataFrame(rows)
 
 
 def balance_time_series_frame(
@@ -142,7 +141,7 @@ def balance_time_series_frame(
                         "mass_balance_residual_hm3": volume_change - expected_change,
                     }
                 )
-    return cast(pd.DataFrame, pd.DataFrame(rows))
+    return pd.DataFrame(rows)
 
 
 def balance_summary_frame(
@@ -212,4 +211,4 @@ def balance_summary_frame(
                 }
             )
         rows.append(row)
-    return cast(pd.DataFrame, pd.DataFrame(rows))
+    return pd.DataFrame(rows)

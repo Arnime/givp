@@ -11,7 +11,7 @@ equivalent: same algorithm, same public API shape, same module structure.
 
 | Language | Location  | Distribution      | Min version |
 | -------- | --------- | ----------------- | ----------- |
-| Python   | `python/` | PyPI (`givp`)     | 3.10        |
+| Python   | `python/` | PyPI (`givp`)     | 3.11.5      |
 | Julia    | `julia/`  | JuliaHub          | 1.9         |
 | Rust     | `rust/`   | crates.io         | 1.85        |
 | C++      | `cpp/`    | header-only       | C++17       |
@@ -67,9 +67,9 @@ Every port exposes the same logical modules:
 
 ## Python
 
-- Python **≥ 3.10**; use `from __future__ import annotations` in every module.
+- Python **≥ 3.11.5**; use `from __future__ import annotations` in every module.
 - **mypy strict** mode. All public symbols must be fully annotated.
-- **ruff** is the linter and formatter (`line-length = 88`, `target-version = "py310"`).
+- **ruff** is the linter and formatter (`line-length = 88`, `target-version = "py311"`).
   Enabled rule sets: `E, F, I, UP, B, SIM, S, RUF, PERF, PT, RET`.
 - Tests live in `python/tests/` and use **pytest** with `--cov-fail-under=95`.
   Use **Hypothesis** for property-based tests:

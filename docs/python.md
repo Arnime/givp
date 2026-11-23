@@ -12,7 +12,7 @@ pip install givp
 Process-based parallel evaluation of closures and lambdas is included in the
 standard installation through the required `cloudpickle` dependency.
 
-Requires Python 3.10+.
+Requires Python 3.11.5+.
 
 ## Quick start
 
