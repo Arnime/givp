@@ -19,7 +19,7 @@ using Aqua
 
     @testset "JET type inference" begin
         # report_package raises on any type-inference error found in the module
-        result = JET.report_package("GIVPOptimizer"; ignored_modules = (Base, Core))
+        result = JET.report_package(GIVPOptimizer; ignored_modules = (Base, Core))
         @test length(JET.get_reports(result)) == 0
     end
 end

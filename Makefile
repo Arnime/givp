@@ -123,13 +123,13 @@ cpp-coverage:
 		--directory $(BUILD_COV_DIR) \
 		--output-file coverage_raw.info \
 		--gcov-tool gcov \
-		--ignore-errors source,gcov,negative \
+		--ignore-errors source,gcov,negative,inconsistent \
 		--rc geninfo_unexecuted_blocks=1)
 	@$(call cpp_exec,lcov --remove coverage_raw.info \
 		"*/$(BUILD_COV_DIR)/_deps/*" \
 		"/usr/*" \
 		--output-file coverage.info \
-		--ignore-errors source,negative)
+		--ignore-errors source,negative,inconsistent)
 	@$(call cpp_exec,lcov --list coverage.info)
 	@$(call cpp_exec,hit=$$(grep "^LH:" coverage.info | awk -F: "{s+=\\$$2} END {print s+0}"); \
 	 total=$$(grep "^LF:" coverage.info | awk -F: "{s+=\\$$2} END {print s+0}"); \
@@ -244,7 +244,7 @@ julia-lint:
 		Pkg.instantiate(); \
 		using GIVPOptimizer, Aqua, JET; \
 		Aqua.test_all(GIVPOptimizer; ambiguities=(broken=false,), stale_deps=(ignore=[:JSON, :Aqua, :JET],), piracies=(broken=false,)); \
-		report_package("GIVPOptimizer")'
+		report_package(GIVPOptimizer)'
 	@echo "[Julia] ✓ Aqua/JET lint passed"
 
 julia-coverage:

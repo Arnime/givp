@@ -25,13 +25,13 @@ lcov --capture \
   --directory "$COV_DIR" \
   --output-file coverage_raw.info \
   --gcov-tool gcov \
-  --ignore-errors source,gcov,negative \
+  --ignore-errors source,gcov,negative,inconsistent \
   --rc geninfo_unexecuted_blocks=1
 lcov --remove coverage_raw.info \
   "*/${COV_DIR}/_deps/*" \
   '/usr/*' \
   --output-file coverage.info \
-  --ignore-errors source,negative
+  --ignore-errors source,negative,inconsistent
 lcov --list coverage.info
 
 hit=$(grep '^LH:' coverage.info | awk -F: '{s+=$2} END {print s+0}')

@@ -96,7 +96,7 @@ julia --project=julia -e '
   using Pkg
   Pkg.add(["JET"])
   using GIVPOptimizer, JET
-  result = JET.report_package("GIVPOptimizer"; ignored_modules=(Base, Core))
+  result = JET.report_package(GIVPOptimizer; ignored_modules=(Base, Core))
   reports = JET.get_reports(result)
   if !isempty(reports)
     for r in reports
