@@ -5,10 +5,6 @@ inputs:
     description: Julia version or channel.
     required: false
     default: "1"
-  project:
-    description: Julia project directory used by the cache action.
-    required: false
-    default: julia
   cache:
     description: Restore and save Julia package cache.
     required: false
@@ -26,5 +22,4 @@ runs:
     - if: inputs.cache == 'true'
       uses: julia-actions/cache@a45e8fa8be21c18a06b7177052533149e61e9b38 # v3.1.0
       with:
-        project: ${{ inputs.project }}
         delete-old-caches: ${{ inputs.delete-old-caches }}
