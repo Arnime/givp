@@ -5,7 +5,7 @@
 
 **Python** &nbsp;
 [![PyPI givp](https://img.shields.io/pypi/v/givp?logo=pypi&logoColor=white&color=3775A9&label=PyPI%20givp)](https://pypi.org/project/givp/)
-[![Python versions](https://img.shields.io/badge/Python-3.10%E2%80%933.15-blue?logo=python&logoColor=white)](https://pypi.org/project/givp/)
+[![Python versions](https://img.shields.io/badge/Python-3.11%E2%80%933.15-blue?logo=python&logoColor=white)](https://pypi.org/project/givp/)
 [![CI Python](https://github.com/Arnime/givp/actions/workflows/ci-python.yml/badge.svg)](https://github.com/Arnime/givp/actions/workflows/ci-python.yml)
 [![Codecov (python)](https://codecov.io/gh/Arnime/givp/graph/badge.svg?flag=python)](https://codecov.io/gh/Arnime/givp/flags/python)
 [![Ruff](https://img.shields.io/badge/Linter-ruff-red?logo=ruff&logoColor=white)](https://github.com/astral-sh/ruff)
@@ -60,7 +60,7 @@ mixed** black-box problems, available in five languages:
 
 | Language | Distribution | Requires |
 |----------|-------------|---------|
-| **Python** (NumPy-native) | [PyPI `givp`](https://pypi.org/project/givp/) | Python 3.10+, NumPy |
+| **Python** (NumPy-native) | [PyPI `givp`](https://pypi.org/project/givp/) | Python 3.11.5+, NumPy |
 | **Julia** | [JuliaHub `GIVPOptimizer`](https://juliahub.com/ui/Packages/General/GIVPOptimizer) | Julia 1.9+ |
 | **Rust** | [crates.io `givp`](https://crates.io/crates/givp) | Rust 1.85+ |
 | **C++17** | Header-only (vcpkg / Conan / FetchContent / copy) | C++17 compiler, CMake 3.21+ |
@@ -184,7 +184,7 @@ cd givp
 pip install -e .[dev]
 ```
 
-Requires Python 3.10+ and NumPy.
+Requires Python 3.11.5+ and NumPy.
 
 ### Julia installation
 

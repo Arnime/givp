@@ -194,20 +194,17 @@ def _paired_statistics(records: pd.DataFrame) -> pd.DataFrame:
                 }
             )
     if not rows:
-        return cast(
-            pd.DataFrame,
-            pd.DataFrame(
-                columns=[
-                    "scope",
-                    "comparison",
-                    "pairs",
-                    "givp_win_rate",
-                    "median_normalized_difference",
-                    "p_value",
-                    "holm_p_value",
-                    "significant_0_05",
-                ]
-            ),
+        return pd.DataFrame(
+            columns=[
+                "scope",
+                "comparison",
+                "pairs",
+                "givp_win_rate",
+                "median_normalized_difference",
+                "p_value",
+                "holm_p_value",
+                "significant_0_05",
+            ]
         )
     order = sorted(range(len(rows)), key=lambda index: float(rows[index]["p_value"]))
     adjusted = [1.0] * len(rows)
@@ -219,7 +216,7 @@ def _paired_statistics(records: pd.DataFrame) -> pd.DataFrame:
     for row, value in zip(rows, adjusted, strict=True):
         row["holm_p_value"] = value
         row["significant_0_05"] = value < 0.05
-    return cast(pd.DataFrame, pd.DataFrame(rows))
+    return pd.DataFrame(rows)
 
 
 def _overall_summary(records: pd.DataFrame) -> pd.DataFrame:
@@ -286,7 +283,7 @@ def _ordered(frame: pd.DataFrame) -> pd.DataFrame:
             result["algorithm"], _algorithms(result), ordered=True
         )
         sort_fields.append("algorithm")
-    return cast(pd.DataFrame, result.sort_values(sort_fields, ignore_index=True))
+    return result.sort_values(sort_fields, ignore_index=True)
 
 
 def _write_csv(frame: pd.DataFrame, path: Path) -> Path:
@@ -383,7 +380,7 @@ def _median_heatmap(summary: pd.DataFrame, path: Path) -> Path:
     )
     for row, scenario in enumerate(scenarios):
         for column, algorithm in enumerate(algorithms):
-            value = matrix.loc[scenario, algorithm]
+            value = cast(float, matrix.loc[scenario, algorithm])
             if np.isfinite(value):
                 axis.text(
                     column, row, f"{value:.1f}", ha="center", va="center", color="white"

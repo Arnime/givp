@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import cast
 
 import pandas as pd
 
@@ -34,7 +33,7 @@ def _summary_frame(
             row[f"initial_level_{plant_name}_m"] = result.level_m[plant_index, 0]
             row[f"final_level_{plant_name}_m"] = result.level_m[plant_index, -1]
         rows.append(row)
-    return cast(pd.DataFrame, pd.DataFrame(rows))
+    return pd.DataFrame(rows)
 
 
 def _time_series_frame(
@@ -110,4 +109,4 @@ def _time_series_frame(
                         ],
                     }
                 )
-    return cast(pd.DataFrame, pd.DataFrame(rows))
+    return pd.DataFrame(rows)

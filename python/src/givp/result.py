@@ -35,7 +35,9 @@ def _empty_meta() -> AlgorithmMeta:
     return AlgorithmMeta()
 
 
-class TerminationReason(str, Enum):
+# Kept as (str, Enum) instead of StrEnum: StrEnum changes str()/format() output,
+# which is part of the public result surface mirrored by the other ports.
+class TerminationReason(str, Enum):  # noqa: UP042
     """Closed set of termination reasons — safe to pass to LLM agents."""
 
     CONVERGED = "converged"
