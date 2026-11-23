@@ -1,0 +1,73 @@
+{
+  "schema_version": "synthetic-hydropower/sog-comparison-v1",
+  "profile_kind": "optuna-multiscenario-tuned",
+  "benchmark_version": "v1.0.0",
+  "max_evaluations": 15000,
+  "optimizer_seeds": [44, 45, 46, 47, 48],
+  "profiles": {
+    "DE": {
+      "source": "Runtime-calibrated from the SOG SciPy differential-evolution profile",
+      "max_iterations": 20,
+      "population_multiplier": 5,
+      "strategy": "best1bin",
+      "mutation": [
+        0.5,
+        1.0
+      ],
+      "recombination": 0.9,
+      "tolerance": 0.05,
+      "initialization": "latinhypercube",
+      "polish": false,
+      "source_workers": -1,
+      "execution_workers": 1
+    },
+    "PSO": {
+      "source": "SOG seed-validation PSO notebook (pyswarm)",
+      "max_generations": 100,
+      "population_size": 200,
+      "inertia": 0.5,
+      "c1": 1.0,
+      "c2": 1.0
+    },
+    "UPSO": {
+      "source": "SOG UPSO-labelled validation notebook and legacy unified-swarm controls",
+      "max_generations": 75,
+      "population_size": 200,
+      "unification_factor": 0.3,
+      "neighborhood_size": 3,
+      "w_min": 0.6,
+      "w_max": 0.9,
+      "c1": 0.6,
+      "c2": 0.4
+    },
+    "GIVP": {
+      "source": "Optuna multi-scenario tuning round 2 (study givp_hydropower_multiscenario_v2, trial 26/50; scenarios typical, upstream_peak, wet_rising, flood; n_eval_seeds=2; DE-normalized objective; warm-started from round-1 best config plus single-scenario typical/upstream_peak/wet_rising studies)",
+      "max_iterations": 80,
+      "alpha": 0.25301135388087975,
+      "vnd_iterations": 75,
+      "ils_iterations": 11,
+      "perturbation_strength": 19,
+      "use_elite_pool": true,
+      "elite_size": 7,
+      "path_relink_frequency": 3,
+      "adaptive_alpha": false,
+      "alpha_min": 0.25301135388087975,
+      "alpha_max": 0.25301135388087975,
+      "num_candidates_per_step": 4,
+      "use_cache": true,
+      "cache_size": 12000,
+      "early_stop_threshold": 67,
+      "use_convergence_monitor": true,
+      "n_workers": 1,
+      "time_limit_seconds": 300
+    }
+  },
+  "notes": [
+    "Round 2: GIVP block re-tuned focusing on the 4 scenarios that still lagged after round 1 (typical, upstream_peak, wet_rising, flood), warm-started from the round-1 winning config (interop/v1/tuned_hyperparameters.json) so dry_stable/downstream_dominant gains are not blindly discarded.",
+    "early_stop_threshold was rescaled from the tuning budget (max_iter=30, tuned value 25) to the deployment budget (max_iterations=80) preserving the tuned ratio: round(25/30*80)=67.",
+    "DE, PSO, and UPSO profiles are unchanged from balanced_hyperparameters.json so any measured difference is attributable to the GIVP configuration alone.",
+    "This profile is for a balanced-runtime comparison and must not be described as an exact historical SOG replay.",
+    "Final comparisons use the paired reproducible seeds 44 through 48 for every algorithm.",
+    "Validate on all 7 scenarios (not just the 4 tuned) to check for regressions on dry_stable/downstream_dominant relative to round 1."
+  ]
+}

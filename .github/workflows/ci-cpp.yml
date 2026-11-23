@@ -286,14 +286,14 @@ jobs:
             --directory cpp/build/coverage \
                --output-file coverage_raw.info \
                --gcov-tool gcov \
-            --ignore-errors source,gcov,negative \
+            --ignore-errors source,gcov,negative,inconsistent \
                --rc geninfo_unexecuted_blocks=1
           lcov --remove coverage_raw.info \
             '*/cpp/build/coverage/_deps/*' \
                '/usr/*' \
                --output-file coverage.info \
-            --ignore-errors source,negative
-          lcov --list coverage.info
+            --ignore-errors source,negative,inconsistent
+          lcov --list coverage.info --ignore-errors inconsistent
 
       - name: Check coverage gate (≥90%)
         run: |

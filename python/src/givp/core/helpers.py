@@ -18,7 +18,10 @@ from typing import Literal, Protocol
 
 import numpy as np
 
+from givp.exceptions import EvaluationLimitReached
+
 EvaluatorFn = Callable[[np.ndarray], float]
+RepairFn = Callable[[np.ndarray], np.ndarray]
 PathRelinkStrategy = Literal[
     "bidirectional",
     "forward",
@@ -32,6 +35,10 @@ _VERBOSE_HANDLER_ATTACHED: list[bool] = [False]
 
 _INTEGER_SPLIT: ContextVar[int | None] = ContextVar("givp_integer_split", default=None)
 _GROUP_SIZE: ContextVar[int | None] = ContextVar("givp_group_size", default=None)
+_REPAIR: ContextVar[RepairFn | None] = ContextVar("givp_repair", default=None)
+_CONTINUOUS_MOVE_SCALES: ContextVar[tuple[float, ...]] = ContextVar(
+    "givp_continuous_move_scales", default=(0.05, 0.15, 0.35)
+)
 _MASTER_SEED_SEQ: ContextVar[np.random.SeedSequence | None] = ContextVar(
     "givp_master_seed_seq", default=None
 )
@@ -93,6 +100,37 @@ def _get_group_size() -> int | None:
     return _GROUP_SIZE.get()
 
 
+def _set_repair(repair: RepairFn | None) -> None:
+    """Set the candidate repair callback for the current optimization context."""
+    _REPAIR.set(repair)
+
+
+def _repair_solution(solution: np.ndarray) -> np.ndarray:
+    """Repair *solution* in place and return it for cache-safe evaluation."""
+    repair = _REPAIR.get()
+    if repair is None:
+        return solution
+    repaired = np.asarray(repair(solution.copy()), dtype=float)
+    if repaired.shape != solution.shape:
+        raise ValueError(
+            f"repair must preserve shape {solution.shape}, got {repaired.shape}"
+        )
+    if not np.all(np.isfinite(repaired)):
+        raise ValueError("repair must return only finite values")
+    np.copyto(solution, repaired)
+    return solution
+
+
+def _set_continuous_move_scales(scales: tuple[float, ...]) -> None:
+    """Set relative continuous perturbation scales for the current run."""
+    _CONTINUOUS_MOVE_SCALES.set(scales)
+
+
+def _get_continuous_move_scales() -> tuple[float, ...]:
+    """Return configured relative continuous perturbation scales."""
+    return _CONTINUOUS_MOVE_SCALES.get()
+
+
 def _new_rng(seed: int | None = None) -> np.random.Generator:
     """Create a RNG using an explicit seed to satisfy static-analysis rules.
 
@@ -125,7 +163,10 @@ def _safe_evaluate(evaluator: EvaluatorFn, candidate: np.ndarray) -> float:
     Logs a warning with traceback so silent bugs in the evaluator are visible.
     """
     try:
+        _repair_solution(candidate)
         cost = float(evaluator(candidate))
+    except EvaluationLimitReached:
+        raise
     except Exception:  # pylint: disable=broad-exception-caught
         logger.warning(
             "evaluator raised an exception; treating candidate as infeasible",
@@ -164,5 +205,7 @@ class _CoreConfigProto(Protocol):
     use_convergence_monitor: bool
     n_workers: int
     time_limit: float
+    max_evaluations: int
+    continuous_move_scales: tuple[float, ...]
     integer_split: int | None
     group_size: int | None

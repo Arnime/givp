@@ -1,6 +1,9 @@
 # GitHub Copilot Instructions — GIVP
 
-This repository is a multi-language implementation of the **GRASP-ILS-VND with Path Relinking** (GIVP) metaheuristic optimizer for continuous and mixed-integer black-box optimization. All language ports must remain functionally equivalent: same algorithm, same public API shape, same module structure.
+This repository is a multi-language implementation of the
+**GRASP-ILS-VND with Path Relinking** (GIVP) metaheuristic optimizer for continuous
+and mixed-integer black-box optimization. All language ports must remain functionally
+equivalent: same algorithm, same public API shape, same module structure.
 
 ---
 
@@ -19,15 +22,23 @@ This repository is a multi-language implementation of the **GRASP-ILS-VND with P
 ## Universal rules (all languages)
 
 - Every source file **must** begin with the SPDX header:
-  ```
+
+  ```text
   # SPDX-FileCopyrightText: 2026 Arnaldo Mendes Pires Junior
   # SPDX-License-Identifier: MIT
   ```
+
   Adjust the comment style to the language (`//` for C++/Rust, `#` for Python/Julia/R).
 - All commits require a **DCO sign-off** (`Signed-off-by:` line).
 - Never introduce runtime dependencies beyond what is already declared per language.
-- Algorithm parameters and their semantics must stay in sync across all ports. If a parameter changes in one language, update the others.
+- Algorithm parameters and their semantics must stay in sync across all ports.
+If a parameter changes in one language, update the others.
 - Do not add speculative features. Implement only what is required.
+- Use lowercase file and directory names without `_` separators; organize
+compound areas as directories or packages instead.
+Keep language-required special filenames such as `__init__.py` and `__main__.py`.
+- Keep source files at 300 lines or fewer. Split larger files into cohesive
+modules grouped by responsibility, and keep entry points thin.
 
 ---
 
@@ -63,7 +74,8 @@ Every port exposes the same logical modules:
 - Tests live in `python/tests/` and use **pytest** with `--cov-fail-under=95`.
   Use **Hypothesis** for property-based tests:
   - **Default:** `max_examples=15` for lightweight smoke tests
-  - **Exception:** `max_examples=50` for comprehensive API surface coverage (e.g., `test_properties.py` testing the public givp API)
+  - **Exception:** `max_examples=50` for comprehensive API surface coverage
+  (e.g., `test_properties.py` testing the public givp API)
 - Conftest fixtures: `sphere`, `knapsack`, `qap`.
 - Source layout: `python/src/givp/` (hatchling, `src` layout).
 
@@ -80,7 +92,8 @@ givp(func, bounds, *, num_vars=None, minimize=None, direction=None,
 ## Julia
 
 - Target Julia **≥ 1.9**. Package name: `GIVPOptimizer`.
-- Follow standard Julia style: `CamelCase` for types, `snake_case` for functions, 4-space indentation.
+- Follow standard Julia style: `CamelCase` for types, `snake_case` for functions,
+4-space indentation.
 - Format with **JuliaFormatter** (`style = "default"`).
 - Tests are in `julia/test/runtests.jl`; minimum coverage gate: **95 %**.
 - Fuzzing driver: `julia/fuzz/fuzz_givp.jl`.
@@ -118,7 +131,8 @@ givp(func, bounds, *, num_vars=None, minimize=None, direction=None,
 - Minimum R **4.1** (uses native pipe `|>` and `\(x)` lambda syntax).
 - Package name: **givp** (matches Python PyPI name).
 - Directory layout:
-  ```
+
+  ```r
   r/
     DESCRIPTION
     NAMESPACE
@@ -147,28 +161,38 @@ givp(func, bounds, *, num_vars=None, minimize=None, direction=None,
     vignettes/
     inst/
   ```
-- Use **roxygen2** for documentation; every exported symbol needs `@export` and `@param`/`@return` tags.
-- Use **R6** classes for `GIVPOptimizer` and `GIVPConfig`; plain functions for the functional `givp()` API.
-- Tests use **testthat** (≥ 3rd edition). Minimum coverage: **90 %** (enforced with covr).
-- Code style follows the **tidyverse style guide**: `snake_case` everywhere, spaces around operators, 2-space indentation.
+
+- Use **roxygen2** for documentation; every exported symbol needs `@export` and
+`@param`/`@return` tags.
+- Use **R6** classes for `GIVPOptimizer` and `GIVPConfig`; plain functions for
+the functional `givp()` API.
+- Tests use **testthat** (≥ 3rd edition). Minimum coverage: **90 %**
+(enforced with covr).
+- Code style follows the **tidyverse style guide**: `snake_case` everywhere,
+spaces around operators, 2-space indentation.
 - Lint with **lintr** (`linters = linters_with_defaults()`).
-- Errors: define a condition hierarchy with `rlang::abort()` using `.subclass = "givp_error"`.
+- Errors: define a condition hierarchy with `rlang::abort()` using
+`.subclass = "givp_error"`.
 - The functional entry point must match the Python signature as closely as R allows:
+
   ```r
   givp(func, bounds, num_vars = NULL, minimize = NULL, direction = NULL,
        config = NULL, initial_guess = NULL, iteration_callback = NULL,
        seed = NULL, verbose = FALSE)
   ```
+
 - CI workflow: `ci-r.yml` using `r-lib/actions/setup-r` with R 4.1, 4.3, and release.
 
 ---
 
 ## Testing guidelines (all languages)
 
-- Write tests for **happy-path**, **edge-cases** (empty bounds, single variable, large dim), and **error conditions**.
+- Write tests for **happy-path**, **edge-cases** (empty bounds, single variable,
+large dim), and **error conditions**.
 - Each new algorithm feature must be covered by at least one unit test.
 - Do not mock the objective function unless testing error propagation.
-- Fuzz drivers exist for Python (`python/fuzz/`) and Julia (`julia/fuzz/`); add `r/fuzz/fuzz_givp.R` when the R port is ready.
+- Fuzz drivers exist for Python (`python/fuzz/`) and Julia (`julia/fuzz/`);
+add `r/fuzz/fuzz_givp.R` when the R port is ready.
 
 ---
 
@@ -186,4 +210,5 @@ givp(func, bounds, *, num_vars=None, minimize=None, direction=None,
 - Commit message format: `<type>(<scope>): <subject>` (Conventional Commits).
   Scopes: `python`, `julia`, `rust`, `cpp`, `r`, `docs`, `ci`, `deps`.
 - Each commit must include `Signed-off-by: Name <email>` (DCO).
-- PRs that change algorithm behaviour must update **all** language ports, or clearly document which are deferred with a tracking issue.
+- PRs that change algorithm behaviour must update **all** language ports, or
+clearly document which are deferred with a tracking issue.

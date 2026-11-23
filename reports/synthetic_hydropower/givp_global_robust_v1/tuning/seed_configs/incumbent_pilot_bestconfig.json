@@ -1,0 +1,123 @@
+{
+  "metadata": {
+    "scenarios": [
+      "dry_stable",
+      "dry_variable",
+      "typical",
+      "upstream_peak",
+      "downstream_dominant",
+      "wet_rising",
+      "flood"
+    ],
+    "n_trials": 10,
+    "n_completed_trials": 10,
+    "n_eval_seeds": 1,
+    "evaluation_seeds": [
+      0
+    ],
+    "sampler": "TPESampler",
+    "sampler_seed": 42,
+    "n_startup_trials": 3,
+    "max_iter": 80,
+    "time_limit": 300.0,
+    "best_trial_number": 0,
+    "best_value": 0.16540442628231156,
+    "de_reference": {
+      "dry_stable": 7857.1310306368205,
+      "dry_variable": 1692.8204704616196,
+      "typical": -3868.4876608999284,
+      "upstream_peak": -4271.385141965957,
+      "downstream_dominant": -2574.6063583444934,
+      "wet_rising": -4432.278607884923,
+      "flood": -4860.745847464075
+    },
+    "reference": {
+      "dry_stable": 7857.1310306368205,
+      "dry_variable": 1692.8204704616196,
+      "typical": -3868.4876608999284,
+      "upstream_peak": -4271.385141965957,
+      "downstream_dominant": -2574.6063583444934,
+      "wet_rising": -4432.278607884923,
+      "flood": -4860.745847464075
+    },
+    "reference_algorithms": [
+      "DE",
+      "PSO",
+      "UPSO"
+    ],
+    "reference_winners": {
+      "dry_stable": "UPSO",
+      "dry_variable": "UPSO",
+      "typical": "UPSO",
+      "upstream_peak": "UPSO",
+      "downstream_dominant": "UPSO",
+      "wet_rising": "PSO",
+      "flood": "UPSO"
+    },
+    "reference_runs": [
+      "..\\experiments\\synthetic_hydropower\\output\\givp_global_tuning_pilot\\reference.csv"
+    ],
+    "max_iter_min": null,
+    "param_importances": {
+      "ils_iterations": 0.37801915234482164,
+      "num_candidates_per_step": 0.25013685253907564,
+      "vnd_iterations": 0.15263479184240838,
+      "early_stop_threshold": 0.0928628541641956,
+      "alpha": 0.08327361248697095,
+      "perturbation_strength": 0.03745440165697002,
+      "adaptive_alpha": 0.002693678951652493,
+      "use_elite_pool": 0.002309880244646311,
+      "use_convergence_monitor": 0.0006147757692590941
+    },
+    "seed_configs": [
+      "..\\experiments\\synthetic_hydropower\\interop\\v1\\tuned_hyperparameters.json",
+      "..\\experiments\\synthetic_hydropower\\interop\\v1\\tuned_hyperparameters_v2.json",
+      "..\\experiments\\synthetic_hydropower\\interop\\v1\\tuned_hyperparameters_v4.json"
+    ],
+    "benchmark_root": "..\\experiments\\synthetic_hydropower\\benchmarks\\v1.0.0"
+  },
+  "best_trial_params": {
+    "alpha": 0.2640085839366311,
+    "adaptive_alpha": true,
+    "alpha_min": 0.18463591749881503,
+    "alpha_max": 0.4005073860607981,
+    "vnd_iterations": 74,
+    "ils_iterations": 10,
+    "perturbation_strength": 11,
+    "use_elite_pool": false,
+    "early_stop_threshold": 80,
+    "use_convergence_monitor": false,
+    "num_candidates_per_step": 11
+  },
+  "best_params": {
+    "max_iterations": 80,
+    "alpha": 0.2640085839366311,
+    "vnd_iterations": 74,
+    "ils_iterations": 10,
+    "perturbation_strength": 11,
+    "use_elite_pool": false,
+    "elite_size": 5,
+    "path_relink_frequency": 10,
+    "path_relink_strategy": "bidirectional",
+    "adaptive_alpha": true,
+    "alpha_min": 0.18463591749881503,
+    "alpha_max": 0.4005073860607981,
+    "num_candidates_per_step": 11,
+    "use_cache": true,
+    "cache_size": 12000,
+    "early_stop_threshold": 80,
+    "use_convergence_monitor": false,
+    "n_workers": 1,
+    "time_limit": 300.0,
+    "max_evaluations": 15000,
+    "continuous_move_scales": [
+      0.05,
+      0.15,
+      0.35
+    ],
+    "minimize": true,
+    "direction": "minimize",
+    "integer_split": null,
+    "group_size": 24
+  }
+}

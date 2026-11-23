@@ -24,12 +24,12 @@ def _validate_bounds_and_initial(
             raise InvalidInitialGuessError(
                 f"initial_guess has length {initial_guess.shape[0]}, expected {num_vars}"
             )
-        if np.any(initial_guess <= lower_arr) or np.any(initial_guess >= upper_arr):
+        if np.any(initial_guess < lower_arr) or np.any(initial_guess > upper_arr):
             bad = np.nonzero(
-                (initial_guess <= lower_arr) | (initial_guess >= upper_arr)
+                (initial_guess < lower_arr) | (initial_guess > upper_arr)
             )[0]
             raise InvalidInitialGuessError(
-                "initial_guess values must be strictly between lower and upper; "
+                "initial_guess values must be within lower and upper bounds; "
                 f"violating indices: {bad.tolist()[:10]}"
             )
 

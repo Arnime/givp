@@ -52,6 +52,7 @@ ALGO_DESCRIPTIONS = {
     "GRASP-only": "GRASP-only baseline (Feo & Resende 1995)",
     "DE": "Differential Evolution -- scipy.optimize (Storn & Price 1997)",
     "PSO": "Particle Swarm Optimization -- pymoo (Kennedy & Eberhart 1995)",
+    "UPSO": "Unified Particle Swarm Optimization -- pymoo extension (Parsopoulos & Vrahatis 2004)",
     "GA": "Genetic Algorithm -- pymoo (Holland 1975)",
     "CMA-ES": "Covariance Matrix Adaptation Evolution Strategy -- pymoo (Hansen & Ostermeier 2001)",
     "SA": "Dual Annealing -- scipy.optimize (Xiang et al. 1997)",
